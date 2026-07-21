@@ -1,0 +1,11 @@
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+familyhub:
+  version: integration-test
+  security:
+    encryption-key: "integration-key-32-bytes-exactly!"
