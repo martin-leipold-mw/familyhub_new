@@ -1,0 +1,66 @@
+openapi: "3.1.0"
+
+info:
+  title: FamilyHub API
+  version: "0.1.0"
+  description: Self-hosted family dashboard — REST API
+
+servers:
+  - url: /api
+    description: Production (nginx reverse proxy)
+  - url: http://localhost:8081/api
+    description: Local development
+
+tags:
+  - name: System
+    description: Health and operational endpoints
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns service status and database connectivity. Always returns 200; `status` field indicates actual health.
+      tags: [System]
+      security: []
+      responses:
+        "200":
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, timestamp, version]
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+          example: UP
+        timestamp:
+          type: string
+          format: date-time
+          description: UTC timestamp of the check
+          example: "2026-07-21T10:00:00Z"
+        version:
+          type: string
+          description: Build version (Git SHA from CI)
+          example: "abc1234"
+
+    ErrorResponse:
+      type: object
+      required: [code, message, correlationId]
+      properties:
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Ungültige Anfrage
+        correlationId:
+          type: string
+          format: uuid
