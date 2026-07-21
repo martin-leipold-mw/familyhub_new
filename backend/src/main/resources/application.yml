@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: familyhub-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/familyhub}
+    username: ${SPRING_DATASOURCE_USERNAME:familyhub}
+    password: ${SPRING_DATASOURCE_PASSWORD:familyhub_dev}
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: 8081
+
+familyhub:
+  version: ${APP_VERSION:dev}
+  security:
+    encryption-key: ${FAMILYHUB_ENCRYPTION_KEY:}
