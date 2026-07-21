@@ -96,14 +96,8 @@ jobs:
       - name: Generate API client
         run: cd frontend && npm run generate:api
 
-      - name: Type check
-        run: cd frontend && npm run type-check
-
-      - name: Lint
-        run: cd frontend && npm run lint
-
-      - name: Run tests with coverage
-        run: cd frontend && npm run test:coverage
+      - name: Check (type-check + lint + test coverage)
+        run: cd frontend && npm run check
 
       - name: Build
         run: cd frontend && npm run build
