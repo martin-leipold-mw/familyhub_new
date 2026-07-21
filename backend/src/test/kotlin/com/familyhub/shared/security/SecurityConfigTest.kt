@@ -1,0 +1,24 @@
+package com.familyhub.shared.security
+
+import com.familyhub.shared.health.HealthController
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.Import
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
+
+@WebMvcTest(HealthController::class)
+@Import(SecurityConfig::class)
+class SecurityConfigTest {
+
+    @Autowired
+    lateinit var mockMvc: MockMvc
+
+    @Test
+    fun `health endpoint is publicly accessible`() {
+        mockMvc.get("/api/health")
+            .andExpect { status { isOk() } }
+    }
+}
