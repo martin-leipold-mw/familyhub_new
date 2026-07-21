@@ -65,10 +65,55 @@ tasks.test {
 }
 
 tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    val excludedClasses = listOf(
+        "**/Application*",
+        "**/generated/**",
+        "**/config/**",
+        "**/exceptions/ErrorResponse*",
+    )
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            exclude(excludedClasses)
+        }
+    )
     reports {
         xml.required = true
         html.required = true
     }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    val excludedClasses = listOf(
+        "**/Application*",
+        "**/generated/**",
+        "**/config/**",
+        "**/exceptions/ErrorResponse*",
+    )
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            exclude(excludedClasses)
+        }
+    )
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = 0.90.toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = 1.00.toBigDecimal()
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 dependencies {

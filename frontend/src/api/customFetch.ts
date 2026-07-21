@@ -15,6 +15,8 @@ export async function customFetch<T>(
     throw new Error(error.message ?? `HTTP ${response.status}`)
   }
 
-  if (response.status === 204) return undefined as T
-  return response.json() as Promise<T>
+  if (response.status === 204) return { data: undefined, status: 204, headers: response.headers } as T
+
+  const data = await response.json()
+  return { data, status: response.status, headers: response.headers } as T
 }

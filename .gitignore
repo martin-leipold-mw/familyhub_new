@@ -31,3 +31,7 @@ Thumbs.db
 
 # Docker
 *.log
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
