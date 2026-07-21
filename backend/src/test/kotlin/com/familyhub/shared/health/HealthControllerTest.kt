@@ -1,13 +1,16 @@
 package com.familyhub.shared.health
 
+import com.familyhub.shared.security.SecurityConfig
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.context.annotation.Import
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 
 @WebMvcTest(HealthController::class)
+@Import(SecurityConfig::class)
 class HealthControllerTest {
 
     @Autowired
@@ -23,6 +26,14 @@ class HealthControllerTest {
                 jsonPath("$.status") { value("UP") }
                 jsonPath("$.timestamp") { exists() }
                 jsonPath("$.version") { exists() }
+            }
+    }
+
+    @Test
+    fun `GET api health returns 200 for anonymous requests`() {
+        mockMvc.get("/api/health")
+            .andExpect {
+                status { isOk() }
             }
     }
 }

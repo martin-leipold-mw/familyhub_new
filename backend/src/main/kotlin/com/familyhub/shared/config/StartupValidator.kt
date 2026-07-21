@@ -19,10 +19,10 @@ class StartupValidator(
                 "Starting with an empty encryption key is not allowed."
             )
         }
-        if (encryptionKey == "defaultKey12345678901234567890123") {
+        if (encryptionKey.contains("CHANGE_ME", ignoreCase = true)) {
             throw IllegalStateException(
-                "FAMILYHUB_ENCRYPTION_KEY is set to the insecure default value. " +
-                "Generate a secure 32+ character key."
+                "FAMILYHUB_ENCRYPTION_KEY appears to be the example placeholder. " +
+                "Generate a secure 32+ character key: openssl rand -base64 32"
             )
         }
         if (encryptionKey.length < 32) {

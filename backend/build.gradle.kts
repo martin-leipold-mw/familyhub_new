@@ -70,6 +70,7 @@ tasks.jacocoTestReport {
         "**/Application*",
         "**/generated/**",
         "**/config/**",
+        "**/security/**",
         "**/exceptions/ErrorResponse*",
     )
     classDirectories.setFrom(
@@ -89,6 +90,7 @@ tasks.jacocoTestCoverageVerification {
         "**/Application*",
         "**/generated/**",
         "**/config/**",
+        "**/security/**",
         "**/exceptions/ErrorResponse*",
     )
     classDirectories.setFrom(

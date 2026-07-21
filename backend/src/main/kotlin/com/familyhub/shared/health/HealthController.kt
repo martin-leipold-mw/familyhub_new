@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 @RestController
 @RequestMapping("/api")
@@ -18,7 +19,7 @@ class HealthController(
         return ResponseEntity.ok(
             HealthResponse(
                 status = HealthResponse.Status.UP,
-                timestamp = OffsetDateTime.now(),
+                timestamp = OffsetDateTime.now(ZoneOffset.UTC),
                 version = version,
             )
         )
