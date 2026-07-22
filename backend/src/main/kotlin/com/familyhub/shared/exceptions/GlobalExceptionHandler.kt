@@ -24,37 +24,41 @@ class GlobalExceptionHandler {
     @ExceptionHandler(SetupAlreadyCompletedException::class)
     fun handleSetupCompleted(ex: SetupAlreadyCompletedException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-            ErrorResponse(code = "SETUP_COMPLETED", message = ex.message ?: "Setup abgeschlossen")
+            ErrorResponse(code = "SETUP_COMPLETED", message = ex.message)
         )
 
     @ExceptionHandler(InvalidPinException::class)
     fun handleInvalidPin(ex: InvalidPinException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-            ErrorResponse(code = "INVALID_PIN", message = ex.message ?: "PIN ungültig")
+            ErrorResponse(code = "INVALID_PIN", message = ex.message)
         )
 
     @ExceptionHandler(ValidationException::class)
     fun handleValidation(ex: ValidationException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ErrorResponse(code = "VALIDATION_ERROR", message = ex.message ?: "Ungültige Anfrage")
+            ErrorResponse(code = "VALIDATION_ERROR", message = ex.message)
         )
 
     @ExceptionHandler(MemberNotFoundException::class)
     fun handleMemberNotFound(ex: MemberNotFoundException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(code = "NOT_FOUND", message = ex.message ?: "Nicht gefunden")
+            ErrorResponse(code = "NOT_FOUND", message = ex.message)
         )
 
     @ExceptionHandler(PayloadTooLargeException::class)
     fun handlePayloadTooLarge(ex: PayloadTooLargeException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(
-            ErrorResponse(code = "PAYLOAD_TOO_LARGE", message = ex.message ?: "Zu groß")
+            ErrorResponse(code = "PAYLOAD_TOO_LARGE", message = ex.message)
         )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleBeanValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
-        val detail = ex.bindingResult.fieldErrors.firstOrNull()?.let { "${it.field}: ${it.defaultMessage}" }
-            ?: "Ungültige Anfrage"
+        val firstError = ex.bindingResult.fieldErrors.firstOrNull()
+        val detail = if (firstError != null) {
+            "${firstError.field}: ${firstError.defaultMessage}"
+        } else {
+            "Ungültige Anfrage"
+        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
             ErrorResponse(code = "VALIDATION_ERROR", message = detail)
         )

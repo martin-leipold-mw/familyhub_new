@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.springframework.validation.BindingResult
+import org.springframework.web.bind.MethodArgumentNotValidException
 
 @RestController
 @RequestMapping("/api/test-errors")
@@ -87,5 +92,18 @@ class DomainExceptionHandlerTest {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_ERROR") }
         }
+    }
+
+    @Test
+    fun `bean validation with no field errors uses fallback message`() {
+        val bindingResult = mockk<BindingResult>()
+        every { bindingResult.fieldErrors } returns emptyList()
+        val ex = mockk<MethodArgumentNotValidException>()
+        every { ex.bindingResult } returns bindingResult
+
+        val response = GlobalExceptionHandler().handleBeanValidation(ex)
+
+        assertThat(response.statusCode.value()).isEqualTo(400)
+        assertThat(response.body?.message).isEqualTo("Ungültige Anfrage")
     }
 }

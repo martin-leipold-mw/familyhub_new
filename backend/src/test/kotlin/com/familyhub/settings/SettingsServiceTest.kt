@@ -59,6 +59,16 @@ class SettingsServiceTest {
     }
 
     @Test
+    fun `getSetupStatus defaults step to 1 when value is non-numeric`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("setup.step", "abc")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(1)
+    }
+
+    @Test
     fun `updateSetupStep rejects when setup already completed`() {
         stubSetting("setup.completed", "true")
         assertThatThrownBy { service.updateSetupStep(2) }
@@ -69,6 +79,13 @@ class SettingsServiceTest {
     fun `updateSetupStep rejects out-of-range step`() {
         stubSetting("setup.completed", "false")
         assertThatThrownBy { service.updateSetupStep(4) }
+            .isInstanceOf(ValidationException::class.java)
+    }
+
+    @Test
+    fun `updateSetupStep rejects step below lower bound`() {
+        stubSetting("setup.completed", "false")
+        assertThatThrownBy { service.updateSetupStep(0) }
             .isInstanceOf(ValidationException::class.java)
     }
 
