@@ -81,12 +81,11 @@ Basis-Pfad: `/api/v1/members`
 | Method | Pfad | Auth | Beschreibung |
 |--------|------|------|--------------|
 | GET | `/api/v1/settings/setup-status` | öffentlich | Setup-Zustand abfragen |
-| POST | `/api/v1/settings/set-pin` | öffentlich* | PIN erstmalig setzen |
+| POST | `/api/v1/settings/set-pin` | öffentlich* | PIN erstmalig setzen → gibt Session-Token zurück, markiert Setup als abgeschlossen |
 | POST | `/api/v1/settings/verify-pin` | öffentlich | PIN prüfen → Session-Token |
 | POST | `/api/v1/settings/change-pin` | PIN-Session | PIN nachträglich ändern |
-| POST | `/api/v1/settings/complete-setup` | PIN-Session | Setup als abgeschlossen markieren |
 
-*`set-pin` ist serverseitig nur erlaubt solange `setup.completed = "false"` — sonst HTTP 403.
+*`set-pin` ist serverseitig nur erlaubt solange `setup.completed = "false"` — sonst HTTP 403. Der Endpoint setzt den PIN, markiert `setup.completed = true`, und gibt ein Session-Token zurück — kein separater `complete-setup`-Call nötig.
 
 **Setup-Status Response:**
 ```json
@@ -98,7 +97,7 @@ Basis-Pfad: `/api/v1/members`
 }
 ```
 
-**verify-pin Response:**
+**set-pin / verify-pin Response:**
 ```json
 { "sessionToken": "550e8400-e29b-41d4-a716-446655440000" }
 ```
@@ -206,8 +205,8 @@ Fehlertext-Tabelle (aus Konzept):
 - Zwei verdeckte numerische Eingabefelder (4–6 Ziffern)
 - Bestätigung muss übereinstimmen
 - „Fertig"-Schaltfläche:
-  1. `POST /api/v1/settings/set-pin`
-  2. `POST /api/v1/settings/complete-setup`
+  1. `POST /api/v1/settings/set-pin` → setzt PIN, markiert Setup abgeschlossen, gibt Session-Token zurück
+  2. Session-Token in PinSessionContext speichern
   3. Hard-Redirect auf `/`
 
 **Fortschrittsanzeige:** „Schritt {n} von 3" + Prozentbalken (33 % / 66 % / 100 %)
