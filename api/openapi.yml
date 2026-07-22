@@ -14,6 +14,12 @@ servers:
 tags:
   - name: System
     description: Health and operational endpoints
+  - name: Members
+    description: Family member management
+  - name: Settings
+    description: Setup status and PIN management
+  - name: Avatar
+    description: Member avatar image (binary)
 
 paths:
   /health:
@@ -30,6 +36,212 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+
+  /v1/members:
+    get:
+      operationId: listMembers
+      summary: List active family members
+      tags: [Members]
+      security: []
+      responses:
+        "200":
+          description: Active members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MemberResponse"
+    post:
+      operationId: createMember
+      summary: Create a family member
+      tags: [Members]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberRequest"
+      responses:
+        "201":
+          description: Created member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberResponse"
+
+  /v1/members/{id}:
+    put:
+      operationId: updateMember
+      summary: Update a family member
+      tags: [Members]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberRequest"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberResponse"
+    delete:
+      operationId: deleteMember
+      summary: Soft-delete a family member
+      tags: [Members]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+
+  /v1/members/{id}/avatar:
+    get:
+      operationId: getMemberAvatar
+      summary: Get a member avatar JPEG
+      tags: [Avatar]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Avatar image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+    put:
+      operationId: uploadMemberAvatar
+      summary: Upload a member avatar JPEG (already client-compressed)
+      tags: [Avatar]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "204":
+          description: Stored
+
+  /v1/settings/setup-status:
+    get:
+      operationId: getSetupStatus
+      summary: Read setup wizard status
+      tags: [Settings]
+      security: []
+      responses:
+        "200":
+          description: Setup status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetupStatusResponse"
+
+  /v1/settings/setup-step:
+    post:
+      operationId: updateSetupStep
+      summary: Persist the current wizard step (only while setup incomplete)
+      tags: [Settings]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetupStepRequest"
+      responses:
+        "204":
+          description: Stored
+
+  /v1/settings/set-pin:
+    post:
+      operationId: setPin
+      summary: Set the initial PIN and complete setup
+      tags: [Settings]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPinRequest"
+      responses:
+        "200":
+          description: Session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionTokenResponse"
+
+  /v1/settings/verify-pin:
+    post:
+      operationId: verifyPin
+      summary: Verify the PIN and open a session
+      tags: [Settings]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyPinRequest"
+      responses:
+        "200":
+          description: Session token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionTokenResponse"
+
+  /v1/settings/change-pin:
+    post:
+      operationId: changePin
+      summary: Change the PIN (requires an active PIN session)
+      tags: [Settings]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePinRequest"
+      responses:
+        "204":
+          description: Changed
 
 components:
   schemas:
@@ -62,5 +274,116 @@ components:
           type: string
           example: Ungültige Anfrage
         correlationId:
+          type: string
+          format: uuid
+
+    MemberRequest:
+      type: object
+      required: [name, role, color]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: Anna
+        role:
+          type: string
+          pattern: "^(parent|child)$"
+          example: parent
+        color:
+          type: string
+          pattern: "^(blue|pink|green|purple|orange|teal)$"
+          example: blue
+        dateOfBirth:
+          type: string
+          format: date
+          example: "2015-04-01"
+
+    MemberResponse:
+      type: object
+      required: [id, name, role, color, isActive, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        role:
+          type: string
+        color:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        isActive:
+          type: boolean
+        avatarUrl:
+          type: string
+          description: Present when an avatar exists, else null
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SetupStatusResponse:
+      type: object
+      required: [setupCompleted, currentStep, hasFamilyMembers, hasPin]
+      properties:
+        setupCompleted:
+          type: boolean
+        currentStep:
+          type: integer
+          format: int32
+        hasFamilyMembers:
+          type: boolean
+        hasPin:
+          type: boolean
+
+    SetupStepRequest:
+      type: object
+      required: [step]
+      properties:
+        step:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 3
+
+    SetPinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          pattern: "^[0-9]{4,6}$"
+          example: "1234"
+
+    VerifyPinRequest:
+      type: object
+      required: [pin]
+      properties:
+        pin:
+          type: string
+          example: "1234"
+
+    ChangePinRequest:
+      type: object
+      required: [currentPin, newPin]
+      properties:
+        currentPin:
+          type: string
+          example: "1234"
+        newPin:
+          type: string
+          pattern: "^[0-9]{4,6}$"
+          example: "5678"
+
+    SessionTokenResponse:
+      type: object
+      required: [sessionToken]
+      properties:
+        sessionToken:
           type: string
           format: uuid
