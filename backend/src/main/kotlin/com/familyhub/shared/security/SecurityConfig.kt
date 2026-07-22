@@ -19,11 +19,8 @@ class SecurityConfig {
             .httpBasic { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
-                auth
-                    .requestMatchers("/api/health").permitAll()
-                    .requestMatchers("/api/settings/setup-status").permitAll()
-                    .requestMatchers("/api/settings/verify-pin").permitAll()
-                    .anyRequest().authenticated()
+                // PIN protection is enforced by PinSessionInterceptor, not Spring Security.
+                auth.anyRequest().permitAll()
             }
 
         return http.build()
