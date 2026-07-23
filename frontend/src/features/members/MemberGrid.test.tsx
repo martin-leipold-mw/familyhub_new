@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemberGrid } from './MemberGrid'
+import { MEMBER_COLORS } from './colors'
 import type { MemberResponse } from '@/api/generated/model'
 
 const base: MemberResponse = {
@@ -52,8 +53,9 @@ describe('MemberGrid', () => {
   it('renders a member with an invalid/unknown color and falls back to blue', () => {
     // This tests the ?? MEMBER_COLORS.blue fallback branch
     render(<MemberGrid members={[{ ...base, color: 'invalid-color-xyz' as unknown as string }]} />)
-    expect(screen.getByText('Anna')).toBeInTheDocument()
-    // The card should still render without error, using the blue fallback
+    const card = screen.getByRole('button', { name: 'Anna' })
+    const ring = card.querySelector('span[style*="box-shadow"]') as HTMLElement
+    expect(ring.getAttribute('style')).toContain(MEMBER_COLORS.blue)
   })
 
   it('does not call onSelect when onSelect is not provided', () => {
