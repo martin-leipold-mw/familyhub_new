@@ -72,9 +72,16 @@ class SettingsService(
         settingRepository.save(setting)
     }
 
+    fun setGoogleConnected(value: Boolean) = setValue(KEY_GOOGLE_CONNECTED, value.toString())
+    fun timezone(): String = getValue(KEY_TIMEZONE) ?: "Europe/Berlin"
+    fun syncIntervalMinutes(): Long = getValue(KEY_SYNC_INTERVAL)?.toLongOrNull() ?: 15
+
     companion object {
         const val KEY_PIN = "pin"
         const val KEY_SETUP_COMPLETED = "setup.completed"
         const val KEY_SETUP_STEP = "setup.step"
+        const val KEY_GOOGLE_CONNECTED = "google.connected"
+        const val KEY_TIMEZONE = "family.timezone"
+        const val KEY_SYNC_INTERVAL = "google.sync.interval.minutes"
     }
 }
