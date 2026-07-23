@@ -45,6 +45,12 @@ class GlobalExceptionHandler {
             ErrorResponse(code = "NOT_FOUND", message = ex.message)
         )
 
+    @ExceptionHandler(ResourceNotFoundException::class)
+    fun handleResourceNotFound(ex: ResourceNotFoundException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ErrorResponse(code = "NOT_FOUND", message = ex.message)
+        )
+
     @ExceptionHandler(PayloadTooLargeException::class)
     fun handlePayloadTooLarge(ex: PayloadTooLargeException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(

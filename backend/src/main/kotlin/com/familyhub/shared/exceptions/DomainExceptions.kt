@@ -23,3 +23,7 @@ class MemberNotFoundException(
 class PayloadTooLargeException(
     override val message: String = "Das Bild ist zu groß für den Server",
 ) : RuntimeException(message)
+
+class ResourceNotFoundException(
+    override val message: String,
+) : RuntimeException(message)

@@ -30,6 +30,7 @@ private class ErrorProbeController {
     @GetMapping("/validation") fun validation(): Nothing = throw ValidationException("Ungültig")
     @GetMapping("/not-found") fun notFound(): Nothing = throw MemberNotFoundException()
     @GetMapping("/too-large") fun tooLarge(): Nothing = throw PayloadTooLargeException()
+    @GetMapping("/resource-not-found") fun rnf(): Nothing = throw ResourceNotFoundException("weg")
 
     data class Body(@field:Size(min = 2) val name: String)
     @PostMapping("/bean") fun bean(@Valid @RequestBody body: Body) = body.name
@@ -72,6 +73,15 @@ class DomainExceptionHandlerTest {
         mockMvc.get("/api/test-errors/not-found").andExpect {
             status { isNotFound() }
             jsonPath("$.code") { value("NOT_FOUND") }
+        }
+    }
+
+    @Test
+    fun `resource not found maps to 404`() {
+        mockMvc.get("/api/test-errors/resource-not-found").andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value("NOT_FOUND") }
+            jsonPath("$.message") { value("weg") }
         }
     }
 
