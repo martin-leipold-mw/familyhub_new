@@ -22,6 +22,8 @@ tags:
     description: Member avatar image (binary)
   - name: GoogleCredentials
     description: Google OAuth credentials management
+  - name: GoogleAuth
+    description: Google OAuth authorization flow and connection management
 
 paths:
   /health:
@@ -381,6 +383,85 @@ paths:
               schema:
                 $ref: "#/components/schemas/CredentialsValidationResponse"
 
+  /v1/google/auth/authorize:
+    get:
+      operationId: authorizeGoogle
+      summary: Start Google OAuth authorization flow
+      tags: [GoogleAuth]
+      security: []
+      parameters:
+        - name: credentialsId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: returnUrl
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Authorization URL to redirect the user to
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUrlResponse"
+
+  /v1/google/auth/callback:
+    post:
+      operationId: googleCallback
+      summary: Handle Google OAuth callback
+      tags: [GoogleAuth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthCallbackRequest"
+      responses:
+        "200":
+          description: Callback handled, member info returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthCallbackResponse"
+
+  /v1/google/connections:
+    get:
+      operationId: listConnections
+      summary: List all Google account connections
+      tags: [GoogleAuth]
+      security: []
+      responses:
+        "200":
+          description: List of connections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConnectionResponse"
+
+  /v1/google/connections/{id}/disconnect:
+    post:
+      operationId: disconnectConnection
+      summary: Disconnect a Google account connection
+      tags: [GoogleAuth]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Disconnected
+
 components:
   schemas:
     HealthResponse:
@@ -580,3 +661,61 @@ components:
           type: boolean
         message:
           type: string
+
+    AuthUrlResponse:
+      type: object
+      required: [authUrl]
+      properties:
+        authUrl:
+          type: string
+          description: Google OAuth authorization URL to redirect the user to
+
+    OAuthCallbackRequest:
+      type: object
+      required: [code, state]
+      properties:
+        code:
+          type: string
+          description: Authorization code from Google
+        state:
+          type: string
+          description: State nonce from the authorization request
+
+    OAuthCallbackResponse:
+      type: object
+      required: [memberId, memberName, isNewMember, returnUrl]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        isNewMember:
+          type: boolean
+        returnUrl:
+          type: string
+
+    ConnectionResponse:
+      type: object
+      required: [connectionId, memberId, email, name, status, scopes]
+      properties:
+        connectionId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        email:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        lastSyncedAt:
+          type: string
+          nullable: true
+          description: ISO-8601 timestamp of last sync, null if never synced
+        scopes:
+          type: array
+          items:
+            type: string
