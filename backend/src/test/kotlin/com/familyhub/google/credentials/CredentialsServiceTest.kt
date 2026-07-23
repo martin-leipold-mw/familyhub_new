@@ -63,6 +63,15 @@ class CredentialsServiceTest {
         assertThat(target.isPrimary).isTrue()
     }
 
+    @Test fun `setPrimary is idempotent when target is already primary`() {
+        val target = existing(isPrimary = true)
+        every { repo.findByIsPrimaryTrue() } returns target        // same entity
+        every { repo.findById(target.id!!) } returns Optional.of(target)
+        every { repo.save(any()) } answers { firstArg() }
+        service.setPrimary(target.id!!)
+        assertThat(target.isPrimary).isTrue()                     // still primary, no demotion
+    }
+
     @Test fun `get throws when missing`() {
         every { repo.findById(any()) } returns Optional.empty()
         assertThatThrownBy { service.get(UUID.randomUUID()) }
