@@ -27,3 +27,7 @@ class PayloadTooLargeException(
 class ResourceNotFoundException(
     override val message: String,
 ) : RuntimeException(message)
+
+class GoogleConnectionRevokedException(
+    override val message: String = "Google-Verbindung abgelaufen. Bitte neu verbinden.",
+) : RuntimeException(message)

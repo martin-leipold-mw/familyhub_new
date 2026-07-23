@@ -52,4 +52,10 @@ class GoogleAuthController(
         service.disconnect(id)
         return ResponseEntity.ok().build()
     }
+
+    @RequiresPinSession
+    override fun refreshConnection(id: UUID): ResponseEntity<Unit> {
+        service.refreshConnection(id)
+        return ResponseEntity.ok().build()
+    }
 }

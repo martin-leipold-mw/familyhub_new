@@ -4,6 +4,7 @@ import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.credentials.CredentialsService
 import com.familyhub.google.credentials.GoogleCredentials
 import com.familyhub.google.oauth.*
+import com.familyhub.google.token.GoogleTokenProvider
 import com.familyhub.members.FamilyMember
 import com.familyhub.members.FamilyMemberRepository
 import com.familyhub.settings.SettingsService
@@ -26,6 +27,7 @@ class ConnectionServiceTest {
     private val members = mockk<FamilyMemberRepository>(relaxed = true)
     private val enc = EncryptionService("test-key-with-more-than-32-characters-in-it")
     private val settings = mockk<SettingsService>(relaxed = true)
+    private val tokenProvider = mockk<GoogleTokenProvider>(relaxed = true)
     private lateinit var service: ConnectionService
 
     private val credId = UUID.randomUUID()
@@ -36,7 +38,7 @@ class ConnectionServiceTest {
 
     @BeforeEach
     fun setup() {
-        service = ConnectionService(credentials, flow, stateStore, pkce, connections, members, enc, settings)
+        service = ConnectionService(credentials, flow, stateStore, pkce, connections, members, enc, settings, tokenProvider)
     }
 
     // ─── startAuthorization ──────────────────────────────────────────────────

@@ -122,4 +122,14 @@ class GoogleAuthControllerTest {
             status { isOk() }
         }
     }
+
+    // ── refreshConnection ──────────────────────────────────────────────────────
+
+    @Test
+    fun `refreshConnection returns 200`() {
+        justRun { service.refreshConnection(connectionId) }
+        mockMvc.post("/api/v1/google/connections/$connectionId/refresh").andExpect {
+            status { isOk() }
+        }
+    }
 }

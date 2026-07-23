@@ -31,6 +31,7 @@ private class ErrorProbeController {
     @GetMapping("/not-found") fun notFound(): Nothing = throw MemberNotFoundException()
     @GetMapping("/too-large") fun tooLarge(): Nothing = throw PayloadTooLargeException()
     @GetMapping("/resource-not-found") fun rnf(): Nothing = throw ResourceNotFoundException("weg")
+    @GetMapping("/google-revoked") fun rev(): Nothing = throw GoogleConnectionRevokedException()
 
     data class Body(@field:Size(min = 2) val name: String)
     @PostMapping("/bean") fun bean(@Valid @RequestBody body: Body) = body.name
@@ -101,6 +102,15 @@ class DomainExceptionHandlerTest {
         }.andExpect {
             status { isBadRequest() }
             jsonPath("$.code") { value("VALIDATION_ERROR") }
+        }
+    }
+
+    @Test
+    fun `google connection revoked maps to 409`() {
+        mockMvc.get("/api/test-errors/google-revoked").andExpect {
+            status { isEqualTo(409) }
+            jsonPath("$.code") { value("GOOGLE_CONNECTION_REVOKED") }
+            jsonPath("$.message") { value("Google-Verbindung abgelaufen. Bitte neu verbinden.") }
         }
     }
 

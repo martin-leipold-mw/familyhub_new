@@ -57,6 +57,12 @@ class GlobalExceptionHandler {
             ErrorResponse(code = "PAYLOAD_TOO_LARGE", message = ex.message)
         )
 
+    @ExceptionHandler(GoogleConnectionRevokedException::class)
+    fun handleGoogleConnectionRevoked(ex: GoogleConnectionRevokedException): ResponseEntity<ErrorResponse> =
+        ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ErrorResponse(code = "GOOGLE_CONNECTION_REVOKED", message = ex.message)
+        )
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleBeanValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val firstError = ex.bindingResult.fieldErrors.firstOrNull()

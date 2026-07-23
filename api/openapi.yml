@@ -462,6 +462,23 @@ paths:
         "200":
           description: Disconnected
 
+  /v1/google/connections/{id}/refresh:
+    post:
+      operationId: refreshConnection
+      summary: Force-refresh the access token for a Google account connection
+      tags: [GoogleAuth]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Token refreshed
+
 components:
   schemas:
     HealthResponse:

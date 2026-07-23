@@ -3,6 +3,7 @@ package com.familyhub.google.connection
 import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.credentials.CredentialsService
 import com.familyhub.google.oauth.*
+import com.familyhub.google.token.GoogleTokenProvider
 import com.familyhub.members.FamilyMember
 import com.familyhub.members.FamilyMemberRepository
 import com.familyhub.settings.SettingsService
@@ -29,6 +30,7 @@ class ConnectionService(
     private val members: FamilyMemberRepository,
     private val encryption: EncryptionService,
     private val settings: SettingsService,
+    private val tokenProvider: GoogleTokenProvider,
 ) {
     private val palette = listOf("blue", "pink", "green", "purple", "orange", "teal")
 
@@ -106,6 +108,8 @@ class ConnectionService(
         connections.delete(c)
         if (connections.count() == 0L) settings.setGoogleConnected(false)
     }
+
+    fun refreshConnection(connectionId: UUID) = tokenProvider.forceRefresh(connectionId)
 
     private fun sanitizeReturnUrl(url: String): String {
         val t = url.trim()
