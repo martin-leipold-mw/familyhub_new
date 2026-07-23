@@ -136,6 +136,13 @@ dependencies {
     implementation("io.swagger.core.v3:swagger-annotations:2.2.25")
     implementation("jakarta.validation:jakarta.validation-api")
 
+    // Google APIs
+    implementation("com.google.api-client:google-api-client:2.7.0")
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20241101-2.0.0")
+    implementation("com.google.oauth-client:google-oauth-client:1.36.0")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.28.0")
+    implementation("com.google.http-client:google-http-client-jackson2:1.45.0")
+
     // Tests
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.mockito")
@@ -146,5 +153,6 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
     testImplementation("org.testcontainers:postgresql:1.20.4")
+    testImplementation("org.wiremock:wiremock-standalone:3.9.2")
     testRuntimeOnly("com.h2database:h2")
 }
