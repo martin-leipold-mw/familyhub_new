@@ -51,6 +51,7 @@ export function PinSessionProvider({ children }: { children: ReactNode }) {
     const unsubscribe = subscribeActivity(arm)
     return () => {
       unsubscribe()
+      // v8 ignore next — timerRef.current is always non-null here since arm() runs first
       if (timerRef.current !== null) window.clearTimeout(timerRef.current)
     }
   }, [token, clearSession])

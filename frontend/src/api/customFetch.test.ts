@@ -2,13 +2,15 @@ import { vi } from 'vitest'
 import { customFetch } from './customFetch'
 import { setSessionToken, subscribeActivity } from './sessionTokenStore'
 
-function mockFetch(status = 200, body: unknown = { ok: true }) {
+function mockFetch(status = 200, body: unknown = { ok: true }, jsonRejects = false) {
   const fetchMock = vi.fn().mockResolvedValue({
     ok: status < 400,
     status,
-    statusText: 'OK',
+    statusText: `STATUS_${status}`,
     headers: new Headers(),
-    json: async () => body,
+    json: jsonRejects
+      ? () => Promise.reject(new Error('not JSON'))
+      : async () => body,
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
@@ -58,5 +60,22 @@ describe('customFetch', () => {
     await customFetch('/api/v1/members')
     expect(listener).toHaveBeenCalled()
     unsub()
+  })
+
+  it('returns status 204 with undefined data for 204 No Content', async () => {
+    mockFetch(204)
+    const result = await customFetch<{ data: undefined; status: 204 }>('/api/v1/members/1')
+    expect(result.status).toBe(204)
+    expect(result.data).toBeUndefined()
+  })
+
+  it('throws with statusText when response.json() rejects on error response', async () => {
+    mockFetch(500, {}, true)
+    await expect(customFetch('/api/v1/members')).rejects.toThrow('STATUS_500')
+  })
+
+  it('throws HTTP <status> when error body has no message field', async () => {
+    mockFetch(404, { code: 'NOT_FOUND' })
+    await expect(customFetch('/api/v1/members/999')).rejects.toThrow('HTTP 404')
   })
 })
