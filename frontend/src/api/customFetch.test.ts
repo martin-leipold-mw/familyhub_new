@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { customFetch } from './customFetch'
-import { setSessionToken } from './sessionTokenStore'
+import { setSessionToken, subscribeActivity } from './sessionTokenStore'
 
 function mockFetch(status = 200, body: unknown = { ok: true }) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -49,5 +49,14 @@ describe('customFetch', () => {
     mockFetch(413, { message: 'Das Bild ist zu groß für den Server' })
     await expect(customFetch('/api/v1/members/1/avatar', { method: 'PUT' }))
       .rejects.toThrow('Das Bild ist zu groß für den Server')
+  })
+
+  it('signals activity on every request', async () => {
+    mockFetch()
+    const listener = vi.fn()
+    const unsub = subscribeActivity(listener)
+    await customFetch('/api/v1/members')
+    expect(listener).toHaveBeenCalled()
+    unsub()
   })
 })
