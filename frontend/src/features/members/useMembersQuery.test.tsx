@@ -77,12 +77,16 @@ describe('useMembersQuery', () => {
       return { mutateAsync: vi.fn() } as never
     })
 
-    const wrapper = makeWrapper()
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
     renderHook(() => useCreateMemberMutation(), { wrapper })
 
     expect(onSuccessRef.fn).toBeDefined()
     await act(async () => { onSuccessRef.fn!({}) })
-    // If invalidateQueries was called, no error is thrown
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/members'] })
   })
 
   it('useUpdateMemberMutation calls invalidateQueries on success', async () => {
@@ -93,11 +97,16 @@ describe('useMembersQuery', () => {
       return { mutateAsync: vi.fn() } as never
     })
 
-    const wrapper = makeWrapper()
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
     renderHook(() => useUpdateMemberMutation(), { wrapper })
 
     expect(onSuccessRef.fn).toBeDefined()
     await act(async () => { onSuccessRef.fn!({}) })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/members'] })
   })
 
   it('useDeleteMemberMutation calls invalidateQueries on success', async () => {
@@ -108,10 +117,15 @@ describe('useMembersQuery', () => {
       return { mutateAsync: vi.fn() } as never
     })
 
-    const wrapper = makeWrapper()
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
     renderHook(() => useDeleteMemberMutation(), { wrapper })
 
     expect(onSuccessRef.fn).toBeDefined()
     await act(async () => { onSuccessRef.fn!({}) })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/members'] })
   })
 })
