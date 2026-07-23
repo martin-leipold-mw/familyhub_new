@@ -1,6 +1,5 @@
 package com.familyhub.google.calendar
 
-import com.familyhub.settings.SettingsService
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.Event as GoogleEvent
 import com.google.api.services.calendar.model.EventDateTime
@@ -25,9 +24,7 @@ data class EventCommand(
 )
 
 @Component
-class EventMapper(
-    private val settingsService: SettingsService,
-) {
+class EventMapper {
 
     /**
      * Converts a Google Calendar Event into a local [Event] entity.
@@ -42,12 +39,6 @@ class EventMapper(
         subscription: CalendarSubscription,
         ownerMemberId: UUID,
     ): Event {
-        // Call timezone() so coverage for SettingsService.timezone() is exercised.
-        // Currently used for potential future use with timezone-aware parsing; timed events
-        // already arrive as UTC millis from the Google API.
-        @Suppress("UNUSED_VARIABLE")
-        val timezone = settingsService.timezone()
-
         val title = google.summary ?: "Ohne Titel"
         val googleUpdated = google.updated?.let { Instant.ofEpochMilli(it.value) }
 

@@ -1,23 +1,17 @@
 package com.familyhub.google.calendar
 
-import com.familyhub.settings.SettingsService
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.Event as GoogleEvent
 import com.google.api.services.calendar.model.EventDateTime
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.util.UUID
 
 class EventMapperTest {
 
-    private val settingsService = mockk<SettingsService>()
     private lateinit var mapper: EventMapper
 
     private val subscriptionId = UUID.randomUUID()
@@ -31,8 +25,7 @@ class EventMapperTest {
 
     @BeforeEach
     fun setUp() {
-        every { settingsService.timezone() } returns "Europe/Berlin"
-        mapper = EventMapper(settingsService)
+        mapper = EventMapper()
     }
 
     // ─── isCancelled ──────────────────────────────────────────────────────────
@@ -225,41 +218,6 @@ class EventMapperTest {
         assertThat(entity.isAllDay).isFalse()
         assertThat(entity.startTime).isNull()
         assertThat(entity.endTime).isNull()
-    }
-
-    // ─── toEntity: timezone() is called ──────────────────────────────────────
-
-    @Test
-    fun `toEntity invokes settingsService timezone for timed events`() {
-        val millis = Instant.parse("2026-05-01T08:00:00Z").toEpochMilli()
-        val google = GoogleEvent()
-            .setId("evt-tz")
-            .setSummary("TZ test")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(millis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(millis + 3600_000L)))
-
-        mapper.toEntity(google, subscription, ownerMemberId)
-
-        verify { settingsService.timezone() }
-    }
-
-    @Test
-    fun `toEntity works with default timezone when setting absent`() {
-        // Simulate default: timezone() returns "Europe/Berlin" (already configured in setUp)
-        // This test verifies the call goes through with no DB-provided override.
-        every { settingsService.timezone() } returns "Europe/Berlin"
-
-        val millis = Instant.parse("2026-06-21T12:00:00Z").toEpochMilli()
-        val google = GoogleEvent()
-            .setId("evt-default-tz")
-            .setSummary("Sommer")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(millis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(millis + 7200_000L)))
-
-        val entity = mapper.toEntity(google, subscription, ownerMemberId)
-        assertThat(entity.startTime).isEqualTo(Instant.ofEpochMilli(millis))
     }
 
     // ─── toGoogleEvent: timed path ────────────────────────────────────────────
