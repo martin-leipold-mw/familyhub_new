@@ -297,8 +297,9 @@ class ConnectionServiceTest {
 
         assertThat(result.isNewMember).isFalse()
         assertThat(result.memberName).isEqualTo("Existing User")
-        // refresh token should remain encrypted "oldRT" since no new one was provided
-        verify { connections.save(match { enc.decrypt(it.refreshToken) == "oldRT" }) }
+        // refresh token stays "oldRT" (no new one) AND existing scopes are preserved
+        // (null-scope re-auth must not wipe the stored scopes)
+        verify { connections.save(match { enc.decrypt(it.refreshToken) == "oldRT" && it.scopes == listOf("scope1") }) }
         verify { settings.setGoogleConnected(true) }
     }
 
