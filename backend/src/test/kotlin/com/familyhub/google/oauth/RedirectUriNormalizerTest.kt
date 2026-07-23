@@ -30,4 +30,24 @@ class RedirectUriNormalizerTest {
     @Test fun `rejects malformed uri`() {
         assertThatThrownBy { n.normalize("not a uri") }.isInstanceOf(ValidationException::class.java)
     }
+
+    @Test fun `rejects non-http(s) scheme`() {
+        assertThatThrownBy { n.normalize("ftp://example.com/callback") }
+            .isInstanceOf(ValidationException::class.java)
+    }
+
+    @Test fun `rejects missing scheme`() {
+        assertThatThrownBy { n.normalize("/relative/callback") }
+            .isInstanceOf(ValidationException::class.java)
+    }
+
+    @Test fun `rejects missing host`() {
+        assertThatThrownBy { n.normalize("http:///callback") }
+            .isInstanceOf(ValidationException::class.java)
+    }
+
+    @Test fun `keeps a valid 127_0_0_1 http uri`() {
+        assertThat(n.normalize("http://127.0.0.1:8080/callback"))
+            .isEqualTo("http://127.0.0.1:8080/callback")
+    }
 }
