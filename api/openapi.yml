@@ -20,6 +20,8 @@ tags:
     description: Setup status and PIN management
   - name: Avatar
     description: Member avatar image (binary)
+  - name: GoogleCredentials
+    description: Google OAuth credentials management
 
 paths:
   /health:
@@ -243,6 +245,142 @@ paths:
         "204":
           description: Changed
 
+  /v1/google/credentials:
+    get:
+      operationId: listCredentials
+      summary: List all Google OAuth credentials
+      tags: [GoogleCredentials]
+      security: []
+      responses:
+        "200":
+          description: List of credentials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoogleCredentialsResponse"
+    post:
+      operationId: createCredentials
+      summary: Create Google OAuth credentials
+      tags: [GoogleCredentials]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleCredentialsRequest"
+      responses:
+        "201":
+          description: Created credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleCredentialsResponse"
+
+  /v1/google/credentials/{id}:
+    get:
+      operationId: getCredentials
+      summary: Get a single Google OAuth credential set
+      tags: [GoogleCredentials]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleCredentialsResponse"
+    put:
+      operationId: updateCredentials
+      summary: Update Google OAuth credentials
+      tags: [GoogleCredentials]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleCredentialsRequest"
+      responses:
+        "200":
+          description: Updated credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleCredentialsResponse"
+    delete:
+      operationId: deleteCredentials
+      summary: Delete Google OAuth credentials
+      tags: [GoogleCredentials]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+
+  /v1/google/credentials/{id}/primary:
+    put:
+      operationId: setPrimaryCredentials
+      summary: Set credentials as primary
+      tags: [GoogleCredentials]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Updated credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoogleCredentialsResponse"
+
+  /v1/google/credentials/validate:
+    post:
+      operationId: validateCredentials
+      summary: Validate Google OAuth credentials against the token endpoint
+      tags: [GoogleCredentials]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredentialsValidationRequest"
+      responses:
+        "200":
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialsValidationResponse"
+
 components:
   schemas:
     HealthResponse:
@@ -387,3 +525,58 @@ components:
         sessionToken:
           type: string
           format: uuid
+
+    GoogleCredentialsRequest:
+      type: object
+      required: [nickname, redirectUri]
+      properties:
+        nickname:
+          type: string
+          example: "Meine Google-App"
+        clientId:
+          type: string
+          nullable: true
+          example: "123456789-abc.apps.googleusercontent.com"
+        clientSecret:
+          type: string
+          nullable: true
+          example: "GOCSPX-secret"
+        redirectUri:
+          type: string
+          example: "https://familyhub.local/api/v1/google/oauth/callback"
+
+    GoogleCredentialsResponse:
+      type: object
+      required: [id, nickname, redirectUri, isPrimary, isActive]
+      properties:
+        id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+        redirectUri:
+          type: string
+        isPrimary:
+          type: boolean
+        isActive:
+          type: boolean
+
+    CredentialsValidationRequest:
+      type: object
+      required: [clientId, clientSecret, redirectUri]
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        redirectUri:
+          type: string
+
+    CredentialsValidationResponse:
+      type: object
+      required: [isValid, message]
+      properties:
+        isValid:
+          type: boolean
+        message:
+          type: string
