@@ -1,11 +1,17 @@
+import { getSessionToken, notifyActivity } from './sessionTokenStore'
+
 export async function customFetch<T>(
   url: string,
   options?: RequestInit,
 ): Promise<T> {
+  notifyActivity()
+  const sessionToken = getSessionToken()
+
   const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(sessionToken ? { 'X-Pin-Session': sessionToken } : {}),
       ...options?.headers,
     },
   })
