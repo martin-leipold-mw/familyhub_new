@@ -1,5 +1,5 @@
 import { vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test/testUtils'
 
 vi.mock('@/api/generated/endpoints/familyHubAPI', () => ({
