@@ -47,12 +47,10 @@ class GoogleOAuthFlowTest {
     }
 
     @Test fun `probe maps invalid_client to CLIENT_INVALID`() {
-        // NOTE: Google HTTP client retries on HTTP 401 and consumes the response body,
-        // so TokenResponseException.details is null for 401 responses.
-        // We use HTTP 400 here (also RFC 6749-compliant for invalid_client) to allow
-        // the Google library to parse the error body into details.
-        wm.stubFor(post("/token").willReturn(aResponse().withStatus(400)
-            .withHeader("Content-Type","application/json; charset=UTF-8").withBody("""{"error":"invalid_client"}""")))
+        // Google returns HTTP 401 for invalid_client. The Google HTTP client consumes the
+        // body on 401 (leaving ex.details null), so probe() branches on statusCode == 401.
+        wm.stubFor(post("/token").willReturn(aResponse().withStatus(401)
+            .withHeader("Content-Type","application/json").withBody("""{"error":"invalid_client"}""")))
         assertThat(flow.probe("cid","sec","http://localhost:8080/oauth/callback"))
             .isEqualTo(ProbeResult.CLIENT_INVALID)
     }

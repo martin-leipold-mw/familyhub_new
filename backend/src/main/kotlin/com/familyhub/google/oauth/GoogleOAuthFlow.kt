@@ -59,7 +59,9 @@ class GoogleOAuthFlow(
     fun fetchUserInfo(accessToken: String): GoogleUserInfo {
         val request = transport.createRequestFactory().buildGetRequest(GenericUrl(userInfoUrl))
         request.headers.authorization = "Bearer $accessToken"
-        val body = request.execute().parseAsString()
+        // HttpResponse is not Closeable, so `use` does not resolve; disconnect() releases the connection.
+        val response = request.execute()
+        val body = try { response.parseAsString() } finally { response.disconnect() }
         val map = json.createJsonParser(body).parse(Map::class.java)
         return GoogleUserInfo(
             sub = map["id"]?.toString() ?: map["sub"].toString(),
@@ -81,9 +83,13 @@ class GoogleOAuthFlow(
             exchangeCode(clientId, clientSecret, redirectUri, "invalid-probe-code", pkce.generateVerifier())
             ProbeResult.CREDENTIALS_VALID // unexpected success also means creds are fine
         } catch (ex: TokenResponseException) {
-            when (ex.details?.error) {
-                "invalid_grant" -> ProbeResult.CREDENTIALS_VALID
-                "invalid_client" -> ProbeResult.CLIENT_INVALID
+            when {
+                // A 401 from the token endpoint always means client authentication failed
+                // (invalid client id/secret). Google returns 401 for invalid_client, and the
+                // HTTP client may leave ex.details null in that case, so branch on status first.
+                ex.statusCode == 401 -> ProbeResult.CLIENT_INVALID
+                ex.details?.error == "invalid_grant" -> ProbeResult.CREDENTIALS_VALID
+                ex.details?.error == "invalid_client" -> ProbeResult.CLIENT_INVALID
                 else -> ProbeResult.ERROR
             }
         } catch (ex: Exception) { ProbeResult.ERROR }
