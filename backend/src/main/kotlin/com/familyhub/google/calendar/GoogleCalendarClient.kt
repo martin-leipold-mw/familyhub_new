@@ -8,6 +8,7 @@ import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
 import com.google.api.client.util.DateTime
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 data class GoogleCalendarInfo(
@@ -27,7 +28,7 @@ data class EventPage(
 class GoogleCalendarClient(
     private val tokenProvider: GoogleTokenProvider,
     private val transport: NetHttpTransport,
-    private val baseUrl: String = "https://www.googleapis.com/",
+    @Value("\${google.api-base-url:https://www.googleapis.com/}") private val baseUrl: String,
 ) {
     private fun buildCalendar(connection: GoogleConnection): Calendar {
         val token = tokenProvider.validAccessToken(connection)
