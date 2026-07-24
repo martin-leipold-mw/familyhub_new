@@ -24,6 +24,8 @@ tags:
     description: Google OAuth credentials management
   - name: GoogleAuth
     description: Google OAuth authorization flow and connection management
+  - name: GoogleCalendars
+    description: Google Calendar list, selection and manual sync
 
 paths:
   /health:
@@ -479,6 +481,66 @@ paths:
         "200":
           description: Token refreshed
 
+  /v1/google/calendars:
+    get:
+      operationId: listGoogleCalendars
+      summary: List Google calendars for a family member
+      tags: [GoogleCalendars]
+      security: []
+      parameters:
+        - name: memberId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of calendars
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CalendarResponse"
+
+  /v1/google/calendars/selected:
+    put:
+      operationId: saveSelectedCalendars
+      summary: Save which calendars are selected for sync
+      tags: [GoogleCalendars]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelectedCalendarsRequest"
+      responses:
+        "200":
+          description: Selection saved
+
+  /v1/google/calendars/sync:
+    post:
+      operationId: syncCalendars
+      summary: Manually trigger a calendar sync for a family member
+      tags: [GoogleCalendars]
+      security: []
+      parameters:
+        - name: memberId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResultResponse"
+
 components:
   schemas:
     HealthResponse:
@@ -736,3 +798,46 @@ components:
           type: array
           items:
             type: string
+
+    CalendarResponse:
+      type: object
+      required: [id, summary, isPrimary, isSelected]
+      properties:
+        id:
+          type: string
+          description: Google calendar ID
+        summary:
+          type: string
+        backgroundColor:
+          type: string
+          nullable: true
+        isPrimary:
+          type: boolean
+        isSelected:
+          type: boolean
+
+    SelectedCalendarsRequest:
+      type: object
+      required: [memberId, calendarIds]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        calendarIds:
+          type: array
+          items:
+            type: string
+
+    SyncResultResponse:
+      type: object
+      required: [created, updated, deleted]
+      properties:
+        created:
+          type: integer
+          format: int32
+        updated:
+          type: integer
+          format: int32
+        deleted:
+          type: integer
+          format: int32
