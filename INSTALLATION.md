@@ -116,3 +116,65 @@ docker-compose ps postgres  # Healthcheck-Status prüfen
 |------|--------|--------|
 | 3080 | Frontend (öffentlich im LAN) | `http://NAS-IP:3080` |
 | alle anderen | intern | nicht von außen erreichbar |
+
+---
+
+## 9. Google-Cloud-Einrichtung (Kalender & Aufgaben)
+
+### 9.1 Google-Cloud-Projekt anlegen und API aktivieren
+
+1. Öffne die [Google Cloud Console](https://console.cloud.google.com/) und erstelle ein neues Projekt (z. B. „FamilyHub").
+2. Navigiere zu **APIs & Dienste → Bibliothek** und aktiviere die **Google Calendar API**.
+
+### 9.2 OAuth-Zustimmungsbildschirm konfigurieren
+
+1. Navigiere zu **APIs & Dienste → OAuth-Zustimmungsbildschirm**.
+2. Wähle **Extern** als Benutzertyp (auch für private Familienprojekte).
+3. Trage App-Name, Support-E-Mail und Entwickler-E-Mail ein und klicke **Speichern und weiter**.
+4. Füge folgende Scopes hinzu:
+   - `https://www.googleapis.com/auth/calendar`
+   - `https://www.googleapis.com/auth/userinfo.profile`
+   - `https://www.googleapis.com/auth/userinfo.email`
+5. Trage unter **Testnutzer** alle Google-Konten ein, die sich mit FamilyHub verbinden sollen.
+6. Klicke **Speichern und weiter** bis zum Abschluss.
+
+> **Wichtig — 7-Tage-Ablauf im Testing-Status:** Solange die App im Status **„In Prüfung"** (Testing)
+> verbleibt, laufen Refresh-Tokens nach 7 Tagen ab. Familienmitglieder müssen sich dann erneut
+> verbinden. Um das zu vermeiden, kann die App in den Status **„In Produktion"** versetzt werden —
+> für eine private, nicht öffentlich zugängliche Instanz ist keine formale Google-Prüfung erforderlich,
+> solange die App nicht im Play Store oder ähnlichem veröffentlicht wird.
+
+### 9.3 OAuth-Client-ID erstellen (Typ: Webanwendung)
+
+1. Navigiere zu **APIs & Dienste → Anmeldedaten → Anmeldedaten erstellen → OAuth-Client-ID**.
+2. Wähle als Anwendungstyp **Webanwendung**.
+3. Trage unter **Autorisierte Weiterleitungs-URIs** genau **eine** URI ein:
+
+   ```
+   http://<NAS-IP>:<Port>/oauth/callback
+   ```
+
+   Beispiel: `http://192.168.1.100:3080/oauth/callback`
+
+   > Trage ausschließlich diese eine URI ein — keine Trailing-Slashes, keine Varianten.
+
+4. Klicke **Erstellen**. Die angezeigte **Client-ID** und das **Client-Secret** werden im nächsten Schritt benötigt.
+
+### 9.4 Zugangsdaten im Setup-Wizard eingeben
+
+1. Öffne `http://NAS-IP:3080` im Browser.
+2. Navigiere im Setup-Wizard zum Abschnitt **Google-Verbindung**.
+3. Trage ein:
+   - **Client-ID** (aus Schritt 9.3)
+   - **Client-Secret** (aus Schritt 9.3)
+   - **Redirect-URI**: identisch zur URI aus Schritt 9.3
+4. Speichern — die Zugangsdaten werden **verschlüsselt** in der Datenbank abgelegt.
+
+### 9.5 Sync-Einstellungen
+
+| Einstellung | Standardwert | Beschreibung |
+|-------------|-------------|--------------|
+| `google.sync.interval.minutes` | `15` | Intervall (in Minuten), in dem Kalender und Aufgaben aus Google synchronisiert werden. |
+| `family.timezone` | `Europe/Berlin` | Zeitzone für die Darstellung von Terminen und Aufgaben. |
+
+Diese Werte können über Umgebungsvariablen oder im Setup-Wizard überschrieben werden.
