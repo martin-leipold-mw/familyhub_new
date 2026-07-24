@@ -176,4 +176,24 @@ class SettingsServiceTest {
         assertThatThrownBy { service.changePin("1234", "5678") }
             .isInstanceOf(InvalidPinException::class.java)
     }
+
+    // --- syncIntervalMinutes() coverage ---
+
+    @Test
+    fun `syncIntervalMinutes returns parsed DB value when set`() {
+        stubSetting("google.sync.interval.minutes", "30")
+        assertThat(service.syncIntervalMinutes()).isEqualTo(30L)
+    }
+
+    @Test
+    fun `syncIntervalMinutes returns default 15 when setting is absent`() {
+        stubSetting("google.sync.interval.minutes", null)
+        assertThat(service.syncIntervalMinutes()).isEqualTo(15L)
+    }
+
+    @Test
+    fun `syncIntervalMinutes returns default 15 when value is non-numeric`() {
+        stubSetting("google.sync.interval.minutes", "abc")
+        assertThat(service.syncIntervalMinutes()).isEqualTo(15L)
+    }
 }
