@@ -110,6 +110,7 @@ class CalendarSyncServiceTest {
             backgroundColor = "#ff0000",
             isPrimary = true,
             isSelected = true,
+            syncToken = "preserve-me",
         ).also { it.id = UUID.randomUUID() }
 
         every { calendarClient.listCalendars(activeConnection) } returns listOf(calendarInfo)
@@ -124,6 +125,8 @@ class CalendarSyncServiceTest {
         assertThat(existingSub.isPrimary).isFalse()
         // isSelected must NOT be changed
         assertThat(existingSub.isSelected).isTrue()
+        // syncToken must NOT be clobbered by refreshCalendars
+        assertThat(existingSub.syncToken).isEqualTo("preserve-me")
     }
 
     // ─── syncConnection: inactive connection skipped ──────────────────────────
@@ -149,6 +152,10 @@ class CalendarSyncServiceTest {
         assertThat(result.updated).isEqualTo(0)
         assertThat(result.deleted).isEqualTo(0)
         verify(exactly = 0) { calendarClient.listEvents(any(), any(), any(), any(), any()) }
+
+        // lastSyncedAt still stamped and connection persisted, even with no selected subscriptions
+        assertThat(activeConnection.lastSyncedAt).isEqualTo(fixedNow)
+        verify(exactly = 1) { connectionRepo.save(activeConnection) }
     }
 
     // ─── syncConnection: incremental sync — 1 new + 1 cancelled ─────────────
@@ -304,9 +311,11 @@ class CalendarSyncServiceTest {
         every {
             calendarClient.listEvents(activeConnection, "cal1@gmail.com", "stale-token", null, null)
         } returns fullResyncPage
-        // Second call with time window (null syncToken, timeMin/timeMax set)
+        // Second call with time window (null syncToken, timeMin/timeMax set) — capture the window
+        val minSlot = slot<DateTime>()
+        val maxSlot = slot<DateTime>()
         every {
-            calendarClient.listEvents(activeConnection, "cal1@gmail.com", null, any<DateTime>(), any<DateTime>())
+            calendarClient.listEvents(activeConnection, "cal1@gmail.com", null, capture(minSlot), capture(maxSlot))
         } returns fullSyncResult
         every { eventRepo.findByGoogleEventIdAndGoogleCalendarId("evt-fresh", "cal1@gmail.com") } returns null
         every { eventRepo.save(any<Event>()) } answers { firstArg() }
@@ -319,6 +328,12 @@ class CalendarSyncServiceTest {
         assertThat(result.updated).isEqualTo(0)
         assertThat(result.deleted).isEqualTo(0)
         assertThat(subscription.syncToken).isEqualTo("fresh-sync-token")
+
+        // Pin the full-resync window: now − 1 month … now + 12 months (derived from the fixed clock)
+        val expMin = DateTime(fixedNow.atOffset(ZoneOffset.UTC).minusMonths(1).toInstant().toEpochMilli())
+        val expMax = DateTime(fixedNow.atOffset(ZoneOffset.UTC).plusMonths(12).toInstant().toEpochMilli())
+        assertThat(minSlot.captured.value).isEqualTo(expMin.value)
+        assertThat(maxSlot.captured.value).isEqualTo(expMax.value)
     }
 
     // ─── syncConnection: nextSyncToken null → syncToken cleared ─────────────
