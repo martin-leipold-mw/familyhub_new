@@ -1,6 +1,9 @@
 package com.familyhub.settings
 
 import com.familyhub.generated.model.SetupStatusResponse
+import com.familyhub.google.calendar.CalendarSubscriptionRepository
+import com.familyhub.google.connection.GoogleConnectionRepository
+import com.familyhub.google.credentials.GoogleCredentialsRepository
 import com.familyhub.members.FamilyMemberRepository
 import com.familyhub.pin.PinSessionService
 import com.familyhub.shared.exceptions.InvalidPinException
@@ -14,19 +17,47 @@ class SettingsService(
     private val settingRepository: SettingRepository,
     private val memberRepository: FamilyMemberRepository,
     private val pinSessionService: PinSessionService,
+    private val googleCredentialsRepository: GoogleCredentialsRepository,
+    private val googleConnectionRepository: GoogleConnectionRepository,
+    private val calendarSubscriptionRepository: CalendarSubscriptionRepository,
 ) {
 
-    fun getSetupStatus(): SetupStatusResponse = SetupStatusResponse(
-        setupCompleted = getValue(KEY_SETUP_COMPLETED) == "true",
-        currentStep = getValue(KEY_SETUP_STEP)?.toIntOrNull() ?: 1,
-        hasFamilyMembers = memberRepository.countByIsActiveTrue() > 0,
-        hasPin = getValue(KEY_PIN) != null,
-    )
+    fun getSetupStatus(): SetupStatusResponse {
+        val hasFamilyMembers = memberRepository.countByIsActiveTrue() > 0
+        val hasCredentials = googleCredentialsRepository.count() > 0
+        val hasConnection = googleConnectionRepository.findAllByStatus("active").isNotEmpty()
+        val hasSelectedCalendars = calendarSubscriptionRepository.existsByIsSelectedTrue()
+        val hasPin = getValue(KEY_PIN) != null
+        return SetupStatusResponse(
+            setupCompleted = getValue(KEY_SETUP_COMPLETED) == "true",
+            currentStep = computeStep(hasFamilyMembers, hasCredentials, hasConnection, hasSelectedCalendars, hasPin),
+            hasFamilyMembers = hasFamilyMembers,
+            hasPin = hasPin,
+            hasCredentials = hasCredentials,
+            hasConnection = hasConnection,
+            hasSelectedCalendars = hasSelectedCalendars,
+        )
+    }
+
+    private fun computeStep(
+        hasMembers: Boolean,
+        hasCredentials: Boolean,
+        hasConnection: Boolean,
+        hasSelectedCalendars: Boolean,
+        hasPin: Boolean,
+    ): Int = when {
+        !hasMembers -> 2
+        !hasCredentials -> 3
+        !hasConnection -> 5
+        !hasSelectedCalendars -> 6
+        !hasPin -> 7
+        else -> 7
+    }
 
     @Transactional
     fun updateSetupStep(step: Int) {
         requireSetupNotCompleted()
-        if (step !in 1..3) throw ValidationException("Ungültiger Schritt")
+        if (step !in 1..7) throw ValidationException("Ungültiger Schritt")
         setValue(KEY_SETUP_STEP, step.toString())
     }
 

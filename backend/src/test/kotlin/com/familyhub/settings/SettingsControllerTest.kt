@@ -28,7 +28,13 @@ class SettingsControllerTest {
     @Test
     fun `GET setup-status returns status json`() {
         every { settingsService.getSetupStatus() } returns SetupStatusResponse(
-            setupCompleted = false, currentStep = 1, hasFamilyMembers = false, hasPin = false
+            setupCompleted = false,
+            currentStep = 1,
+            hasFamilyMembers = false,
+            hasPin = false,
+            hasCredentials = false,
+            hasConnection = false,
+            hasSelectedCalendars = false,
         )
         mockMvc.get("/api/v1/settings/setup-status").andExpect {
             status { isOk() }

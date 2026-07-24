@@ -1,5 +1,8 @@
 package com.familyhub.settings
 
+import com.familyhub.google.calendar.CalendarSubscriptionRepository
+import com.familyhub.google.connection.GoogleConnectionRepository
+import com.familyhub.google.credentials.GoogleCredentialsRepository
 import com.familyhub.members.FamilyMemberRepository
 import com.familyhub.pin.PinSessionService
 import com.familyhub.shared.exceptions.InvalidPinException
@@ -20,7 +23,17 @@ class SettingsServiceTest {
     private val settingRepository = mockk<SettingRepository>(relaxed = true)
     private val memberRepository = mockk<FamilyMemberRepository>()
     private val pinSessionService = mockk<PinSessionService>()
-    private val service = SettingsService(settingRepository, memberRepository, pinSessionService)
+    private val googleCredentialsRepository = mockk<GoogleCredentialsRepository>(relaxed = true)
+    private val googleConnectionRepository = mockk<GoogleConnectionRepository>(relaxed = true)
+    private val calendarSubscriptionRepository = mockk<CalendarSubscriptionRepository>(relaxed = true)
+    private val service = SettingsService(
+        settingRepository,
+        memberRepository,
+        pinSessionService,
+        googleCredentialsRepository,
+        googleConnectionRepository,
+        calendarSubscriptionRepository,
+    )
 
     init {
         every { settingRepository.save(ofType()) } answers { firstArg() }
@@ -31,42 +44,189 @@ class SettingsServiceTest {
             (value?.let { Optional.of(Setting(key = key, value = it)) } ?: Optional.empty())
     }
 
+    /** Default stubs so tests that don't care about the Google repos get safe defaults */
+    private fun stubGoogleDefaults() {
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+    }
+
+    // ── getSetupStatus: basic fields ────────────────────────────────────────
+
     @Test
     fun `getSetupStatus reflects stored keys and member count`() {
         stubSetting("setup.completed", "false")
-        stubSetting("setup.step", "2")
         stubSetting("pin", null)
         every { memberRepository.countByIsActiveTrue() } returns 1L
+        stubGoogleDefaults()
 
         val status = service.getSetupStatus()
         assertThat(status.setupCompleted).isFalse()
-        assertThat(status.currentStep).isEqualTo(2)
         assertThat(status.hasFamilyMembers).isTrue()
         assertThat(status.hasPin).isFalse()
     }
 
     @Test
-    fun `getSetupStatus defaults step to 1 when unparaseable`() {
+    fun `getSetupStatus reports hasPin true when pin setting present`() {
         stubSetting("setup.completed", "true")
-        stubSetting("setup.step", null)
         stubSetting("pin", "1234")
         every { memberRepository.countByIsActiveTrue() } returns 0L
+        stubGoogleDefaults()
 
         val status = service.getSetupStatus()
-        assertThat(status.currentStep).isEqualTo(1)
         assertThat(status.hasPin).isTrue()
         assertThat(status.hasFamilyMembers).isFalse()
     }
 
+    // ── getSetupStatus: new boolean fields ──────────────────────────────────
+
     @Test
-    fun `getSetupStatus defaults step to 1 when value is non-numeric`() {
+    fun `getSetupStatus hasCredentials true when credentials exist`() {
         stubSetting("setup.completed", "false")
-        stubSetting("setup.step", "abc")
         stubSetting("pin", null)
         every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 1L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
 
-        assertThat(service.getSetupStatus().currentStep).isEqualTo(1)
+        assertThat(service.getSetupStatus().hasCredentials).isTrue()
     }
+
+    @Test
+    fun `getSetupStatus hasCredentials false when no credentials`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().hasCredentials).isFalse()
+    }
+
+    @Test
+    fun `getSetupStatus hasConnection true when active connection exists`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns listOf(mockk())
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().hasConnection).isTrue()
+    }
+
+    @Test
+    fun `getSetupStatus hasConnection false when no active connection`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().hasConnection).isFalse()
+    }
+
+    @Test
+    fun `getSetupStatus hasSelectedCalendars true when a subscription is selected`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns true
+
+        assertThat(service.getSetupStatus().hasSelectedCalendars).isTrue()
+    }
+
+    @Test
+    fun `getSetupStatus hasSelectedCalendars false when no subscription is selected`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().hasSelectedCalendars).isFalse()
+    }
+
+    // ── computeStep branch coverage via getSetupStatus.currentStep ──────────
+
+    @Test
+    fun `computeStep returns 2 when no members`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 0L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(2)
+    }
+
+    @Test
+    fun `computeStep returns 3 when members but no credentials`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 1L
+        every { googleCredentialsRepository.count() } returns 0L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(3)
+    }
+
+    @Test
+    fun `computeStep returns 5 when members and credentials but no connection`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 1L
+        every { googleCredentialsRepository.count() } returns 1L
+        every { googleConnectionRepository.findAllByStatus("active") } returns emptyList()
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(5)
+    }
+
+    @Test
+    fun `computeStep returns 6 when members, credentials, connection but no selected calendars`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 1L
+        every { googleCredentialsRepository.count() } returns 1L
+        every { googleConnectionRepository.findAllByStatus("active") } returns listOf(mockk())
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns false
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(6)
+    }
+
+    @Test
+    fun `computeStep returns 7 when members, credentials, connection, calendars but no pin`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("pin", null)
+        every { memberRepository.countByIsActiveTrue() } returns 1L
+        every { googleCredentialsRepository.count() } returns 1L
+        every { googleConnectionRepository.findAllByStatus("active") } returns listOf(mockk())
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns true
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(7)
+    }
+
+    @Test
+    fun `computeStep returns 7 when all conditions met`() {
+        stubSetting("setup.completed", "true")
+        stubSetting("pin", "1234")
+        every { memberRepository.countByIsActiveTrue() } returns 1L
+        every { googleCredentialsRepository.count() } returns 1L
+        every { googleConnectionRepository.findAllByStatus("active") } returns listOf(mockk())
+        every { calendarSubscriptionRepository.existsByIsSelectedTrue() } returns true
+
+        assertThat(service.getSetupStatus().currentStep).isEqualTo(7)
+    }
+
+    // ── updateSetupStep ──────────────────────────────────────────────────────
 
     @Test
     fun `updateSetupStep rejects when setup already completed`() {
@@ -76,17 +236,25 @@ class SettingsServiceTest {
     }
 
     @Test
-    fun `updateSetupStep rejects out-of-range step`() {
+    fun `updateSetupStep rejects step 8 above upper bound`() {
         stubSetting("setup.completed", "false")
-        assertThatThrownBy { service.updateSetupStep(4) }
+        assertThatThrownBy { service.updateSetupStep(8) }
             .isInstanceOf(ValidationException::class.java)
     }
 
     @Test
-    fun `updateSetupStep rejects step below lower bound`() {
+    fun `updateSetupStep rejects step 0 below lower bound`() {
         stubSetting("setup.completed", "false")
         assertThatThrownBy { service.updateSetupStep(0) }
             .isInstanceOf(ValidationException::class.java)
+    }
+
+    @Test
+    fun `updateSetupStep accepts step 7`() {
+        stubSetting("setup.completed", "false")
+        stubSetting("setup.step", "6")
+        service.updateSetupStep(7)
+        verify { settingRepository.save(match { it.key == "setup.step" && it.value == "7" }) }
     }
 
     @Test
@@ -99,6 +267,8 @@ class SettingsServiceTest {
         assertThat(saved.captured.key).isEqualTo("setup.step")
         assertThat(saved.captured.value).isEqualTo("3")
     }
+
+    // ── PIN operations ───────────────────────────────────────────────────────
 
     @Test
     fun `setPin rejects when already completed`() {
@@ -177,7 +347,7 @@ class SettingsServiceTest {
             .isInstanceOf(InvalidPinException::class.java)
     }
 
-    // --- timezone() coverage ---
+    // ── timezone() coverage ──────────────────────────────────────────────────
 
     @Test
     fun `timezone returns DB value when family timezone is set`() {
@@ -191,7 +361,7 @@ class SettingsServiceTest {
         assertThat(service.timezone()).isEqualTo("Europe/Berlin")
     }
 
-    // --- syncIntervalMinutes() coverage ---
+    // ── syncIntervalMinutes() coverage ───────────────────────────────────────
 
     @Test
     fun `syncIntervalMinutes returns parsed DB value when set`() {

@@ -746,7 +746,7 @@ components:
 
     SetupStatusResponse:
       type: object
-      required: [setupCompleted, currentStep, hasFamilyMembers, hasPin]
+      required: [setupCompleted, currentStep, hasFamilyMembers, hasPin, hasCredentials, hasConnection, hasSelectedCalendars]
       properties:
         setupCompleted:
           type: boolean
@@ -757,6 +757,12 @@ components:
           type: boolean
         hasPin:
           type: boolean
+        hasCredentials:
+          type: boolean
+        hasConnection:
+          type: boolean
+        hasSelectedCalendars:
+          type: boolean
 
     SetupStepRequest:
       type: object
@@ -766,7 +772,7 @@ components:
           type: integer
           format: int32
           minimum: 1
-          maximum: 3
+          maximum: 7
 
     SetPinRequest:
       type: object

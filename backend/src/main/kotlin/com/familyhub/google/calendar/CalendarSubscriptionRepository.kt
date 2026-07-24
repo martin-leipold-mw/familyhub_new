@@ -7,4 +7,5 @@ interface CalendarSubscriptionRepository : JpaRepository<CalendarSubscription, U
     fun findAllByConnectionId(connectionId: UUID): List<CalendarSubscription>
     fun findByConnectionIdAndGoogleCalendarId(connectionId: UUID, googleCalendarId: String): CalendarSubscription?
     fun findAllByConnectionIdAndIsSelectedTrue(connectionId: UUID): List<CalendarSubscription>
+    fun existsByIsSelectedTrue(): Boolean
 }
