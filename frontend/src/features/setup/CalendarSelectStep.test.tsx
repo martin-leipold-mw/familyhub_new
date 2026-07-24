@@ -48,6 +48,14 @@ function setupMocks({
 describe('CalendarSelectStep', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  it('shows "Lade..." while connections are loading', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: true, isError: false } as never)
+    vi.mocked(useCalendarsForMember).mockReturnValue({ calendars: [], isLoading: false, isError: false } as never)
+    vi.mocked(useSaveSelectedCalendarsMutation).mockReturnValue({ mutateAsync: vi.fn() } as never)
+    renderWithProviders(<CalendarSelectStep onNext={vi.fn()} />)
+    expect(screen.getByText('Lade...')).toBeInTheDocument()
+  })
+
   it('shows "Keine Verbindung gefunden." when no connections', () => {
     setupMocks({ connections: [], calendars: [] })
     renderWithProviders(<CalendarSelectStep onNext={vi.fn()} />)
@@ -81,17 +89,43 @@ describe('CalendarSelectStep', () => {
     )
   })
 
-  it('shows "Wähle mindestens einen Kalender aus." when saving with none selected', async () => {
+  it('reactive hint appears when none selected and disappears once one is selected', async () => {
     setupMocks({
       calendars: [{ id: 'cal-1', summary: 'Persönlich', backgroundColor: null, isPrimary: true, isSelected: false }],
     })
     renderWithProviders(<CalendarSelectStep onNext={vi.fn()} />)
-    // Deselect primary
+    // Primary is pre-selected → hint not shown
+    expect(screen.queryByText('Wähle mindestens einen Kalender aus.')).not.toBeInTheDocument()
+    // Deselect the only calendar → hint appears
     fireEvent.click(screen.getByRole('checkbox', { name: /Persönlich/i }))
-    // The button should be disabled but let's verify the message by attempting via the internal guard
-    // Since the button is disabled we can't click it; verify the error only appears when we force it.
-    // Instead test with a workaround: test the disabled state shows the label.
-    expect(screen.getByRole('button', { name: 'Speichern & weiter' })).toBeDisabled()
+    await waitFor(() =>
+      expect(screen.getByText('Wähle mindestens einen Kalender aus.')).toBeInTheDocument(),
+    )
+    // Re-select → hint disappears
+    fireEvent.click(screen.getByRole('checkbox', { name: /Persönlich/i }))
+    await waitFor(() =>
+      expect(screen.queryByText('Wähle mindestens einen Kalender aus.')).not.toBeInTheDocument(),
+    )
+  })
+
+  it('shows a German error when saving rejects with an Error', async () => {
+    setupMocks({ saveReject: new Error('Serverfehler') })
+    const onNext = vi.fn()
+    renderWithProviders(<CalendarSelectStep onNext={onNext} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern & weiter' }))
+    await waitFor(() => expect(screen.getByText('Serverfehler')).toBeInTheDocument())
+    expect(onNext).not.toHaveBeenCalled()
+  })
+
+  it('shows a fallback German error when saving rejects with a non-Error', async () => {
+    setupMocks({ saveReject: 'oops' })
+    const onNext = vi.fn()
+    renderWithProviders(<CalendarSelectStep onNext={onNext} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern & weiter' }))
+    await waitFor(() =>
+      expect(screen.getByText('Kalender konnten nicht gespeichert werden.')).toBeInTheDocument(),
+    )
+    expect(onNext).not.toHaveBeenCalled()
   })
 
   it('saving calls mutation with selected calendar IDs and calls onNext', async () => {

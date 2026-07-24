@@ -230,6 +230,15 @@ describe('SetupWizard', () => {
     expect(screen.getByRole('button', { name: 'connect-next' })).toBeInTheDocument()
   })
 
+  it('goToStep: advances from step 5 (Connect) to step 6 (CalendarSelect)', async () => {
+    setup({ step: 5 })
+    renderWithProviders(<SetupWizard />)
+    expect(screen.getByText('Schritt 5 von 7')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'connect-next' }))
+    await waitFor(() => expect(screen.getByText('Schritt 6 von 7')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'calendar-next' })).toBeInTheDocument()
+  })
+
   it('goToStep: advances from step 6 (CalendarSelect) to step 7 (PIN)', async () => {
     setup({ step: 6 })
     renderWithProviders(<SetupWizard />)

@@ -6,13 +6,6 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
 ]
 
-const CHECKLIST = [
-  'Ich habe ein Google Cloud-Projekt erstellt.',
-  'Ich habe die OAuth-Zustimmungsseite konfiguriert.',
-  null, // redirect URI — rendered separately
-  'Ich habe OAuth-Client-Anmeldedaten (Desktop oder Web) erstellt.',
-]
-
 export function GoogleGuideStep({ onNext }: { onNext: () => void }) {
   const [checked, setChecked] = useState([false, false, false, false])
 
@@ -23,13 +16,6 @@ export function GoogleGuideStep({ onNext }: { onNext: () => void }) {
   function toggle(i: number) {
     setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)))
   }
-
-  const labels = [
-    CHECKLIST[0]!,
-    CHECKLIST[1]!,
-    // index 2 handled specially
-    'Ich habe OAuth-Client-Anmeldedaten (Desktop oder Web) erstellt.',
-  ]
 
   return (
     <div className="flex flex-col gap-6 text-white">

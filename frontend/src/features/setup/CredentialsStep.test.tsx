@@ -57,6 +57,14 @@ describe('CredentialsStep', () => {
     expect(input.value).toBe(window.location.origin + '/oauth/callback')
   })
 
+  it('redirect URI is editable', () => {
+    setupMocks()
+    renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
+    const input = screen.getByLabelText('Redirect-URI') as HTMLInputElement
+    fireEvent.change(input, { target: { value: 'https://example.com/oauth/callback' } })
+    expect(input.value).toBe('https://example.com/oauth/callback')
+  })
+
   it('"Verbindung testen" shows green success message when isValid=true', async () => {
     setupMocks({ validateResult: { data: { isValid: true, message: 'Verbindung OK' } } })
     renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
@@ -73,6 +81,41 @@ describe('CredentialsStep', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Verbindung testen' }))
     await waitFor(() => expect(screen.getByText('Ungültige Anmeldedaten')).toBeInTheDocument())
     expect(screen.getByText('Ungültige Anmeldedaten')).toHaveClass('text-red-400')
+  })
+
+  it('falls back to "Verbindung erfolgreich." when isValid=true and message is null', async () => {
+    setupMocks({ validateResult: { data: { isValid: true, message: null } } })
+    renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
+    fillForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Verbindung testen' }))
+    await waitFor(() => expect(screen.getByText('Verbindung erfolgreich.')).toBeInTheDocument())
+    expect(screen.getByText('Verbindung erfolgreich.')).toHaveClass('text-green-400')
+  })
+
+  it('falls back to "Verbindung fehlgeschlagen." when isValid=false and message is null', async () => {
+    setupMocks({ validateResult: { data: { isValid: false, message: null } } })
+    renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
+    fillForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Verbindung testen' }))
+    await waitFor(() => expect(screen.getByText('Verbindung fehlgeschlagen.')).toBeInTheDocument())
+    expect(screen.getByText('Verbindung fehlgeschlagen.')).toHaveClass('text-red-400')
+  })
+
+  it('"Verbindung testen" shows err.message (red) when validation rejects with an Error', async () => {
+    setupMocks({ validateReject: new Error('Netzwerkfehler') })
+    renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
+    fillForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Verbindung testen' }))
+    await waitFor(() => expect(screen.getByText('Netzwerkfehler')).toBeInTheDocument())
+    expect(screen.getByText('Netzwerkfehler')).toHaveClass('text-red-400')
+  })
+
+  it('"Verbindung testen" shows fallback message when validation rejects with a non-Error', async () => {
+    setupMocks({ validateReject: 'oops' })
+    renderWithProviders(<CredentialsStep onNext={vi.fn()} />)
+    fillForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Verbindung testen' }))
+    await waitFor(() => expect(screen.getByText('Validierung fehlgeschlagen.')).toBeInTheDocument())
   })
 
   it('"Speichern & weiter" calls createMutation and calls onNext on success', async () => {
@@ -92,6 +135,18 @@ describe('CredentialsStep', () => {
     fillForm()
     fireEvent.click(screen.getByRole('button', { name: 'Speichern & weiter' }))
     await waitFor(() => expect(screen.getByText('Speichern fehlgeschlagen')).toBeInTheDocument())
+    expect(onNext).not.toHaveBeenCalled()
+  })
+
+  it('"Speichern & weiter" shows fallback error when createMutation rejects with a non-Error', async () => {
+    setupMocks({ createReject: 'oops' })
+    const onNext = vi.fn()
+    renderWithProviders(<CredentialsStep onNext={onNext} />)
+    fillForm()
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern & weiter' }))
+    await waitFor(() =>
+      expect(screen.getByText('Anmeldedaten konnten nicht gespeichert werden.')).toBeInTheDocument(),
+    )
     expect(onNext).not.toHaveBeenCalled()
   })
 })

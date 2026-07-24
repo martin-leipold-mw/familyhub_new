@@ -31,13 +31,13 @@ export function CalendarSelectStep({ onNext }: { onNext: () => void }) {
   }
 
   async function handleSave() {
-    if (selected.size === 0) {
-      setError('Wähle mindestens einen Kalender aus.')
-      return
-    }
     setError(null)
-    await saveMutation.mutateAsync({ data: { memberId, calendarIds: Array.from(selected) } })
-    onNext()
+    try {
+      await saveMutation.mutateAsync({ data: { memberId, calendarIds: Array.from(selected) } })
+      onNext()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Kalender konnten nicht gespeichert werden.')
+    }
   }
 
   if (connectionsLoading || calendarsLoading) {
@@ -76,6 +76,10 @@ export function CalendarSelectStep({ onNext }: { onNext: () => void }) {
           </li>
         ))}
       </ul>
+
+      {selected.size === 0 && (
+        <p className="text-red-400 text-sm text-center">Wähle mindestens einen Kalender aus.</p>
+      )}
 
       {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 

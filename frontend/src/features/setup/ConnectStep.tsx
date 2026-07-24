@@ -1,5 +1,8 @@
 import { useStartGoogleAuth } from '@/features/google/useCalendars'
 
+// `onNext` is intentionally unused: this step redirects to Google via
+// window.location.href, and progression is handled by the OAuth callback +
+// wizard resume when the user returns. The prop is kept for interface uniformity.
 export function ConnectStep({ onNext: _onNext }: { onNext: () => void }) {
   const startAuth = useStartGoogleAuth()
 
