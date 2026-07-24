@@ -88,6 +88,7 @@ class EventService(
     }
 
     fun create(cmd: CreateEventCommand): EventView {
+        requireValidTiming(cmd)
         val connection = connectionRepository.findByFamilyMemberId(cmd.memberId)
             ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
 
@@ -106,6 +107,7 @@ class EventService(
     }
 
     fun update(id: UUID, cmd: CreateEventCommand): EventView {
+        requireValidTiming(cmd)
         val local = eventRepository.findById(id).orElseThrow {
             ResourceNotFoundException("Termin nicht gefunden")
         }
@@ -131,5 +133,17 @@ class EventService(
 
         calendarClient.deleteEvent(connection, local.googleCalendarId, local.googleEventId)
         eventRepository.delete(local)
+    }
+
+    private fun requireValidTiming(cmd: CreateEventCommand) {
+        if (cmd.isAllDay) {
+            if (cmd.allDayStart == null || cmd.allDayEnd == null) {
+                throw ValidationException("Ganztägige Termine benötigen ein Start- und Enddatum.")
+            }
+        } else {
+            if (cmd.start == null || cmd.end == null) {
+                throw ValidationException("Termine benötigen eine Start- und Endzeit.")
+            }
+        }
     }
 }

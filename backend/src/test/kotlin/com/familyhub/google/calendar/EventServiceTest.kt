@@ -355,6 +355,105 @@ class EventServiceTest {
             .hasMessage("Kein Zielkalender vorhanden")
     }
 
+    // ─── create: timing validation (reject missing start/end → 400) ────────────
+
+    @Test
+    fun `create timed event with null start throws ValidationException`() {
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = "primary@gmail.com",
+            title = "Meeting",
+            start = null,
+            end = endTime,
+            isAllDay = false,
+        )
+
+        assertThatThrownBy { service.create(cmd) }
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessage("Termine benötigen eine Start- und Endzeit.")
+
+        verify(exactly = 0) { calendarClient.insertEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `create timed event with null end throws ValidationException`() {
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = "primary@gmail.com",
+            title = "Meeting",
+            start = startTime,
+            end = null,
+            isAllDay = false,
+        )
+
+        assertThatThrownBy { service.create(cmd) }
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessage("Termine benötigen eine Start- und Endzeit.")
+
+        verify(exactly = 0) { calendarClient.insertEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `create all-day event with null allDayStart throws ValidationException`() {
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = "primary@gmail.com",
+            title = "Holiday",
+            allDayStart = null,
+            allDayEnd = LocalDate.of(2026, 8, 1),
+            isAllDay = true,
+        )
+
+        assertThatThrownBy { service.create(cmd) }
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessage("Ganztägige Termine benötigen ein Start- und Enddatum.")
+
+        verify(exactly = 0) { calendarClient.insertEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `create all-day event with null allDayEnd throws ValidationException`() {
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = "primary@gmail.com",
+            title = "Holiday",
+            allDayStart = LocalDate.of(2026, 8, 1),
+            allDayEnd = null,
+            isAllDay = true,
+        )
+
+        assertThatThrownBy { service.create(cmd) }
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessage("Ganztägige Termine benötigen ein Start- und Enddatum.")
+
+        verify(exactly = 0) { calendarClient.insertEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `create valid all-day event inserts event`() {
+        val googleInserted = GoogleEvent()
+            .setId("google-evt-allday")
+            .setSummary("Holiday")
+        every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns primarySubscription
+        every { calendarClient.insertEvent(connection, "primary@gmail.com", any()) } returns googleInserted
+        every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = UUID.randomUUID() } }
+
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = "primary@gmail.com",
+            title = "Holiday",
+            allDayStart = LocalDate.of(2026, 8, 1),
+            allDayEnd = LocalDate.of(2026, 8, 3),
+            isAllDay = true,
+        )
+
+        val result = service.create(cmd)
+
+        assertThat(result.title).isEqualTo("Holiday")
+        verify(exactly = 1) { calendarClient.insertEvent(connection, "primary@gmail.com", any()) }
+    }
+
     // ─── update ───────────────────────────────────────────────────────────────
 
     @Test
@@ -465,6 +564,25 @@ class EventServiceTest {
 
         assertThat(savedSlot).hasSize(1)
         assertThat(savedSlot[0].id).isEqualTo(eventId)
+    }
+
+    @Test
+    fun `update timed event with null start throws ValidationException before any Google call`() {
+        val cmd = CreateEventCommand(
+            memberId = memberId,
+            calendarId = null,
+            title = "Updated",
+            start = null,
+            end = endTime,
+            isAllDay = false,
+        )
+
+        assertThatThrownBy { service.update(eventId, cmd) }
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessage("Termine benötigen eine Start- und Endzeit.")
+
+        verify(exactly = 0) { eventRepository.findById(any()) }
+        verify(exactly = 0) { calendarClient.updateEvent(any(), any(), any()) }
     }
 
     // ─── delete ───────────────────────────────────────────────────────────────
