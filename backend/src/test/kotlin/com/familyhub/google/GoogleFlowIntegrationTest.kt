@@ -9,6 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -54,6 +55,14 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
             registry.add("google.authorize-url") { "https://accounts.google.com/o/oauth2/v2/auth" }
             // Trailing slash: the Calendar client does setRootUrl(baseUrl) then appends "calendar/v3/...".
             registry.add("google.api-base-url") { "${wm.baseUrl()}/" }
+        }
+
+        // Stop only WireMock — the singleton Testcontainers Postgres in BaseIntegrationTest is a
+        // separate resource that must stay up for the rest of the JVM (Ryuk reaps it at JVM exit).
+        @JvmStatic
+        @AfterAll
+        fun stopWireMock() {
+            wm.stop()
         }
     }
 
@@ -193,6 +202,8 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
         }
 
         // 6. Select the calendar.
+        // Selection persistence is proven by step 7: if it didn't take, sync would import 0 events
+        // (created==0), but we assert created==1.
         mockMvc.put("/api/v1/google/calendars/selected") {
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(
