@@ -38,6 +38,7 @@ const SUCCESS_RESPONSE = {
 
 function makeMutation(overrides: Record<string, unknown> = {}) {
   return {
+    mutate: vi.fn(),
     mutateAsync: vi.fn().mockResolvedValue(SUCCESS_RESPONSE),
     isSuccess: false,
     isError: false,
@@ -65,10 +66,10 @@ describe('OAuthCallback', () => {
     })
 
     it('does NOT call the mutation', () => {
-      const mutateAsync = vi.fn()
-      vi.mocked(useGoogleCallback).mockReturnValue(makeMutation({ mutateAsync }) as never)
+      const mutate = vi.fn()
+      vi.mocked(useGoogleCallback).mockReturnValue(makeMutation({ mutate }) as never)
       renderWithProviders(<OAuthCallback />, { route: '/oauth/callback?error=access_denied' })
-      expect(mutateAsync).not.toHaveBeenCalled()
+      expect(mutate).not.toHaveBeenCalled()
     })
 
     it('renders a Zurück link back to /', () => {
@@ -133,13 +134,13 @@ describe('OAuthCallback', () => {
     })
 
     it('calls mutation with code and state from query params', () => {
-      const mutateAsync = vi.fn().mockResolvedValue(SUCCESS_RESPONSE)
-      vi.mocked(useGoogleCallback).mockReturnValue(makeMutation({ mutateAsync }) as never)
+      const mutate = vi.fn()
+      vi.mocked(useGoogleCallback).mockReturnValue(makeMutation({ mutate }) as never)
       renderWithProviders(<OAuthCallback />, { route: '/oauth/callback?code=abc&state=xyz' })
-      expect(mutateAsync).toHaveBeenCalledWith({ data: { code: 'abc', state: 'xyz' } })
+      expect(mutate).toHaveBeenCalledWith({ data: { code: 'abc', state: 'xyz' } })
     })
 
-    it('shows empty memberName when data has no memberName (fallback to empty string)', () => {
+    it('shows plain Willkommen! when data has no memberName (empty-name fallback)', () => {
       vi.mocked(useGoogleCallback).mockReturnValue(
         makeMutation({
           isSuccess: true,
@@ -148,8 +149,8 @@ describe('OAuthCallback', () => {
       )
       renderWithProviders(<OAuthCallback />, { route: '/oauth/callback?code=abc&state=xyz' })
       expect(screen.getByText('Erfolgreich verbunden!')).toBeInTheDocument()
-      // memberName falls back to '' so the text is "Willkommen, !"
-      expect(screen.getByText('Willkommen, !')).toBeInTheDocument()
+      // memberName falls back to '' → greeting has no name/comma
+      expect(screen.getByText('Willkommen!')).toBeInTheDocument()
     })
   })
 
