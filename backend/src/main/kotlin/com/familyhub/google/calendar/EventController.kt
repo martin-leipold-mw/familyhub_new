@@ -69,28 +69,25 @@ class EventController(
         eventService.delete(id)
         return ResponseEntity.noContent().build()
     }
-}
 
-private fun EventCreateRequest.toCommand() = CreateEventCommand(
-    memberId = memberId,
-    calendarId = calendarId,
-    title = title,
-    description = description,
-    location = location,
-    start = start?.let {
-        try { Instant.parse(it) } catch (e: DateTimeException) {
-            null
-        }
-    },
-    end = end?.let {
-        try { Instant.parse(it) } catch (e: DateTimeException) {
-            null
-        }
-    },
-    allDayStart = allDayStart,
-    allDayEnd = allDayEnd,
-    isAllDay = isAllDay,
-)
+    // Reuses parseInstant so body start/end get the same handling as the GET
+    // query params: garbage → ValidationException → 400, date-only → timezone-
+    // resolved start of day. Needs settingsService, hence a member method (not a
+    // standalone extension). Adds no new branches — parseInstant's branches are
+    // already covered by the GET tests.
+    private fun EventCreateRequest.toCommand() = CreateEventCommand(
+        memberId = memberId,
+        calendarId = calendarId,
+        title = title,
+        description = description,
+        location = location,
+        start = parseInstant(start),
+        end = parseInstant(end),
+        allDayStart = allDayStart,
+        allDayEnd = allDayEnd,
+        isAllDay = isAllDay,
+    )
+}
 
 private fun EventView.toResponse() = EventResponse(
     id = id,
@@ -98,7 +95,7 @@ private fun EventView.toResponse() = EventResponse(
     description = description,
     location = location,
     start = start?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
-    end = end?.toString(),
+    end = end?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
     isAllDay = isAllDay,
     allDayStart = allDayStart,
     allDayEnd = allDayEnd,

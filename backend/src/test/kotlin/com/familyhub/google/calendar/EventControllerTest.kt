@@ -132,6 +132,29 @@ class EventControllerTest {
             }
     }
 
+    // ─── GET /v1/events/{id} — all-day event, null start/end in response ───────
+
+    @Test
+    fun `GET event by id returns 200 with all-day event and null timestamps`() {
+        every { eventService.get(eventId) } returns aView(
+            isAllDay = true,
+            start = null,
+            end = null,
+            allDayStart = LocalDate.parse("2026-07-24"),
+            allDayEnd = LocalDate.parse("2026-07-25"),
+        )
+
+        mockMvc.get("/api/v1/events/$eventId")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.isAllDay") { value(true) }
+                jsonPath("$.start") { doesNotExist() }
+                jsonPath("$.end") { doesNotExist() }
+                jsonPath("$.allDayStart") { value("2026-07-24") }
+                jsonPath("$.allDayEnd") { value("2026-07-25") }
+            }
+    }
+
     // ─── GET /v1/events/{id} ──────────────────────────────────────────────────
 
     @Test
@@ -169,6 +192,27 @@ class EventControllerTest {
             status { isCreated() }
             jsonPath("$.id") { value(eventId.toString()) }
             jsonPath("$.title") { value("Test Event") }
+        }
+    }
+
+    // ─── POST /v1/events — garbage start in body → 400 ────────────────────────
+
+    @Test
+    fun `POST event with garbage start in body returns 400`() {
+        every { settingsService.timezone() } returns "Europe/Berlin"
+
+        mockMvc.post("/api/v1/events") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """
+                {
+                  "memberId": "$memberId",
+                  "title": "Test Event",
+                  "isAllDay": false,
+                  "start": "not-a-date"
+                }
+            """.trimIndent()
+        }.andExpect {
+            status { isBadRequest() }
         }
     }
 

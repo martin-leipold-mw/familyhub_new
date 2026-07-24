@@ -1017,6 +1017,7 @@ components:
           nullable: true
         end:
           type: string
+          format: date-time
           nullable: true
         isAllDay:
           type: boolean
