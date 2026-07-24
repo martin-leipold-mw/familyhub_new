@@ -30,9 +30,13 @@ class GoogleTokenProvider(
         if (!needsRefresh && connection.accessToken != null) {
             return encryption.decrypt(connection.accessToken!!)
         }
-        val cred = connection.credentialsId?.let { credentials.entity(it) }
-            ?: credentials.primaryOrNull()
-            ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert.")
+        val credId = connection.credentialsId
+        val cred = if (credId != null) {
+            credentials.entity(credId)
+        } else {
+            credentials.primaryOrNull()
+                ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert.")
+        }
         try {
             val newTokens = flow.refresh(
                 encryption.decrypt(cred.clientId), encryption.decrypt(cred.clientSecret),

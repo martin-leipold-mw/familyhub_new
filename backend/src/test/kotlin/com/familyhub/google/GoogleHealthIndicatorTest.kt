@@ -96,4 +96,21 @@ class GoogleHealthIndicatorTest {
         assertThat(health.details["activeConnections"]).isEqualTo(2)
         assertThat(health.details["lastSyncAgeMinutes"]).isEqualTo(10L)
     }
+
+    @Test
+    fun `active empty but revoked non-empty returns UP with activeConnections=0`() {
+        // Exercises the missed branch: active.isEmpty()=true && revoked.isEmpty()=false → condition false
+        // The && short-circuit means: left=true, right=false → overall false → falls through to Health.up()
+        val revoked = makeConnection("revoked")
+
+        every { repo.findAllByStatus("active") } returns emptyList()
+        every { repo.findAllByStatus("revoked") } returns listOf(revoked)
+
+        val health = indicator.health()
+
+        assertThat(health.status).isEqualTo(Status.UP)
+        assertThat(health.details["activeConnections"]).isEqualTo(0)
+        assertThat(health.details["revokedConnections"]).isEqualTo(1)
+        assertThat(health.details).doesNotContainKey("lastSyncAgeMinutes")
+    }
 }

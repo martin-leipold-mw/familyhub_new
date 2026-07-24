@@ -14,10 +14,10 @@ class RedirectUriNormalizer {
         } catch (ex: Exception) {
             throw ValidationException("Redirect-URI ist ungültig")
         }
-        val scheme = parsed.scheme?.lowercase()
-            ?: throw ValidationException("Redirect-URI ist ungültig")
-        val host = parsed.host?.lowercase()
-            ?: throw ValidationException("Redirect-URI ist ungültig")
+        val rawScheme = parsed.scheme ?: throw ValidationException("Redirect-URI ist ungültig")
+        val scheme = rawScheme.lowercase()
+        val rawHost = parsed.host ?: throw ValidationException("Redirect-URI ist ungültig")
+        val host = rawHost.lowercase()
         val isLocalhost = host == "localhost" || host == "127.0.0.1"
         if (scheme == "http" && !isLocalhost) {
             throw ValidationException("Redirect-URI muss https verwenden (außer localhost)")
@@ -26,7 +26,8 @@ class RedirectUriNormalizer {
             throw ValidationException("Redirect-URI muss http oder https sein")
         }
         val port = if (parsed.port != -1) ":${parsed.port}" else ""
-        val path = parsed.path ?: ""
+        // URI.getPath() is non-null for hierarchical URIs (validated above via parsed.host check)
+        val path = parsed.path!!
         return "$scheme://$host$port$path"
     }
 }

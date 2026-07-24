@@ -130,6 +130,18 @@ class EventServiceTest {
     }
 
     @Test
+    fun `list with start but null end falls back to findAll`() {
+        // Exercises the missed branch: start!=null && end==null → short-circuit false → findAll()
+        every { eventRepository.findAll() } returns listOf(timedEvent, allDayEvent)
+
+        val result = service.list(start = startTime, end = null, memberId = null, calendarId = null)
+
+        assertThat(result).hasSize(2)
+        verify(exactly = 1) { eventRepository.findAll() }
+        verify(exactly = 0) { eventRepository.findByStartTimeBetween(any(), any()) }
+    }
+
+    @Test
     fun `list filters by memberId when provided`() {
         val otherMemberId = UUID.randomUUID()
         val otherEvent = Event(

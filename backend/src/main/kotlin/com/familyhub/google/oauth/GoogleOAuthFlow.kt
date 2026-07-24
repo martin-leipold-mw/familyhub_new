@@ -64,7 +64,7 @@ class GoogleOAuthFlow(
         val body = try { response.parseAsString() } finally { response.disconnect() }
         val map = json.createJsonParser(body).parse(Map::class.java)
         return GoogleUserInfo(
-            sub = map["id"]?.toString() ?: map["sub"].toString(),
+            sub = (map["id"] ?: map["sub"]).toString(),
             email = map["email"].toString(),
             name = map["name"]?.toString(),
             picture = map["picture"]?.toString(),

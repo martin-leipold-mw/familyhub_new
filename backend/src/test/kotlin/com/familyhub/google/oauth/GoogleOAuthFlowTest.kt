@@ -121,4 +121,25 @@ class GoogleOAuthFlowTest {
         assertThat(u.sub).isEqualTo("ID456")
         assertThat(u.email).isEqualTo("c@d.de")
     }
+
+    @Test fun `fetchUserInfo returns null name when name field is absent`() {
+        // Exercises the missed branch: map["name"] == null → name?.toString() returns null
+        wm.stubFor(get("/userinfo").willReturn(okJson(
+            """{"sub":"SUB789","email":"d@e.de"}""")))
+        val u = flow.fetchUserInfo("AT4")
+        assertThat(u.sub).isEqualTo("SUB789")
+        assertThat(u.email).isEqualTo("d@e.de")
+        assertThat(u.name).isNull()
+        assertThat(u.picture).isNull()
+    }
+
+    @Test fun `probe maps 400 invalid_client body to CLIENT_INVALID`() {
+        // Exercises the missed branch: ex.details?.error == "invalid_client" → true → CLIENT_INVALID
+        // (distinct from the 401-status path which short-circuits at ex.statusCode == 401)
+        wm.stubFor(post("/token").willReturn(aResponse().withStatus(400)
+            .withHeader("Content-Type", "application/json; charset=UTF-8")
+            .withBody("""{"error":"invalid_client"}""")))
+        assertThat(flow.probe("cid", "sec", "http://localhost:8080/oauth/callback"))
+            .isEqualTo(ProbeResult.CLIENT_INVALID)
+    }
 }

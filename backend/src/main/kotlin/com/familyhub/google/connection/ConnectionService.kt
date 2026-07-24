@@ -35,9 +35,12 @@ class ConnectionService(
     private val palette = listOf("blue", "pink", "green", "purple", "orange", "teal")
 
     fun startAuthorization(credentialsId: UUID?, returnUrl: String): String {
-        val cred = credentialsId?.let { credentials.entity(it) }
-            ?: credentials.primaryOrNull()
-            ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert. Bitte zuerst im Setup einrichten.")
+        val cred = if (credentialsId != null) {
+            credentials.entity(credentialsId)
+        } else {
+            credentials.primaryOrNull()
+                ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert. Bitte zuerst im Setup einrichten.")
+        }
         val clientId = encryption.decrypt(cred.clientId)
         val verifier = pkce.generateVerifier()
         val safeReturn = sanitizeReturnUrl(returnUrl)
@@ -49,9 +52,13 @@ class ConnectionService(
     fun handleCallback(code: String, state: String): CallbackResult {
         val entry = stateStore.consume(state)
             ?: throw ValidationException("Ungültiger oder abgelaufener Anmeldevorgang.")
-        val cred = entry.credentialsId?.let { credentials.entity(it) }
-            ?: credentials.primaryOrNull()
-            ?: throw ValidationException("Keine Google-Credentials konfiguriert.")
+        val entryCredId = entry.credentialsId
+        val cred = if (entryCredId != null) {
+            credentials.entity(entryCredId)
+        } else {
+            credentials.primaryOrNull()
+                ?: throw ValidationException("Keine Google-Credentials konfiguriert.")
+        }
         val tokens = flow.exchangeCode(
             encryption.decrypt(cred.clientId), encryption.decrypt(cred.clientSecret),
             cred.redirectUri, code, entry.verifier,
@@ -74,7 +81,7 @@ class ConnectionService(
                 email = userInfo.email, accessToken = encryption.encrypt(tokens.accessToken),
                 refreshToken = encryption.encrypt(refresh),
                 tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds),
-                scopes = tokens.scope?.split(" ") ?: emptyList(), status = "active",
+                scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
             ))
             isNew = true
         } else {

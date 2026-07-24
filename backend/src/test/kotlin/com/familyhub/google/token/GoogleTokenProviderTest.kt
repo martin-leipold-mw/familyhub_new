@@ -151,6 +151,22 @@ class GoogleTokenProviderTest {
         verify(exactly = 0) { connections.save(any()) }
     }
 
+    // ─── catch TokenResponseException: details==null → rethrow (details-null branch) ─
+
+    @Test fun `rethrows TokenResponseException when details is null`() {
+        // Exercises the missed branch: ex.details == null →
+        // ex.details?.error evaluates to null → null != "invalid_grant" → rethrow
+        val c = conn(now.minusSeconds(10))
+        every { credentials.entity(cred.id!!) } returns cred
+        val ex = mockk<TokenResponseException>(relaxed = true)
+        every { ex.details } returns null
+        every { flow.refresh(any(), any(), any()) } throws ex
+
+        assertThatThrownBy { provider.validAccessToken(c) }
+            .isSameAs(ex)
+        verify(exactly = 0) { connections.save(any()) }
+    }
+
     // ─── forceRefresh: found → sets EPOCH + triggers refresh ─────────────────
 
     @Test fun `forceRefresh resets expiry to EPOCH and triggers token refresh`() {
