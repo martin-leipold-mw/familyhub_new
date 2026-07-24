@@ -26,6 +26,8 @@ tags:
     description: Google OAuth authorization flow and connection management
   - name: GoogleCalendars
     description: Google Calendar list, selection and manual sync
+  - name: Events
+    description: Calendar event CRUD
 
 paths:
   /health:
@@ -541,6 +543,123 @@ paths:
               schema:
                 $ref: "#/components/schemas/SyncResultResponse"
 
+  /v1/events:
+    get:
+      operationId: listEvents
+      summary: List calendar events
+      tags: [Events]
+      security: []
+      parameters:
+        - name: start
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: end
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: calendarId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventResponse"
+    post:
+      operationId: createEvent
+      summary: Create a calendar event
+      tags: [Events]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventCreateRequest"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+
+  /v1/events/{id}:
+    get:
+      operationId: getEvent
+      summary: Get a single calendar event
+      tags: [Events]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+    put:
+      operationId: updateEvent
+      summary: Update a calendar event
+      tags: [Events]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventCreateRequest"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventResponse"
+    delete:
+      operationId: deleteEvent
+      summary: Delete a calendar event
+      tags: [Events]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthResponse:
@@ -841,3 +960,76 @@ components:
         deleted:
           type: integer
           format: int32
+
+    EventCreateRequest:
+      type: object
+      required: [memberId, title, isAllDay]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        calendarId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        start:
+          type: string
+          nullable: true
+        end:
+          type: string
+          nullable: true
+        allDayStart:
+          type: string
+          format: date
+          nullable: true
+        allDayEnd:
+          type: string
+          format: date
+          nullable: true
+        isAllDay:
+          type: boolean
+
+    EventResponse:
+      type: object
+      required: [id, title, isAllDay, memberId, calendarId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        start:
+          type: string
+          format: date-time
+          nullable: true
+        end:
+          type: string
+          nullable: true
+        isAllDay:
+          type: boolean
+        allDayStart:
+          type: string
+          format: date
+          nullable: true
+        allDayEnd:
+          type: string
+          format: date
+          nullable: true
+        memberId:
+          type: string
+          format: uuid
+        calendarId:
+          type: string

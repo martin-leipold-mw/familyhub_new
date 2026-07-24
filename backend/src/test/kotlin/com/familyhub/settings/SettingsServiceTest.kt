@@ -177,6 +177,20 @@ class SettingsServiceTest {
             .isInstanceOf(InvalidPinException::class.java)
     }
 
+    // --- timezone() coverage ---
+
+    @Test
+    fun `timezone returns DB value when family timezone is set`() {
+        stubSetting("family.timezone", "Europe/London")
+        assertThat(service.timezone()).isEqualTo("Europe/London")
+    }
+
+    @Test
+    fun `timezone returns default Europe Berlin when setting is absent`() {
+        stubSetting("family.timezone", null)
+        assertThat(service.timezone()).isEqualTo("Europe/Berlin")
+    }
+
     // --- syncIntervalMinutes() coverage ---
 
     @Test
