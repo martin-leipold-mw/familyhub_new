@@ -27,6 +27,12 @@ vi.mock('@/features/settings/ChangePinDialog', () => ({
     </div>
   ),
 }))
+vi.mock('@/features/google/GoogleAccountsSettings', () => ({
+  GoogleAccountsSettings: () => <div>GoogleAccountsSettings</div>,
+}))
+vi.mock('@/features/google/CalendarManagement', () => ({
+  CalendarManagement: () => <div>CalendarManagement</div>,
+}))
 
 const setSession = vi.fn()
 let hasPinSession = false

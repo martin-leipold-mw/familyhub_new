@@ -8,6 +8,8 @@ import { usePinSession } from '@/features/pin/PinSessionContext'
 import { useVerifyPin } from '@/api/generated/endpoints/familyHubAPI'
 import { PinInputDialog } from '@/features/pin/PinInputDialog'
 import { ChangePinDialog } from './ChangePinDialog'
+import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
+import { CalendarManagement } from '@/features/google/CalendarManagement'
 
 export function SettingsView() {
   const { members } = useMembers()
@@ -64,6 +66,9 @@ export function SettingsView() {
             Zum Bearbeiten entsperren
           </button>
         )}
+
+        <GoogleAccountsSettings />
+        <CalendarManagement />
       </div>
 
       {unlocking && (
