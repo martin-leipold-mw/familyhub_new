@@ -11,6 +11,24 @@ vi.mock('@/features/members/useMembersQuery', () => ({ useMembers: vi.fn() }))
 vi.mock('@/features/members/AddMemberDialog', () => ({ AddMemberDialog: ({ onClose }: { onClose: () => void }) => <button onClick={onClose}>close-add</button> }))
 vi.mock('@/features/setup/redirectHome', () => ({ redirectHome: vi.fn() }))
 
+vi.mock('@/features/google/useGoogleCredentials', () => ({
+  useCreateCredentialsMutation: vi.fn(),
+  useValidateCredentialsMutation: vi.fn(),
+}))
+vi.mock('@/features/google/useGoogleConnections', () => ({
+  useGoogleConnections: vi.fn(),
+}))
+vi.mock('@/features/google/useCalendars', () => ({
+  useCalendarsForMember: vi.fn(),
+  useSaveSelectedCalendarsMutation: vi.fn(),
+  useStartGoogleAuth: vi.fn(),
+}))
+
+vi.mock('./GoogleGuideStep', () => ({ GoogleGuideStep: ({ onNext }: { onNext: () => void }) => <button onClick={onNext}>google-guide-next</button> }))
+vi.mock('./CredentialsStep', () => ({ CredentialsStep: ({ onNext }: { onNext: () => void }) => <button onClick={onNext}>credentials-next</button> }))
+vi.mock('./ConnectStep', () => ({ ConnectStep: ({ onNext }: { onNext: () => void }) => <button onClick={onNext}>connect-next</button> }))
+vi.mock('./CalendarSelectStep', () => ({ CalendarSelectStep: ({ onNext }: { onNext: () => void }) => <button onClick={onNext}>calendar-next</button> }))
+
 import { useGetSetupStatus, useUpdateSetupStep, useSetPin } from '@/api/generated/endpoints/familyHubAPI'
 import { useMembers } from '@/features/members/useMembersQuery'
 import { redirectHome } from '@/features/setup/redirectHome'
@@ -32,13 +50,13 @@ describe('SetupWizard', () => {
     setup({ step: 1 })
     renderWithProviders(<SetupWizard />)
     expect(screen.getByText('Willkommen bei FamilyHub')).toBeInTheDocument()
-    expect(screen.getByText('Schritt 1 von 3')).toBeInTheDocument()
+    expect(screen.getByText('Schritt 1 von 7')).toBeInTheDocument()
   })
 
   it('resumes at the stored step', () => {
     setup({ step: 2, members: [] })
     renderWithProviders(<SetupWizard />)
-    expect(screen.getByText('Schritt 2 von 3')).toBeInTheDocument()
+    expect(screen.getByText('Schritt 2 von 7')).toBeInTheDocument()
     // Weiter disabled without members
     expect(screen.getByRole('button', { name: 'Weiter →' })).toBeDisabled()
   })
@@ -49,8 +67,15 @@ describe('SetupWizard', () => {
     expect(screen.getByRole('button', { name: 'Weiter →' })).toBeEnabled()
   })
 
-  it('completes setup on the PIN step and redirects home', async () => {
+  it('resumes at step 3 (GoogleGuide)', () => {
     setup({ step: 3 })
+    renderWithProviders(<SetupWizard />)
+    expect(screen.getByText('Schritt 3 von 7')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'google-guide-next' })).toBeInTheDocument()
+  })
+
+  it('completes setup on the PIN step (step 7) and redirects home', async () => {
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     // enter matching PINs
     for (const d of '1234') fireEvent.click(screen.getAllByRole('button', { name: d })[0])
@@ -71,12 +96,12 @@ describe('SetupWizard', () => {
     vi.mocked(useSetPin).mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue({ data: { sessionToken: 'tok' } }) } as never)
     vi.mocked(useMembers).mockReturnValue({ members: [], isLoading: false, isError: false } as never)
     renderWithProviders(<SetupWizard />)
-    expect(screen.getByText('Schritt 1 von 3')).toBeInTheDocument()
+    expect(screen.getByText('Schritt 1 von 7')).toBeInTheDocument()
     expect(screen.getByText('Willkommen bei FamilyHub')).toBeInTheDocument()
   })
 
   it('pressDigit: Löschen clears the entry', async () => {
-    setup({ step: 3 })
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     // type '1' then clear
     fireEvent.click(screen.getAllByRole('button', { name: '1' })[0])
@@ -86,7 +111,7 @@ describe('SetupWizard', () => {
   })
 
   it('pressDigit: ← backspaces the last character', async () => {
-    setup({ step: 3 })
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     // type '1','2','3','4' then backspace
     for (const d of '1234') fireEvent.click(screen.getAllByRole('button', { name: d })[0])
@@ -98,7 +123,7 @@ describe('SetupWizard', () => {
   })
 
   it('pressDigit: does not append when entry is 6 digits (cap)', async () => {
-    setup({ step: 3 })
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     // enter 6 digits
     for (const d of '123456') fireEvent.click(screen.getAllByRole('button', { name: d })[0])
@@ -109,7 +134,7 @@ describe('SetupWizard', () => {
   })
 
   it('confirmSecond: mismatch shows error and resets to PIN vergeben phase', async () => {
-    setup({ step: 3 })
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     // first PIN: 1234
     for (const d of '1234') fireEvent.click(screen.getAllByRole('button', { name: d })[0])
@@ -124,7 +149,7 @@ describe('SetupWizard', () => {
 
   it('setPin.mutateAsync rejects with an Error → shows err.message', async () => {
     vi.mocked(useGetSetupStatus).mockReturnValue({
-      data: { data: { currentStep: 3 } }, isLoading: false, isError: false,
+      data: { data: { currentStep: 7 } }, isLoading: false, isError: false,
     } as never)
     vi.mocked(useUpdateSetupStep).mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue({}) } as never)
     vi.mocked(useSetPin).mockReturnValue({
@@ -141,7 +166,7 @@ describe('SetupWizard', () => {
 
   it('setPin.mutateAsync rejects with a non-Error → shows fallback message', async () => {
     vi.mocked(useGetSetupStatus).mockReturnValue({
-      data: { data: { currentStep: 3 } }, isLoading: false, isError: false,
+      data: { data: { currentStep: 7 } }, isLoading: false, isError: false,
     } as never)
     vi.mocked(useUpdateSetupStep).mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue({}) } as never)
     vi.mocked(useSetPin).mockReturnValue({
@@ -156,14 +181,14 @@ describe('SetupWizard', () => {
     await waitFor(() => expect(screen.getByText('PIN konnte nicht gesetzt werden.')).toBeInTheDocument())
   })
 
-  it('firstPin === null branch: shows "Weiter zur Bestätigung" label on step 3', () => {
-    setup({ step: 3 })
+  it('firstPin === null branch: shows "Weiter zur Bestätigung" label on step 7', () => {
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     expect(screen.getByRole('button', { name: 'Weiter zur Bestätigung' })).toBeInTheDocument()
   })
 
   it('firstPin !== null branch: shows "Fertig" label after advancing to confirm phase', async () => {
-    setup({ step: 3 })
+    setup({ step: 7 })
     renderWithProviders(<SetupWizard />)
     for (const d of '1234') fireEvent.click(screen.getAllByRole('button', { name: d })[0])
     fireEvent.click(screen.getByRole('button', { name: 'Weiter zur Bestätigung' }))
@@ -173,17 +198,45 @@ describe('SetupWizard', () => {
   it('goToStep: advances from step 1 to step 2 when clicking Los geht\'s', async () => {
     setup({ step: 1 })
     renderWithProviders(<SetupWizard />)
-    expect(screen.getByText('Schritt 1 von 3')).toBeInTheDocument()
+    expect(screen.getByText('Schritt 1 von 7')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: "Los geht's →" }))
-    await waitFor(() => expect(screen.getByText('Schritt 2 von 3')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Schritt 2 von 7')).toBeInTheDocument())
   })
 
-  it('goToStep: advances from step 2 to step 3 when clicking Weiter → (with member)', async () => {
+  it('goToStep: advances from step 2 to step 3 (GoogleGuide) when clicking Weiter → (with member)', async () => {
     setup({ step: 2, members: [{ id: '1', name: 'Anna' }] })
     renderWithProviders(<SetupWizard />)
-    expect(screen.getByText('Schritt 2 von 3')).toBeInTheDocument()
+    expect(screen.getByText('Schritt 2 von 7')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Weiter →' }))
-    await waitFor(() => expect(screen.getByText('Schritt 3 von 3')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Schritt 3 von 7')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'google-guide-next' })).toBeInTheDocument()
+  })
+
+  it('goToStep: advances from step 3 (GoogleGuide) to step 4 (Credentials)', async () => {
+    setup({ step: 3 })
+    renderWithProviders(<SetupWizard />)
+    expect(screen.getByText('Schritt 3 von 7')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'google-guide-next' }))
+    await waitFor(() => expect(screen.getByText('Schritt 4 von 7')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'credentials-next' })).toBeInTheDocument()
+  })
+
+  it('goToStep: advances from step 4 (Credentials) to step 5 (Connect)', async () => {
+    setup({ step: 4 })
+    renderWithProviders(<SetupWizard />)
+    expect(screen.getByText('Schritt 4 von 7')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'credentials-next' }))
+    await waitFor(() => expect(screen.getByText('Schritt 5 von 7')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'connect-next' })).toBeInTheDocument()
+  })
+
+  it('goToStep: advances from step 6 (CalendarSelect) to step 7 (PIN)', async () => {
+    setup({ step: 6 })
+    renderWithProviders(<SetupWizard />)
+    expect(screen.getByText('Schritt 6 von 7')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'calendar-next' }))
+    await waitFor(() => expect(screen.getByText('Schritt 7 von 7')).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Weiter zur Bestätigung' })).toBeInTheDocument()
   })
 
   it('MembersStep: Mitglied hinzufügen opens AddMemberDialog, close-add closes it', async () => {

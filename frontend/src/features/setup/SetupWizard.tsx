@@ -3,9 +3,13 @@ import { useGetSetupStatus, useUpdateSetupStep, useSetPin } from '@/api/generate
 import { usePinSession } from '@/features/pin/PinSessionContext'
 import { WelcomeStep } from './WelcomeStep'
 import { MembersStep } from './MembersStep'
+import { GoogleGuideStep } from './GoogleGuideStep'
+import { CredentialsStep } from './CredentialsStep'
+import { ConnectStep } from './ConnectStep'
+import { CalendarSelectStep } from './CalendarSelectStep'
 import { redirectHome } from './redirectHome'
 
-const PERCENT: Record<number, string> = { 1: '33%', 2: '66%', 3: '100%' }
+const TOTAL_STEPS = 7
 
 export function SetupWizard() {
   const status = useGetSetupStatus()
@@ -59,17 +63,23 @@ export function SetupWizard() {
   const valid = entry.length >= 4
   const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Löschen', '0', '←']
 
+  const progressPercent = Math.round((step / TOTAL_STEPS) * 100) + '%'
+
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <p className="text-slate-300 mb-2">Schritt {step} von 3</p>
+        <p className="text-slate-300 mb-2">Schritt {step} von {TOTAL_STEPS}</p>
         <div className="h-2 rounded-full bg-slate-700 mb-8">
-          <div className="h-2 rounded-full bg-blue-500" style={{ width: PERCENT[step] }} />
+          <div className="h-2 rounded-full bg-blue-500" style={{ width: progressPercent }} />
         </div>
 
         {step === 1 && <WelcomeStep onNext={() => goToStep(2)} />}
         {step === 2 && <MembersStep onNext={() => goToStep(3)} />}
-        {step === 3 && (
+        {step === 3 && <GoogleGuideStep onNext={() => goToStep(4)} />}
+        {step === 4 && <CredentialsStep onNext={() => goToStep(5)} />}
+        {step === 5 && <ConnectStep onNext={() => goToStep(6)} />}
+        {step === 6 && <CalendarSelectStep onNext={() => goToStep(7)} />}
+        {step === 7 && (
           <div className="flex flex-col gap-4 text-white">
             <h1 className="text-2xl font-bold text-center">
               {firstPin === null ? 'PIN vergeben' : 'PIN bestätigen'}
