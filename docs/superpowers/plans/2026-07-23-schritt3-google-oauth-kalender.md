@@ -2130,10 +2130,10 @@ currentStep = computeStep(...),
 
 **Files:** keine (Verifikation)
 
-- [ ] **Step 1: Backend komplett** — `cd backend && ./gradlew clean check` → BUILD SUCCESSFUL (JaCoCo 90 % Line / 100 % Branch erfüllt). Falls Branch-Coverage < 100 %: fehlende Zweige gezielt testen.
-- [ ] **Step 2: Frontend komplett** — `cd frontend && npm run lint && npm test -- --run && npm run build` → grün.
-- [ ] **Step 3: E2E** — `cd frontend && npm run test:e2e` (Playwright-Wizard-Pfad) → grün.
-- [ ] **Step 4: Commit** (falls Nacharbeiten) `test: close coverage gaps for Google integration`.
+- [x] **Step 1: Backend komplett** — `cd backend && ./gradlew clean check` → BUILD SUCCESSFUL (JaCoCo 90 % Line / 100 % Branch erfüllt). Falls Branch-Coverage < 100 %: fehlende Zweige gezielt testen.
+- [x] **Step 2: Frontend komplett** — `cd frontend && npm run lint && npm test -- --run && npm run build` → grün.
+- [x] **Step 3: E2E** — `cd frontend && npm run test:e2e` (Playwright-Wizard-Pfad) → grün.
+- [x] **Step 4: Commit** (falls Nacharbeiten) `test: close coverage gaps for Google integration`. — keine Coverage-Nacharbeiten nötig; Bugfix + Tooling separat committet.
 
 ---
 
