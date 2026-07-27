@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "permissions": {
+    "deny": [
+      "Bash(git commit --no-verify:*)",
+      "Bash(git commit -n:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Edit(./frontend/src/api/generated/**)",
+      "Write(./frontend/src/api/generated/**)",
+      "Edit(./backend/build/generated/**)",
+      "Write(./backend/build/generated/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/git-guard.sh\"",
+            "timeout": 10,
+            "statusMessage": "git-Guard…"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/check-changed.sh\"",
+            "timeout": 30,
+            "statusMessage": "ESLint auf geänderter Datei…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/verify-done.sh\"",
+            "timeout": 180,
+            "statusMessage": "Verifikation: Compile + Type-Check…"
+          }
+        ]
+      }
+    ]
+  }
+}
