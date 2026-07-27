@@ -8,15 +8,15 @@ import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 class FamilyMemberRepositoryIntegrationTest : BaseIntegrationTest() {
-
     @Autowired
     lateinit var repository: FamilyMemberRepository
 
     @Test
     fun `saves and reads a member with all new columns`() {
-        val saved = repository.save(
-            FamilyMember(name = "Anna", role = "parent", color = "blue")
-        )
+        val saved =
+            repository.save(
+                FamilyMember(name = "Anna", role = "parent", color = "blue"),
+            )
 
         val found = repository.findById(saved.id!!).orElseThrow()
         assertThat(found.name).isEqualTo("Anna")

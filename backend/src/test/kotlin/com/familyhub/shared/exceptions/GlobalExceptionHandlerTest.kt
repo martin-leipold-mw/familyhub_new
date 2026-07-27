@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.get
 @WebMvcTest(HealthController::class)
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 class GlobalExceptionHandlerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -26,13 +25,14 @@ class GlobalExceptionHandlerTest {
     @Test
     @WithMockUser
     fun `GET unknown path returns 404 with NOT_FOUND error`() {
-        every { healthController.getHealth() } returns ResponseEntity.ok(
-            com.familyhub.generated.model.HealthResponse(
-                status = com.familyhub.generated.model.HealthResponse.Status.UP,
-                timestamp = java.time.OffsetDateTime.now(),
-                version = "test",
+        every { healthController.getHealth() } returns
+            ResponseEntity.ok(
+                com.familyhub.generated.model.HealthResponse(
+                    status = com.familyhub.generated.model.HealthResponse.Status.UP,
+                    timestamp = java.time.OffsetDateTime.now(),
+                    version = "test",
+                ),
             )
-        )
         mockMvc.get("/api/nonexistent-endpoint-xyz")
             .andExpect {
                 status { isNotFound() }

@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class PinSessionService(private val clock: Clock) {
-
     private val sessions = ConcurrentHashMap<UUID, Instant>()
 
     fun createSession(): UUID {

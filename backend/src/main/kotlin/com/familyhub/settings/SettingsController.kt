@@ -18,9 +18,7 @@ import java.util.UUID
 class SettingsController(
     private val settingsService: SettingsService,
 ) : SettingsApi {
-
-    override fun getSetupStatus(): ResponseEntity<SetupStatusResponse> =
-        ResponseEntity.ok(settingsService.getSetupStatus())
+    override fun getSetupStatus(): ResponseEntity<SetupStatusResponse> = ResponseEntity.ok(settingsService.getSetupStatus())
 
     override fun updateSetupStep(setupStepRequest: SetupStepRequest): ResponseEntity<Unit> {
         settingsService.updateSetupStep(setupStepRequest.step)

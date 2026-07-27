@@ -1,8 +1,8 @@
 package com.familyhub.pin
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.familyhub.settings.Setting
 import com.familyhub.settings.SettingRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.mockk
 import jakarta.servlet.http.HttpServletRequest
@@ -16,7 +16,6 @@ import java.util.Optional
 import java.util.UUID
 
 class PinSessionInterceptorTest {
-
     private val sessionService = mockk<PinSessionService>()
     private val settingRepository = mockk<SettingRepository>()
     private val interceptor = PinSessionInterceptor(sessionService, settingRepository, ObjectMapper())
@@ -24,10 +23,10 @@ class PinSessionInterceptorTest {
     // A real handler method carrying (or not carrying) the annotation.
     @RequiresPinSession
     fun protectedHandler() = Unit
+
     fun openHandler() = Unit
 
-    private fun handlerMethod(name: String) =
-        HandlerMethod(this, this::class.java.getDeclaredMethod(name))
+    private fun handlerMethod(name: String) = HandlerMethod(this, this::class.java.getDeclaredMethod(name))
 
     private fun setupCompleted(value: Boolean) {
         every { settingRepository.findById("setup.completed") } returns

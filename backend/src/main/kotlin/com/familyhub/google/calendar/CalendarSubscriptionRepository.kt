@@ -5,7 +5,13 @@ import java.util.UUID
 
 interface CalendarSubscriptionRepository : JpaRepository<CalendarSubscription, UUID> {
     fun findAllByConnectionId(connectionId: UUID): List<CalendarSubscription>
-    fun findByConnectionIdAndGoogleCalendarId(connectionId: UUID, googleCalendarId: String): CalendarSubscription?
+
+    fun findByConnectionIdAndGoogleCalendarId(
+        connectionId: UUID,
+        googleCalendarId: String,
+    ): CalendarSubscription?
+
     fun findAllByConnectionIdAndIsSelectedTrue(connectionId: UUID): List<CalendarSubscription>
+
     fun existsByIsSelectedTrue(): Boolean
 }

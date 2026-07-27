@@ -16,11 +16,13 @@ import java.util.Optional
 import java.util.UUID
 
 class MemberServiceTest {
-
     private val repository = mockk<FamilyMemberRepository>()
     private val service = MemberService(repository)
 
-    private fun member(name: String = "Anna", withAvatar: Boolean = false): FamilyMember {
+    private fun member(
+        name: String = "Anna",
+        withAvatar: Boolean = false,
+    ): FamilyMember {
         val m = FamilyMember(name = name, role = "parent", color = "blue")
         m.id = UUID.randomUUID()
         m.createdAt = Instant.parse("2026-07-22T10:00:00Z")
@@ -46,7 +48,13 @@ class MemberServiceTest {
 
     @Test
     fun `create trims name and saves`() {
-        every { repository.save(any()) } answers { firstArg<FamilyMember>().also { it.id = UUID.randomUUID(); it.createdAt = Instant.now(); it.updatedAt = Instant.now() } }
+        every { repository.save(any()) } answers {
+            firstArg<FamilyMember>().also {
+                it.id = UUID.randomUUID()
+                it.createdAt = Instant.now()
+                it.updatedAt = Instant.now()
+            }
+        }
         val saved = slot<FamilyMember>()
         service.create(MemberRequest(name = "  Bea  ", role = "child", color = "pink", dateOfBirth = LocalDate.of(2015, 1, 1)))
         verify { repository.save(capture(saved)) }

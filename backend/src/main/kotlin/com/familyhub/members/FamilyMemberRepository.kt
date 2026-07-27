@@ -5,5 +5,6 @@ import java.util.UUID
 
 interface FamilyMemberRepository : JpaRepository<FamilyMember, UUID> {
     fun findByIsActiveTrueOrderByCreatedAtAsc(): List<FamilyMember>
+
     fun countByIsActiveTrue(): Long
 }

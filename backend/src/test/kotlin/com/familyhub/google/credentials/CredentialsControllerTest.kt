@@ -1,7 +1,6 @@
 package com.familyhub.google.credentials
 
 import com.familyhub.generated.model.GoogleCredentialsResponse
-import com.familyhub.generated.model.CredentialsValidationResponse
 import com.familyhub.shared.exceptions.GlobalExceptionHandler
 import com.familyhub.shared.security.SecurityConfig
 import com.ninjasquad.springmockk.MockkBean
@@ -24,7 +23,6 @@ import java.util.UUID
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 @ExtendWith(MockKExtension::class)
 class CredentialsControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -33,22 +31,24 @@ class CredentialsControllerTest {
 
     private val testId: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
 
-    private fun view(id: UUID = testId) = GoogleCredentialsView(
-        id = id,
-        nickname = "Test App",
-        redirectUri = "https://familyhub.local/callback",
-        isPrimary = true,
-        isActive = true,
-        createdAt = null,
-    )
+    private fun view(id: UUID = testId) =
+        GoogleCredentialsView(
+            id = id,
+            nickname = "Test App",
+            redirectUri = "https://familyhub.local/callback",
+            isPrimary = true,
+            isActive = true,
+            createdAt = null,
+        )
 
-    private fun response(id: UUID = testId) = GoogleCredentialsResponse(
-        id = id,
-        nickname = "Test App",
-        redirectUri = "https://familyhub.local/callback",
-        isPrimary = true,
-        isActive = true,
-    )
+    private fun response(id: UUID = testId) =
+        GoogleCredentialsResponse(
+            id = id,
+            nickname = "Test App",
+            redirectUri = "https://familyhub.local/callback",
+            isPrimary = true,
+            isActive = true,
+        )
 
     @Test
     fun `GET credentials returns list`() {

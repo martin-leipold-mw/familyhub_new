@@ -1,8 +1,8 @@
 package com.familyhub.pin
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.familyhub.settings.SettingRepository
 import com.familyhub.shared.exceptions.ErrorResponse
+import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
@@ -16,8 +16,11 @@ class PinSessionInterceptor(
     private val settingRepository: SettingRepository,
     private val objectMapper: ObjectMapper,
 ) : HandlerInterceptor {
-
-    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+    ): Boolean {
         if (handler !is HandlerMethod) return true
         if (!handler.hasMethodAnnotation(RequiresPinSession::class.java)) return true
         if (!isSetupCompleted()) return true
@@ -30,15 +33,15 @@ class PinSessionInterceptor(
         return true
     }
 
-    private fun isSetupCompleted(): Boolean =
-        settingRepository.findById("setup.completed").map { it.value == "true" }.orElse(false)
+    private fun isSetupCompleted(): Boolean = settingRepository.findById("setup.completed").map { it.value == "true" }.orElse(false)
 
     private fun isValidToken(header: String): Boolean {
-        val token = try {
-            UUID.fromString(header)
-        } catch (ex: IllegalArgumentException) {
-            return false
-        }
+        val token =
+            try {
+                UUID.fromString(header)
+            } catch (ex: IllegalArgumentException) {
+                return false
+            }
         return pinSessionService.isValid(token)
     }
 
@@ -47,8 +50,8 @@ class PinSessionInterceptor(
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.writer.write(
             objectMapper.writeValueAsString(
-                ErrorResponse(code = "UNAUTHORIZED", message = "PIN-Sitzung erforderlich")
-            )
+                ErrorResponse(code = "UNAUTHORIZED", message = "PIN-Sitzung erforderlich"),
+            ),
         )
     }
 }

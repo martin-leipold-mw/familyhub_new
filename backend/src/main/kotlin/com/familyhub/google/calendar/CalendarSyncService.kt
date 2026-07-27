@@ -22,7 +22,6 @@ class CalendarSyncService(
     private val connectionRepo: GoogleConnectionRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) {
-
     private val mapper = EventMapper()
 
     /**
@@ -36,14 +35,15 @@ class CalendarSyncService(
         for (info in calendars) {
             val existing = subscriptionRepo.findByConnectionIdAndGoogleCalendarId(connectionId, info.id)
             if (existing == null) {
-                val sub = CalendarSubscription(
-                    connectionId = connectionId,
-                    googleCalendarId = info.id,
-                    summary = info.summary,
-                    backgroundColor = info.backgroundColor,
-                    isPrimary = info.primary,
-                    isSelected = false,
-                )
+                val sub =
+                    CalendarSubscription(
+                        connectionId = connectionId,
+                        googleCalendarId = info.id,
+                        summary = info.summary,
+                        backgroundColor = info.backgroundColor,
+                        isPrimary = info.primary,
+                        isSelected = false,
+                    )
                 subscriptionRepo.save(sub)
             } else {
                 existing.summary = info.summary
@@ -91,7 +91,10 @@ class CalendarSyncService(
     /**
      * Syncs events for a single subscription.
      */
-    private fun syncSubscription(connection: GoogleConnection, subscription: CalendarSubscription): SyncResult {
+    private fun syncSubscription(
+        connection: GoogleConnection,
+        subscription: CalendarSubscription,
+    ): SyncResult {
         val calendarId = subscription.googleCalendarId
 
         // Try incremental sync with existing syncToken

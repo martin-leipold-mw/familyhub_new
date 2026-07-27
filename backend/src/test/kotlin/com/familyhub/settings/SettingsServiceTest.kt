@@ -19,27 +19,30 @@ import java.util.Optional
 import java.util.UUID
 
 class SettingsServiceTest {
-
     private val settingRepository = mockk<SettingRepository>(relaxed = true)
     private val memberRepository = mockk<FamilyMemberRepository>()
     private val pinSessionService = mockk<PinSessionService>()
     private val googleCredentialsRepository = mockk<GoogleCredentialsRepository>(relaxed = true)
     private val googleConnectionRepository = mockk<GoogleConnectionRepository>(relaxed = true)
     private val calendarSubscriptionRepository = mockk<CalendarSubscriptionRepository>(relaxed = true)
-    private val service = SettingsService(
-        settingRepository,
-        memberRepository,
-        pinSessionService,
-        googleCredentialsRepository,
-        googleConnectionRepository,
-        calendarSubscriptionRepository,
-    )
+    private val service =
+        SettingsService(
+            settingRepository,
+            memberRepository,
+            pinSessionService,
+            googleCredentialsRepository,
+            googleConnectionRepository,
+            calendarSubscriptionRepository,
+        )
 
     init {
         every { settingRepository.save(ofType()) } answers { firstArg() }
     }
 
-    private fun stubSetting(key: String, value: String?) {
+    private fun stubSetting(
+        key: String,
+        value: String?,
+    ) {
         every { settingRepository.findById(key) } returns
             (value?.let { Optional.of(Setting(key = key, value = it)) } ?: Optional.empty())
     }

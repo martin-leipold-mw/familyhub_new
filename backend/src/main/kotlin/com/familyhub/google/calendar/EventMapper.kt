@@ -1,12 +1,12 @@
 package com.familyhub.google.calendar
 
 import com.google.api.client.util.DateTime
-import com.google.api.services.calendar.model.Event as GoogleEvent
 import com.google.api.services.calendar.model.EventDateTime
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import com.google.api.services.calendar.model.Event as GoogleEvent
 
 /**
  * Command object representing a local event to be pushed to Google Calendar.
@@ -25,7 +25,6 @@ data class EventCommand(
 
 @Component
 class EventMapper {
-
     /**
      * Converts a Google Calendar Event into a local [Event] entity.
      *
@@ -95,10 +94,11 @@ class EventMapper {
      *   Google end is EXCLUSIVE so we add +1 day to the inclusive allDayEnd.
      */
     fun toGoogleEvent(cmd: EventCommand): GoogleEvent {
-        val googleEvent = GoogleEvent()
-            .setSummary(cmd.title)
-            .setDescription(cmd.description)
-            .setLocation(cmd.location)
+        val googleEvent =
+            GoogleEvent()
+                .setSummary(cmd.title)
+                .setDescription(cmd.description)
+                .setLocation(cmd.location)
 
         if (cmd.isAllDay) {
             googleEvent.start = EventDateTime().setDate(dateTimeFromLocalDate(cmd.allDayStart!!))

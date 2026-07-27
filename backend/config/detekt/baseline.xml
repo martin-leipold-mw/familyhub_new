@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>ComplexCondition:ConnectionService.kt$ConnectionService$t.isEmpty() || !t.startsWith("/") || t.startsWith("//") || t.contains("://")</ID>
+    <ID>LongMethod:GoogleFlowIntegrationTest.kt$GoogleFlowIntegrationTest$@Test fun `full google flow plus pin enforcement`()</ID>
+    <ID>LongParameterList:Event.kt$Event$( @Column(name = "subscription_id", nullable = false) var subscriptionId: UUID, @Column(name = "google_event_id", nullable = false) var googleEventId: String, @Column(name = "google_calendar_id", nullable = false) var googleCalendarId: String, @Column(name = "owner_member_id", nullable = false) var ownerMemberId: UUID, @Column(nullable = false) var title: String, @Column var description: String? = null, @Column var location: String? = null, @Column(name = "start_time") var startTime: Instant? = null, @Column(name = "end_time") var endTime: Instant? = null, @Column(name = "is_all_day", nullable = false) var isAllDay: Boolean = false, @Column(name = "all_day_start") var allDayStart: LocalDate? = null, @Column(name = "all_day_end") var allDayEnd: LocalDate? = null, @Column(name = "recurrence_id") var recurrenceId: String? = null, @Column var etag: String? = null, @Column(name = "google_updated") var googleUpdated: Instant? = null, @Column(name = "sync_status", nullable = false) var syncStatus: String = "synced", )</ID>
+    <ID>MatchingDeclarationName:Application.kt$FamilyHubApplication</ID>
+    <ID>MaxLineLength:ConnectionServiceTest.kt$ConnectionServiceTest$every { flow.buildAuthorizationUrl("cid", credEntity.redirectUri, "state-nonce", "challenge") } returns "https://accounts.google.com/auth"</ID>
+    <ID>MaxLineLength:ConnectionServiceTest.kt$ConnectionServiceTest$every { flow.buildAuthorizationUrl("cid", credEntity.redirectUri, "state-nonce", "challenge") } returns "https://accounts.google.com/auth2"</ID>
+    <ID>MaxLineLength:CredentialsControllerTest.kt$CredentialsControllerTest$content = """{"nickname":"Test App","clientId":"my-client-id","clientSecret":"my-secret","redirectUri":"https://familyhub.local/callback"}"""</ID>
+    <ID>MaxLineLength:CredentialsControllerTest.kt$CredentialsControllerTest$content = """{"nickname":"Test App","clientId":"new-client-id","clientSecret":"new-secret","redirectUri":"https://familyhub.local/callback"}"""</ID>
+    <ID>MaxLineLength:EventServiceTest.kt$EventServiceTest$every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns primarySubscription</ID>
+    <ID>NestedBlockDepth:GoogleCalendarClient.kt$GoogleCalendarClient$fun listEvents( connection: GoogleConnection, calendarId: String, syncToken: String?, timeMin: DateTime?, timeMax: DateTime?, ): EventPage</ID>
+    <ID>ProtectedMemberInFinalClass:CalendarSubscription.kt$CalendarSubscription$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:CalendarSubscription.kt$CalendarSubscription$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:Event.kt$Event$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:Event.kt$Event$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:FamilyMember.kt$FamilyMember$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:FamilyMember.kt$FamilyMember$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:GoogleConnection.kt$GoogleConnection$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:GoogleCredentials.kt$GoogleCredentials$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:GoogleCredentials.kt$GoogleCredentials$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:Setting.kt$Setting$@PrePersist @PreUpdate protected fun onWrite()</ID>
+    <ID>ReturnCount:PinSessionInterceptor.kt$PinSessionInterceptor$override fun preHandle( request: HttpServletRequest, response: HttpServletResponse, handler: Any, ): Boolean</ID>
+    <ID>SpreadOperator:Application.kt$(*args)</ID>
+    <ID>SwallowedException:EventController.kt$EventController$e: DateTimeException</ID>
+    <ID>SwallowedException:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
+    <ID>SwallowedException:PinSessionInterceptor.kt$PinSessionInterceptor$ex: IllegalArgumentException</ID>
+    <ID>SwallowedException:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>
+    <ID>ThrowsCount:ConnectionService.kt$ConnectionService$@Transactional fun handleCallback( code: String, state: String, ): CallbackResult</ID>
+    <ID>ThrowsCount:EventService.kt$EventService$fun create(cmd: CreateEventCommand): EventView</ID>
+    <ID>ThrowsCount:GoogleTokenProvider.kt$GoogleTokenProvider$@Transactional fun validAccessToken(connection: GoogleConnection): String</ID>
+    <ID>ThrowsCount:RedirectUriNormalizer.kt$RedirectUriNormalizer$fun normalize(uri: String): String</ID>
+    <ID>ThrowsCount:StartupValidator.kt$StartupValidator$@PostConstruct fun validate()</ID>
+    <ID>TooGenericExceptionCaught:CalendarSyncScheduler.kt$CalendarSyncScheduler$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>
+    <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: NoResourceFoundException</ID>
+    <ID>UnusedPrivateMember:CredentialsControllerTest.kt$CredentialsControllerTest$private fun response(id: UUID = testId)</ID>
+    <ID>WildcardImport:ConnectionServiceTest.kt$import com.familyhub.google.oauth.*</ID>
+    <ID>WildcardImport:ConnectionServiceTest.kt$import io.mockk.*</ID>
+    <ID>WildcardImport:ConnectionServiceTest.kt$import org.assertj.core.api.Assertions.*</ID>
+    <ID>WildcardImport:GoogleCalendarClientTest.kt$import com.github.tomakehurst.wiremock.client.WireMock.*</ID>
+    <ID>WildcardImport:GoogleOAuthFlowTest.kt$import com.github.tomakehurst.wiremock.client.WireMock.*</ID>
+    <ID>WildcardImport:GoogleOAuthFlowTest.kt$import org.junit.jupiter.api.*</ID>
+    <ID>WildcardImport:GoogleTokenProviderTest.kt$import io.mockk.*</ID>
+    <ID>WildcardImport:GoogleTokenProviderTest.kt$import java.time.*</ID>
+    <ID>WildcardImport:GoogleTokenProviderTest.kt$import org.assertj.core.api.Assertions.*</ID>
+  </CurrentIssues>
+</SmellBaseline>

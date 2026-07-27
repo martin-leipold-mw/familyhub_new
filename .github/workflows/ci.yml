@@ -29,6 +29,32 @@ jobs:
       - name: Validate openapi.yml
         run: openapi-generator-cli validate -i api/openapi.yml
 
+  openapi-breaking:
+    name: OpenAPI — Breaking Changes
+    runs-on: ubuntu-latest
+    needs: validate-spec
+    # Only on PRs, and skippable for intentional breaks via a 'breaking-change' label.
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'breaking-change')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract base spec from target branch
+        id: base
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          if git show "FETCH_HEAD:api/openapi.yml" > /tmp/openapi-base.yml 2>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No api/openapi.yml on ${{ github.base_ref }} yet — skipping breaking-change check."
+          fi
+
+      - name: Fail on breaking API changes
+        if: steps.base.outputs.exists == 'true'
+        run: |
+          docker run --rm -v /tmp:/tmp -v "$PWD/api:/api" tufin/oasdiff:latest \
+            breaking /tmp/openapi-base.yml /api/openapi.yml --fail-on ERR
+
   build-backend:
     name: Backend — Build & Test
     runs-on: ubuntu-latest

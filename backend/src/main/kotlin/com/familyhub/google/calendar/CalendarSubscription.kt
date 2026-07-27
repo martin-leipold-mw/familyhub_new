@@ -16,22 +16,16 @@ import java.util.UUID
 class CalendarSubscription(
     @Column(name = "connection_id", nullable = false)
     var connectionId: UUID,
-
     @Column(name = "google_calendar_id", nullable = false)
     var googleCalendarId: String,
-
     @Column(nullable = false)
     var summary: String,
-
     @Column(name = "background_color")
     var backgroundColor: String? = null,
-
     @Column(name = "is_primary", nullable = false)
     var isPrimary: Boolean = false,
-
     @Column(name = "is_selected", nullable = false)
     var isSelected: Boolean = false,
-
     @Column(name = "sync_token")
     var syncToken: String? = null,
 ) {

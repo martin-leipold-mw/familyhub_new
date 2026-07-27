@@ -1,8 +1,10 @@
 package com.familyhub.google.connection
 
-import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.credentials.CredentialsService
-import com.familyhub.google.oauth.*
+import com.familyhub.google.crypto.EncryptionService
+import com.familyhub.google.oauth.GoogleOAuthFlow
+import com.familyhub.google.oauth.OAuthStateStore
+import com.familyhub.google.oauth.PkceGenerator
 import com.familyhub.google.token.GoogleTokenProvider
 import com.familyhub.members.FamilyMember
 import com.familyhub.members.FamilyMemberRepository
@@ -15,9 +17,15 @@ import java.time.Instant
 import java.util.UUID
 
 data class CallbackResult(val memberId: UUID, val memberName: String, val isNewMember: Boolean, val returnUrl: String)
+
 data class ConnectionView(
-    val connectionId: UUID, val memberId: UUID, val email: String, val name: String,
-    val status: String, val lastSyncedAt: Instant?, val scopes: List<String>,
+    val connectionId: UUID,
+    val memberId: UUID,
+    val email: String,
+    val name: String,
+    val status: String,
+    val lastSyncedAt: Instant?,
+    val scopes: List<String>,
 )
 
 @Service
@@ -34,13 +42,17 @@ class ConnectionService(
 ) {
     private val palette = listOf("blue", "pink", "green", "purple", "orange", "teal")
 
-    fun startAuthorization(credentialsId: UUID?, returnUrl: String): String {
-        val cred = if (credentialsId != null) {
-            credentials.entity(credentialsId)
-        } else {
-            credentials.primaryOrNull()
-                ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert. Bitte zuerst im Setup einrichten.")
-        }
+    fun startAuthorization(
+        credentialsId: UUID?,
+        returnUrl: String,
+    ): String {
+        val cred =
+            if (credentialsId != null) {
+                credentials.entity(credentialsId)
+            } else {
+                credentials.primaryOrNull()
+                    ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert. Bitte zuerst im Setup einrichten.")
+            }
         val clientId = encryption.decrypt(cred.clientId)
         val verifier = pkce.generateVerifier()
         val safeReturn = sanitizeReturnUrl(returnUrl)
@@ -49,20 +61,29 @@ class ConnectionService(
     }
 
     @Transactional
-    fun handleCallback(code: String, state: String): CallbackResult {
-        val entry = stateStore.consume(state)
-            ?: throw ValidationException("Ungültiger oder abgelaufener Anmeldevorgang.")
+    fun handleCallback(
+        code: String,
+        state: String,
+    ): CallbackResult {
+        val entry =
+            stateStore.consume(state)
+                ?: throw ValidationException("Ungültiger oder abgelaufener Anmeldevorgang.")
         val entryCredId = entry.credentialsId
-        val cred = if (entryCredId != null) {
-            credentials.entity(entryCredId)
-        } else {
-            credentials.primaryOrNull()
-                ?: throw ValidationException("Keine Google-Credentials konfiguriert.")
-        }
-        val tokens = flow.exchangeCode(
-            encryption.decrypt(cred.clientId), encryption.decrypt(cred.clientSecret),
-            cred.redirectUri, code, entry.verifier,
-        )
+        val cred =
+            if (entryCredId != null) {
+                credentials.entity(entryCredId)
+            } else {
+                credentials.primaryOrNull()
+                    ?: throw ValidationException("Keine Google-Credentials konfiguriert.")
+            }
+        val tokens =
+            flow.exchangeCode(
+                encryption.decrypt(cred.clientId),
+                encryption.decrypt(cred.clientSecret),
+                cred.redirectUri,
+                code,
+                entry.verifier,
+            )
         val userInfo = flow.fetchUserInfo(tokens.accessToken)
 
         val existing = connections.findByGoogleAccountId(userInfo.sub)
@@ -70,24 +91,34 @@ class ConnectionService(
         val member: FamilyMember
         val isNew: Boolean
         if (existing == null) {
-            if (refresh == null) throw ValidationException(
-                "Google hat kein Refresh-Token geliefert. Bitte den Zugriff in den Google-Kontoeinstellungen entfernen und erneut verbinden.")
-            member = members.save(FamilyMember(
-                name = userInfo.name ?: userInfo.email, role = "parent",
-                color = palette[(members.count() % palette.size).toInt()],
-            ))
-            connections.save(GoogleConnection(
-                familyMemberId = member.id!!, credentialsId = cred.id, googleAccountId = userInfo.sub,
-                email = userInfo.email, accessToken = encryption.encrypt(tokens.accessToken),
-                refreshToken = encryption.encrypt(refresh),
-                tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds),
-                scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
-            ))
+            if (refresh == null) {
+                throw ValidationException(
+                    "Google hat kein Refresh-Token geliefert. Bitte den Zugriff in den " +
+                        "Google-Kontoeinstellungen entfernen und erneut verbinden.",
+                )
+            }
+            member =
+                members.save(
+                    FamilyMember(
+                        name = userInfo.name ?: userInfo.email, role = "parent",
+                        color = palette[(members.count() % palette.size).toInt()],
+                    ),
+                )
+            connections.save(
+                GoogleConnection(
+                    familyMemberId = member.id!!, credentialsId = cred.id, googleAccountId = userInfo.sub,
+                    email = userInfo.email, accessToken = encryption.encrypt(tokens.accessToken),
+                    refreshToken = encryption.encrypt(refresh),
+                    tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds),
+                    scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
+                ),
+            )
             isNew = true
         } else {
-            member = members.findById(existing.familyMemberId).orElseThrow {
-                ResourceNotFoundException("Mitglied nicht gefunden")
-            }
+            member =
+                members.findById(existing.familyMemberId).orElseThrow {
+                    ResourceNotFoundException("Mitglied nicht gefunden")
+                }
             existing.accessToken = encryption.encrypt(tokens.accessToken)
             existing.tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds)
             existing.status = "active"
@@ -101,16 +132,18 @@ class ConnectionService(
         return CallbackResult(member.id!!, member.name, isNew, entry.returnUrl)
     }
 
-    fun listConnections(): List<ConnectionView> = connections.findAll().map { c ->
-        val name = members.findById(c.familyMemberId).map { it.name }.orElse(c.email)
-        ConnectionView(c.id!!, c.familyMemberId, c.email, name, c.status, c.lastSyncedAt, c.scopes)
-    }
+    fun listConnections(): List<ConnectionView> =
+        connections.findAll().map { c ->
+            val name = members.findById(c.familyMemberId).map { it.name }.orElse(c.email)
+            ConnectionView(c.id!!, c.familyMemberId, c.email, name, c.status, c.lastSyncedAt, c.scopes)
+        }
 
     @Transactional
     fun disconnect(connectionId: UUID) {
-        val c = connections.findById(connectionId).orElseThrow {
-            ResourceNotFoundException("Verbindung nicht gefunden")
-        }
+        val c =
+            connections.findById(connectionId).orElseThrow {
+                ResourceNotFoundException("Verbindung nicht gefunden")
+            }
         runCatching { flow.revoke(encryption.decrypt(c.refreshToken)) }
         connections.delete(c)
         if (connections.count() == 0L) settings.setGoogleConnected(false)

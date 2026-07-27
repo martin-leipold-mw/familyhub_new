@@ -7,6 +7,8 @@ plugins {
     id("org.springframework.boot") version "3.3.5"
     id("io.spring.dependency-management") version "1.1.6"
     id("org.openapi.generator") version "7.9.0"
+    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.1"
     jacoco
 }
 
@@ -57,6 +59,50 @@ sourceSets {
 
 tasks.compileKotlin {
     dependsOn(tasks.openApiGenerate)
+}
+
+// --- Static analysis: ktlint + detekt --------------------------------------
+// Both must ignore the OpenAPI-generated sources: those live under
+// build/generated but are wired into the main source set via srcDir(), so the
+// linters would otherwise flag machine-generated code we never touch by hand.
+ktlint {
+    filter {
+        exclude { it.file.path.contains("${layout.buildDirectory.get()}") }
+        exclude { it.file.path.contains("/generated/") }
+    }
+}
+
+// The main source set includes the generated sources dir (srcDir above), which
+// ktlint's tasks declare as an input. Gradle 8.12 requires an explicit edge to
+// the task that produces it, even though the filter above skips those files.
+tasks.matching { it.name.startsWith("runKtlint") }.configureEach {
+    dependsOn(tasks.openApiGenerate)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$rootDir/config/detekt/detekt.yml")
+    // Existing smells are frozen here; only NEW findings fail the build.
+    // Regenerate with `./gradlew detektBaseline`, burn down over time.
+    baseline = file("$rootDir/config/detekt/baseline.xml")
+    // Only hand-written sources; never the generated build dir.
+    source.setFrom("src/main/kotlin", "src/test/kotlin")
+}
+
+// detekt 1.23.7 ships an analyzer compiled against Kotlin 2.0.10; the project is
+// on 2.0.21. Pin ONLY detekt's own classpath back to 2.0.10 so the two don't
+// clash (documented workaround). Does not affect the app's Kotlin version.
+configurations.matching { it.name == "detekt" }.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.jetbrains.kotlin") {
+            useVersion("2.0.10")
+        }
+    }
+}
+
+// detekt does not attach to `check` by itself (ktlintCheck does). Make both gates.
+tasks.named("check") {
+    dependsOn("detekt")
 }
 
 tasks.test {
@@ -155,5 +201,6 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
     testImplementation("org.testcontainers:postgresql:1.20.4")
     testImplementation("org.wiremock:wiremock-standalone:3.9.2")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
     testRuntimeOnly("com.h2database:h2")
 }

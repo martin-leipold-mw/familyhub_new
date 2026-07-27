@@ -16,8 +16,9 @@ class PkceGeneratorTest {
 
     @Test fun `challenge is base64url sha256 of verifier without padding`() {
         val v = "test-verifier-value"
-        val expected = Base64.getUrlEncoder().withoutPadding()
-            .encodeToString(MessageDigest.getInstance("SHA-256").digest(v.toByteArray()))
+        val expected =
+            Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(MessageDigest.getInstance("SHA-256").digest(v.toByteArray()))
         assertThat(g.challengeFor(v)).isEqualTo(expected)
     }
 }

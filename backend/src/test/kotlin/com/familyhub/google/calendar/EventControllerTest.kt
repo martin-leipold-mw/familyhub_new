@@ -1,5 +1,6 @@
 package com.familyhub.google.calendar
 
+import com.familyhub.settings.SettingsService
 import com.familyhub.shared.exceptions.GlobalExceptionHandler
 import com.familyhub.shared.security.SecurityConfig
 import com.ninjasquad.springmockk.MockkBean
@@ -17,7 +18,6 @@ import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
-import com.familyhub.settings.SettingsService
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
@@ -26,7 +26,6 @@ import java.util.UUID
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 @ExtendWith(MockKExtension::class)
 class EventControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -92,10 +91,12 @@ class EventControllerTest {
     fun `GET events with date-only start uses family timezone to compute start of day`() {
         every { settingsService.timezone() } returns "Europe/Berlin"
         // 2026-07-24 start of day in Europe/Berlin = 2026-07-23T22:00:00Z (UTC+2 in summer)
-        val expectedStart = java.time.LocalDate.parse("2026-07-24")
-            .atStartOfDay(java.time.ZoneId.of("Europe/Berlin")).toInstant()
-        val expectedEnd = java.time.LocalDate.parse("2026-07-25")
-            .atStartOfDay(java.time.ZoneId.of("Europe/Berlin")).toInstant()
+        val expectedStart =
+            java.time.LocalDate.parse("2026-07-24")
+                .atStartOfDay(java.time.ZoneId.of("Europe/Berlin")).toInstant()
+        val expectedEnd =
+            java.time.LocalDate.parse("2026-07-25")
+                .atStartOfDay(java.time.ZoneId.of("Europe/Berlin")).toInstant()
 
         every { eventService.list(expectedStart, expectedEnd, null, null) } returns listOf(aView())
 
@@ -136,13 +137,14 @@ class EventControllerTest {
 
     @Test
     fun `GET event by id returns 200 with all-day event and null timestamps`() {
-        every { eventService.get(eventId) } returns aView(
-            isAllDay = true,
-            start = null,
-            end = null,
-            allDayStart = LocalDate.parse("2026-07-24"),
-            allDayEnd = LocalDate.parse("2026-07-25"),
-        )
+        every { eventService.get(eventId) } returns
+            aView(
+                isAllDay = true,
+                start = null,
+                end = null,
+                allDayStart = LocalDate.parse("2026-07-24"),
+                allDayEnd = LocalDate.parse("2026-07-25"),
+            )
 
         mockMvc.get("/api/v1/events/$eventId")
             .andExpect {
@@ -179,7 +181,8 @@ class EventControllerTest {
 
         mockMvc.post("/api/v1/events") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {
                   "memberId": "$memberId",
                   "title": "Test Event",
@@ -187,7 +190,7 @@ class EventControllerTest {
                   "start": "2026-07-24T10:00:00Z",
                   "end": "2026-07-24T11:00:00Z"
                 }
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect {
             status { isCreated() }
             jsonPath("$.id") { value(eventId.toString()) }
@@ -203,14 +206,15 @@ class EventControllerTest {
 
         mockMvc.post("/api/v1/events") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {
                   "memberId": "$memberId",
                   "title": "Test Event",
                   "isAllDay": false,
                   "start": "not-a-date"
                 }
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect {
             status { isBadRequest() }
         }
@@ -225,13 +229,14 @@ class EventControllerTest {
 
         mockMvc.put("/api/v1/events/$eventId") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {
                   "memberId": "$memberId",
                   "title": "Updated Event",
                   "isAllDay": false
                 }
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect {
             status { isOk() }
             jsonPath("$.title") { value("Updated Event") }

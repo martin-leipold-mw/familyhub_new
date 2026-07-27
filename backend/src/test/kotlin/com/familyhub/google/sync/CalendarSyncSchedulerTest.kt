@@ -13,21 +13,21 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class CalendarSyncSchedulerTest {
-
     private val connectionRepository = mockk<GoogleConnectionRepository>()
     private val calendarSyncService = mockk<CalendarSyncService>()
     private val scheduler = CalendarSyncScheduler(connectionRepository, calendarSyncService)
 
-    private fun activeConnection(): GoogleConnection = GoogleConnection(
-        familyMemberId = UUID.randomUUID(),
-        credentialsId = null,
-        googleAccountId = "acc@test.com",
-        email = "acc@test.com",
-        accessToken = null,
-        refreshToken = "refresh",
-        tokenExpiresAt = null,
-        status = "active",
-    )
+    private fun activeConnection(): GoogleConnection =
+        GoogleConnection(
+            familyMemberId = UUID.randomUUID(),
+            credentialsId = null,
+            googleAccountId = "acc@test.com",
+            email = "acc@test.com",
+            accessToken = null,
+            refreshToken = "refresh",
+            tokenExpiresAt = null,
+            status = "active",
+        )
 
     @BeforeEach
     fun resetGuard() {

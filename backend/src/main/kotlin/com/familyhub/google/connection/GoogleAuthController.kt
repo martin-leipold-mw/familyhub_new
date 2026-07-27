@@ -16,8 +16,10 @@ import java.util.UUID
 class GoogleAuthController(
     private val service: ConnectionService,
 ) : GoogleAuthApi {
-
-    override fun authorizeGoogle(credentialsId: UUID?, returnUrl: String?): ResponseEntity<AuthUrlResponse> =
+    override fun authorizeGoogle(
+        credentialsId: UUID?,
+        returnUrl: String?,
+    ): ResponseEntity<AuthUrlResponse> =
         ResponseEntity.ok(AuthUrlResponse(authUrl = service.startAuthorization(credentialsId, returnUrl ?: "/")))
 
     override fun googleCallback(oauthCallbackRequest: OAuthCallbackRequest): ResponseEntity<OAuthCallbackResponse> {
@@ -28,7 +30,7 @@ class GoogleAuthController(
                 memberName = r.memberName,
                 isNewMember = r.isNewMember,
                 returnUrl = r.returnUrl,
-            )
+            ),
         )
     }
 
@@ -44,7 +46,7 @@ class GoogleAuthController(
                     lastSyncedAt = it.lastSyncedAt?.let { t -> t.toString() },
                     scopes = it.scopes,
                 )
-            }
+            },
         )
 
     @RequiresPinSession

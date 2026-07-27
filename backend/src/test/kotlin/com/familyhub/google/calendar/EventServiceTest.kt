@@ -4,7 +4,6 @@ import com.familyhub.google.connection.GoogleConnection
 import com.familyhub.google.connection.GoogleConnectionRepository
 import com.familyhub.shared.exceptions.ResourceNotFoundException
 import com.familyhub.shared.exceptions.ValidationException
-import com.google.api.services.calendar.model.Event as GoogleEvent
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -17,9 +16,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
+import com.google.api.services.calendar.model.Event as GoogleEvent
 
 class EventServiceTest {
-
     // ─── Mocks ────────────────────────────────────────────────────────────────
 
     private val eventRepository = mockk<EventRepository>()
@@ -37,71 +36,77 @@ class EventServiceTest {
     private val subscriptionId = UUID.randomUUID()
     private val eventId = UUID.randomUUID()
 
-    private val connection = GoogleConnection(
-        familyMemberId = memberId,
-        credentialsId = null,
-        googleAccountId = "g123",
-        email = "test@example.com",
-        accessToken = "enc_token",
-        refreshToken = "enc_refresh",
-        tokenExpiresAt = null,
-        status = "active",
-    ).also { it.id = connectionId }
+    private val connection =
+        GoogleConnection(
+            familyMemberId = memberId,
+            credentialsId = null,
+            googleAccountId = "g123",
+            email = "test@example.com",
+            accessToken = "enc_token",
+            refreshToken = "enc_refresh",
+            tokenExpiresAt = null,
+            status = "active",
+        ).also { it.id = connectionId }
 
-    private val primarySubscription = CalendarSubscription(
-        connectionId = connectionId,
-        googleCalendarId = "primary@gmail.com",
-        summary = "Primary",
-        isPrimary = true,
-        isSelected = true,
-    ).also { it.id = subscriptionId }
+    private val primarySubscription =
+        CalendarSubscription(
+            connectionId = connectionId,
+            googleCalendarId = "primary@gmail.com",
+            summary = "Primary",
+            isPrimary = true,
+            isSelected = true,
+        ).also { it.id = subscriptionId }
 
-    private val secondarySubscription = CalendarSubscription(
-        connectionId = connectionId,
-        googleCalendarId = "secondary@gmail.com",
-        summary = "Secondary",
-        isPrimary = false,
-        isSelected = true,
-    ).also { it.id = UUID.randomUUID() }
+    private val secondarySubscription =
+        CalendarSubscription(
+            connectionId = connectionId,
+            googleCalendarId = "secondary@gmail.com",
+            summary = "Secondary",
+            isPrimary = false,
+            isSelected = true,
+        ).also { it.id = UUID.randomUUID() }
 
     private val startTime = Instant.parse("2026-08-01T10:00:00Z")
     private val endTime = Instant.parse("2026-08-01T11:00:00Z")
 
-    private val timedEvent = Event(
-        subscriptionId = subscriptionId,
-        googleEventId = "google-evt-1",
-        googleCalendarId = "primary@gmail.com",
-        ownerMemberId = memberId,
-        title = "Meeting",
-        description = "Team standup",
-        location = "Office",
-        startTime = startTime,
-        endTime = endTime,
-        isAllDay = false,
-        syncStatus = "synced",
-    ).also { it.id = eventId }
+    private val timedEvent =
+        Event(
+            subscriptionId = subscriptionId,
+            googleEventId = "google-evt-1",
+            googleCalendarId = "primary@gmail.com",
+            ownerMemberId = memberId,
+            title = "Meeting",
+            description = "Team standup",
+            location = "Office",
+            startTime = startTime,
+            endTime = endTime,
+            isAllDay = false,
+            syncStatus = "synced",
+        ).also { it.id = eventId }
 
-    private val allDayEvent = Event(
-        subscriptionId = subscriptionId,
-        googleEventId = "google-evt-2",
-        googleCalendarId = "primary@gmail.com",
-        ownerMemberId = memberId,
-        title = "Holiday",
-        isAllDay = true,
-        allDayStart = LocalDate.of(2026, 8, 1),
-        allDayEnd = LocalDate.of(2026, 8, 1),
-        syncStatus = "synced",
-    ).also { it.id = UUID.randomUUID() }
+    private val allDayEvent =
+        Event(
+            subscriptionId = subscriptionId,
+            googleEventId = "google-evt-2",
+            googleCalendarId = "primary@gmail.com",
+            ownerMemberId = memberId,
+            title = "Holiday",
+            isAllDay = true,
+            allDayStart = LocalDate.of(2026, 8, 1),
+            allDayEnd = LocalDate.of(2026, 8, 1),
+            syncStatus = "synced",
+        ).also { it.id = UUID.randomUUID() }
 
     @BeforeEach
     fun setUp() {
-        service = EventService(
-            eventRepository = eventRepository,
-            subscriptionRepository = subscriptionRepository,
-            connectionRepository = connectionRepository,
-            calendarClient = calendarClient,
-            mapper = mapper,
-        )
+        service =
+            EventService(
+                eventRepository = eventRepository,
+                subscriptionRepository = subscriptionRepository,
+                connectionRepository = connectionRepository,
+                calendarClient = calendarClient,
+                mapper = mapper,
+            )
     }
 
     // ─── list ─────────────────────────────────────────────────────────────────
@@ -144,15 +149,16 @@ class EventServiceTest {
     @Test
     fun `list filters by memberId when provided`() {
         val otherMemberId = UUID.randomUUID()
-        val otherEvent = Event(
-            subscriptionId = subscriptionId,
-            googleEventId = "google-evt-other",
-            googleCalendarId = "primary@gmail.com",
-            ownerMemberId = otherMemberId,
-            title = "Other Member Event",
-            isAllDay = false,
-            syncStatus = "synced",
-        ).also { it.id = UUID.randomUUID() }
+        val otherEvent =
+            Event(
+                subscriptionId = subscriptionId,
+                googleEventId = "google-evt-other",
+                googleCalendarId = "primary@gmail.com",
+                ownerMemberId = otherMemberId,
+                title = "Other Member Event",
+                isAllDay = false,
+                syncStatus = "synced",
+            ).also { it.id = UUID.randomUUID() }
         every { eventRepository.findAll() } returns listOf(timedEvent, otherEvent)
 
         val result = service.list(start = null, end = null, memberId = memberId, calendarId = null)
@@ -164,15 +170,16 @@ class EventServiceTest {
     @Test
     fun `list with null memberId does not filter by member`() {
         val otherMemberId = UUID.randomUUID()
-        val otherEvent = Event(
-            subscriptionId = subscriptionId,
-            googleEventId = "google-evt-other",
-            googleCalendarId = "primary@gmail.com",
-            ownerMemberId = otherMemberId,
-            title = "Other Member Event",
-            isAllDay = false,
-            syncStatus = "synced",
-        ).also { it.id = UUID.randomUUID() }
+        val otherEvent =
+            Event(
+                subscriptionId = subscriptionId,
+                googleEventId = "google-evt-other",
+                googleCalendarId = "primary@gmail.com",
+                ownerMemberId = otherMemberId,
+                title = "Other Member Event",
+                isAllDay = false,
+                syncStatus = "synced",
+            ).also { it.id = UUID.randomUUID() }
         every { eventRepository.findAll() } returns listOf(timedEvent, otherEvent)
 
         val result = service.list(start = null, end = null, memberId = null, calendarId = null)
@@ -200,15 +207,16 @@ class EventServiceTest {
 
     @Test
     fun `list filters by calendarId and excludes non-matching events`() {
-        val eventOnOtherCal = Event(
-            subscriptionId = UUID.randomUUID(),
-            googleEventId = "google-evt-3",
-            googleCalendarId = "other@gmail.com",
-            ownerMemberId = memberId,
-            title = "Other Calendar Event",
-            isAllDay = false,
-            syncStatus = "synced",
-        ).also { it.id = UUID.randomUUID() }
+        val eventOnOtherCal =
+            Event(
+                subscriptionId = UUID.randomUUID(),
+                googleEventId = "google-evt-3",
+                googleCalendarId = "other@gmail.com",
+                ownerMemberId = memberId,
+                title = "Other Calendar Event",
+                isAllDay = false,
+                syncStatus = "synced",
+            ).also { it.id = UUID.randomUUID() }
         every { eventRepository.findAll() } returns listOf(timedEvent, eventOnOtherCal)
 
         val result = service.list(start = null, end = null, memberId = null, calendarId = "primary@gmail.com")
@@ -251,14 +259,15 @@ class EventServiceTest {
     fun `create throws ResourceNotFoundException when no connection for member`() {
         every { connectionRepository.findByFamilyMemberId(memberId) } returns null
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Meeting",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ResourceNotFoundException::class.java)
@@ -267,22 +276,24 @@ class EventServiceTest {
 
     @Test
     fun `create with calendarId provided and found inserts event`() {
-        val googleInserted = GoogleEvent()
-            .setId("google-evt-new")
-            .setSummary("Meeting")
+        val googleInserted =
+            GoogleEvent()
+                .setId("google-evt-new")
+                .setSummary("Meeting")
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns primarySubscription
         every { calendarClient.insertEvent(connection, "primary@gmail.com", any()) } returns googleInserted
         every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = UUID.randomUUID() } }
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Meeting",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         val result = service.create(cmd)
 
@@ -297,14 +308,15 @@ class EventServiceTest {
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "unknown@gmail.com") } returns null
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "unknown@gmail.com",
-            title = "Meeting",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "unknown@gmail.com",
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -313,22 +325,24 @@ class EventServiceTest {
 
     @Test
     fun `create with null calendarId uses primary subscription`() {
-        val googleInserted = GoogleEvent()
-            .setId("google-evt-new")
-            .setSummary("Meeting")
+        val googleInserted =
+            GoogleEvent()
+                .setId("google-evt-new")
+                .setSummary("Meeting")
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findAllByConnectionId(connectionId) } returns listOf(primarySubscription, secondarySubscription)
         every { calendarClient.insertEvent(connection, "primary@gmail.com", any()) } returns googleInserted
         every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = UUID.randomUUID() } }
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Meeting",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         val result = service.create(cmd)
 
@@ -341,14 +355,15 @@ class EventServiceTest {
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findAllByConnectionId(connectionId) } returns listOf(secondarySubscription)
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Meeting",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -359,14 +374,15 @@ class EventServiceTest {
 
     @Test
     fun `create timed event with null start throws ValidationException`() {
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Meeting",
-            start = null,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Meeting",
+                start = null,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -377,14 +393,15 @@ class EventServiceTest {
 
     @Test
     fun `create timed event with null end throws ValidationException`() {
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Meeting",
-            start = startTime,
-            end = null,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Meeting",
+                start = startTime,
+                end = null,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -395,14 +412,15 @@ class EventServiceTest {
 
     @Test
     fun `create all-day event with null allDayStart throws ValidationException`() {
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Holiday",
-            allDayStart = null,
-            allDayEnd = LocalDate.of(2026, 8, 1),
-            isAllDay = true,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Holiday",
+                allDayStart = null,
+                allDayEnd = LocalDate.of(2026, 8, 1),
+                isAllDay = true,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -413,14 +431,15 @@ class EventServiceTest {
 
     @Test
     fun `create all-day event with null allDayEnd throws ValidationException`() {
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Holiday",
-            allDayStart = LocalDate.of(2026, 8, 1),
-            allDayEnd = null,
-            isAllDay = true,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Holiday",
+                allDayStart = LocalDate.of(2026, 8, 1),
+                allDayEnd = null,
+                isAllDay = true,
+            )
 
         assertThatThrownBy { service.create(cmd) }
             .isInstanceOf(ValidationException::class.java)
@@ -431,22 +450,24 @@ class EventServiceTest {
 
     @Test
     fun `create valid all-day event inserts event`() {
-        val googleInserted = GoogleEvent()
-            .setId("google-evt-allday")
-            .setSummary("Holiday")
+        val googleInserted =
+            GoogleEvent()
+                .setId("google-evt-allday")
+                .setSummary("Holiday")
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns primarySubscription
         every { calendarClient.insertEvent(connection, "primary@gmail.com", any()) } returns googleInserted
         every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = UUID.randomUUID() } }
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = "primary@gmail.com",
-            title = "Holiday",
-            allDayStart = LocalDate.of(2026, 8, 1),
-            allDayEnd = LocalDate.of(2026, 8, 3),
-            isAllDay = true,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = "primary@gmail.com",
+                title = "Holiday",
+                allDayStart = LocalDate.of(2026, 8, 1),
+                allDayEnd = LocalDate.of(2026, 8, 3),
+                isAllDay = true,
+            )
 
         val result = service.create(cmd)
 
@@ -460,14 +481,15 @@ class EventServiceTest {
     fun `update throws ResourceNotFoundException when event not found`() {
         every { eventRepository.findById(eventId) } returns Optional.empty()
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.update(eventId, cmd) }
             .isInstanceOf(ResourceNotFoundException::class.java)
@@ -479,14 +501,15 @@ class EventServiceTest {
         every { eventRepository.findById(eventId) } returns Optional.of(timedEvent)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns null
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.update(eventId, cmd) }
             .isInstanceOf(ResourceNotFoundException::class.java)
@@ -498,14 +521,15 @@ class EventServiceTest {
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns null
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.update(eventId, cmd) }
             .isInstanceOf(ResourceNotFoundException::class.java)
@@ -513,23 +537,25 @@ class EventServiceTest {
 
     @Test
     fun `update happy path preserves local event id and updates in Google`() {
-        val googleUpdated = GoogleEvent()
-            .setId("google-evt-1")
-            .setSummary("Updated Title")
+        val googleUpdated =
+            GoogleEvent()
+                .setId("google-evt-1")
+                .setSummary("Updated Title")
         every { eventRepository.findById(eventId) } returns Optional.of(timedEvent)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com") } returns primarySubscription
         every { calendarClient.updateEvent(connection, "primary@gmail.com", any()) } returns googleUpdated
         every { eventRepository.save(any<Event>()) } answers { firstArg() }
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated Title",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated Title",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         val result = service.update(eventId, cmd)
 
@@ -541,9 +567,10 @@ class EventServiceTest {
 
     @Test
     fun `update saved entity has local id preserved`() {
-        val googleUpdated = GoogleEvent()
-            .setId("google-evt-1")
-            .setSummary("Updated Title")
+        val googleUpdated =
+            GoogleEvent()
+                .setId("google-evt-1")
+                .setSummary("Updated Title")
         val savedSlot = mutableListOf<Event>()
         every { eventRepository.findById(eventId) } returns Optional.of(timedEvent)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
@@ -551,14 +578,15 @@ class EventServiceTest {
         every { calendarClient.updateEvent(connection, "primary@gmail.com", any()) } returns googleUpdated
         every { eventRepository.save(capture(savedSlot)) } answers { firstArg() }
 
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated Title",
-            start = startTime,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated Title",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
+            )
 
         service.update(eventId, cmd)
 
@@ -568,14 +596,15 @@ class EventServiceTest {
 
     @Test
     fun `update timed event with null start throws ValidationException before any Google call`() {
-        val cmd = CreateEventCommand(
-            memberId = memberId,
-            calendarId = null,
-            title = "Updated",
-            start = null,
-            end = endTime,
-            isAllDay = false,
-        )
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId,
+                calendarId = null,
+                title = "Updated",
+                start = null,
+                end = endTime,
+                isAllDay = false,
+            )
 
         assertThatThrownBy { service.update(eventId, cmd) }
             .isInstanceOf(ValidationException::class.java)

@@ -13,13 +13,14 @@ data class CalendarView(
     val isSelected: Boolean,
 )
 
-private fun CalendarSubscription.toView() = CalendarView(
-    id = googleCalendarId,
-    summary = summary,
-    backgroundColor = backgroundColor,
-    isPrimary = isPrimary,
-    isSelected = isSelected,
-)
+private fun CalendarSubscription.toView() =
+    CalendarView(
+        id = googleCalendarId,
+        summary = summary,
+        backgroundColor = backgroundColor,
+        isPrimary = isPrimary,
+        isSelected = isSelected,
+    )
 
 @Service
 class CalendarQueryService(
@@ -27,16 +28,19 @@ class CalendarQueryService(
     private val subscriptionRepository: CalendarSubscriptionRepository,
     private val calendarSyncService: CalendarSyncService,
 ) {
-
     fun listForMember(memberId: UUID): List<CalendarView> {
         val connection = connectionRepository.findByFamilyMemberId(memberId) ?: return emptyList()
         calendarSyncService.refreshCalendars(connection)
         return subscriptionRepository.findAllByConnectionId(connection.id!!).map { it.toView() }
     }
 
-    fun saveSelection(memberId: UUID, calendarIds: List<String>) {
-        val connection = connectionRepository.findByFamilyMemberId(memberId)
-            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+    fun saveSelection(
+        memberId: UUID,
+        calendarIds: List<String>,
+    ) {
+        val connection =
+            connectionRepository.findByFamilyMemberId(memberId)
+                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
         val subscriptions = subscriptionRepository.findAllByConnectionId(connection.id!!)
         for (subscription in subscriptions) {
             subscription.isSelected = subscription.googleCalendarId in calendarIds
@@ -45,8 +49,9 @@ class CalendarQueryService(
     }
 
     fun syncForMember(memberId: UUID): SyncResult {
-        val connection = connectionRepository.findByFamilyMemberId(memberId)
-            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+        val connection =
+            connectionRepository.findByFamilyMemberId(memberId)
+                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
         return calendarSyncService.syncConnection(connection)
     }
 }

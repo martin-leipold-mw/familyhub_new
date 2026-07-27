@@ -25,19 +25,19 @@ import java.util.UUID
  * the literal '@' — not '%40'.
  */
 class GoogleCalendarClientTest {
-
     private lateinit var wm: WireMockServer
     private lateinit var client: GoogleCalendarClient
     private val tokenProvider = mockk<GoogleTokenProvider>()
-    private val connection = GoogleConnection(
-        familyMemberId = UUID.randomUUID(),
-        credentialsId = null,
-        googleAccountId = "g123",
-        email = "test@example.com",
-        accessToken = "enc_token",
-        refreshToken = "enc_refresh",
-        tokenExpiresAt = null,
-    )
+    private val connection =
+        GoogleConnection(
+            familyMemberId = UUID.randomUUID(),
+            credentialsId = null,
+            googleAccountId = "g123",
+            email = "test@example.com",
+            accessToken = "enc_token",
+            refreshToken = "enc_refresh",
+            tokenExpiresAt = null,
+        )
 
     @BeforeEach
     fun setUp() {
@@ -74,9 +74,9 @@ class GoogleCalendarClientTest {
                           ],
                           "nextPageToken": "page2token"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
         // Page 2: non-primary calendar without backgroundColor — no nextPageToken (loop ends)
         wm.stubFor(
@@ -94,9 +94,9 @@ class GoogleCalendarClientTest {
                             }
                           ]
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listCalendars(connection)
@@ -132,9 +132,9 @@ class GoogleCalendarClientTest {
                             }
                           ]
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listCalendars(connection)
@@ -171,9 +171,9 @@ class GoogleCalendarClientTest {
                           ],
                           "nextPageToken": "eventsPage2"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
         // Page 2: has nextSyncToken, no nextPageToken (loop ends)
         wm.stubFor(
@@ -193,9 +193,9 @@ class GoogleCalendarClientTest {
                           ],
                           "nextSyncToken": "sync-token-abc123"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listEvents(connection, "primary@gmail.com", null, null, null)
@@ -221,9 +221,9 @@ class GoogleCalendarClientTest {
                           "items": [],
                           "nextSyncToken": "new-sync-token"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listEvents(connection, "primary@gmail.com", "my-sync-token", null, null)
@@ -254,9 +254,9 @@ class GoogleCalendarClientTest {
                                 "errors": [{"domain":"calendar","reason":"fullSyncRequired"}]
                               }
                             }
-                            """.trimIndent()
-                        )
-                )
+                            """.trimIndent(),
+                        ),
+                ),
         )
 
         val result = client.listEvents(connection, "primary@gmail.com", "stale-sync-token", null, null)
@@ -285,9 +285,9 @@ class GoogleCalendarClientTest {
                                 "errors": [{"domain":"calendar","reason":"forbidden"}]
                               }
                             }
-                            """.trimIndent()
-                        )
-                )
+                            """.trimIndent(),
+                        ),
+                ),
         )
 
         assertThatThrownBy {
@@ -312,9 +312,9 @@ class GoogleCalendarClientTest {
                           "summary": "Neuer Termin",
                           "status": "confirmed"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val newEvent = Event().setSummary("Neuer Termin")
@@ -343,9 +343,9 @@ class GoogleCalendarClientTest {
                           "summary": "Aktualisierter Termin",
                           "status": "confirmed"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val updatedEvent = Event().setId(eventId).setSummary("Aktualisierter Termin")
@@ -364,7 +364,7 @@ class GoogleCalendarClientTest {
 
         wm.stubFor(
             delete(urlPathEqualTo(calendarPath))
-                .willReturn(aResponse().withStatus(204))
+                .willReturn(aResponse().withStatus(204)),
         )
 
         // Must not throw
@@ -391,9 +391,9 @@ class GoogleCalendarClientTest {
                           "items": [],
                           "nextSyncToken": "new-sync-token-timerange"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val timeMin = com.google.api.client.util.DateTime("2026-01-01T00:00:00.000Z")
@@ -417,9 +417,9 @@ class GoogleCalendarClientTest {
                         {
                           "kind": "calendar#calendarList"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listCalendars(connection)
@@ -443,9 +443,9 @@ class GoogleCalendarClientTest {
                             }
                           ]
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listCalendars(connection)
@@ -469,9 +469,9 @@ class GoogleCalendarClientTest {
                           "kind": "calendar#events",
                           "nextSyncToken": "sync-no-items"
                         }
-                        """.trimIndent()
-                    )
-                )
+                        """.trimIndent(),
+                    ),
+                ),
         )
 
         val result = client.listEvents(connection, "primary@gmail.com", null, null, null)

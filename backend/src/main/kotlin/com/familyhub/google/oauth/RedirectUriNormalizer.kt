@@ -9,11 +9,12 @@ class RedirectUriNormalizer {
     fun normalize(uri: String): String {
         val trimmed = uri.trim()
         if (trimmed.isEmpty()) throw ValidationException("Redirect-URI ist erforderlich")
-        val parsed = try {
-            URI(trimmed)
-        } catch (ex: Exception) {
-            throw ValidationException("Redirect-URI ist ungültig")
-        }
+        val parsed =
+            try {
+                URI(trimmed)
+            } catch (ex: Exception) {
+                throw ValidationException("Redirect-URI ist ungültig")
+            }
         val rawScheme = parsed.scheme ?: throw ValidationException("Redirect-URI ist ungültig")
         val scheme = rawScheme.lowercase()
         val rawHost = parsed.host ?: throw ValidationException("Redirect-URI ist ungültig")

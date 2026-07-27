@@ -17,14 +17,17 @@ import java.util.UUID
 class MemberAvatarController(
     private val memberService: MemberService,
 ) {
-
     @GetMapping("/{id}/avatar", produces = [MediaType.IMAGE_JPEG_VALUE])
-    fun getAvatar(@PathVariable id: UUID): ResponseEntity<ByteArray> =
-        ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(memberService.getAvatar(id))
+    fun getAvatar(
+        @PathVariable id: UUID,
+    ): ResponseEntity<ByteArray> = ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(memberService.getAvatar(id))
 
     @RequiresPinSession
     @PutMapping("/{id}/avatar", consumes = [MediaType.IMAGE_JPEG_VALUE])
-    fun putAvatar(@PathVariable id: UUID, @RequestBody bytes: ByteArray): ResponseEntity<Unit> {
+    fun putAvatar(
+        @PathVariable id: UUID,
+        @RequestBody bytes: ByteArray,
+    ): ResponseEntity<Unit> {
         if (bytes.size > MAX_AVATAR_BYTES) throw PayloadTooLargeException()
         memberService.saveAvatar(id, bytes)
         return ResponseEntity.noContent().build()

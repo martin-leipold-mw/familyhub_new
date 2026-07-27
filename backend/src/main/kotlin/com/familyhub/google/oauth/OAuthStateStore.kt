@@ -14,11 +14,16 @@ data class OAuthStateEntry(val credentialsId: UUID?, val returnUrl: String, val 
 @Component
 class OAuthStateStore(private val clock: Clock) {
     private data class Stored(val entry: OAuthStateEntry, val createdAt: Instant)
+
     private val store = ConcurrentHashMap<String, Stored>()
     private val random = SecureRandom()
     private val encoder = Base64.getUrlEncoder().withoutPadding()
 
-    fun create(credentialsId: UUID?, returnUrl: String, verifier: String): String {
+    fun create(
+        credentialsId: UUID?,
+        returnUrl: String,
+        verifier: String,
+    ): String {
         val nonce = encoder.encodeToString(ByteArray(24).also { random.nextBytes(it) })
         store[nonce] = Stored(OAuthStateEntry(credentialsId, returnUrl, verifier), clock.instant())
         return nonce
@@ -30,5 +35,7 @@ class OAuthStateStore(private val clock: Clock) {
         return stored.entry
     }
 
-    companion object { private val TTL = Duration.ofMinutes(10) }
+    companion object {
+        private val TTL = Duration.ofMinutes(10)
+    }
 }

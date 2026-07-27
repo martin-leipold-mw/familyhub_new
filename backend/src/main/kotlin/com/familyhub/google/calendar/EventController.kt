@@ -21,7 +21,6 @@ class EventController(
     private val eventService: EventService,
     private val settingsService: SettingsService,
 ) : EventsApi {
-
     /**
      * Parses an ISO-8601 string to an Instant.
      *
@@ -53,17 +52,18 @@ class EventController(
     ): ResponseEntity<List<EventResponse>> =
         ResponseEntity.ok(
             eventService.list(parseInstant(start), parseInstant(end), memberId, calendarId)
-                .map { it.toResponse() }
+                .map { it.toResponse() },
         )
 
-    override fun getEvent(id: UUID): ResponseEntity<EventResponse> =
-        ResponseEntity.ok(eventService.get(id).toResponse())
+    override fun getEvent(id: UUID): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.get(id).toResponse())
 
     override fun createEvent(eventCreateRequest: EventCreateRequest): ResponseEntity<EventResponse> =
         ResponseEntity.status(201).body(eventService.create(eventCreateRequest.toCommand()).toResponse())
 
-    override fun updateEvent(id: UUID, eventCreateRequest: EventCreateRequest): ResponseEntity<EventResponse> =
-        ResponseEntity.ok(eventService.update(id, eventCreateRequest.toCommand()).toResponse())
+    override fun updateEvent(
+        id: UUID,
+        eventCreateRequest: EventCreateRequest,
+    ): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.update(id, eventCreateRequest.toCommand()).toResponse())
 
     override fun deleteEvent(id: UUID): ResponseEntity<Unit> {
         eventService.delete(id)
@@ -75,30 +75,32 @@ class EventController(
     // resolved start of day. Needs settingsService, hence a member method (not a
     // standalone extension). Adds no new branches — parseInstant's branches are
     // already covered by the GET tests.
-    private fun EventCreateRequest.toCommand() = CreateEventCommand(
-        memberId = memberId,
-        calendarId = calendarId,
+    private fun EventCreateRequest.toCommand() =
+        CreateEventCommand(
+            memberId = memberId,
+            calendarId = calendarId,
+            title = title,
+            description = description,
+            location = location,
+            start = parseInstant(start),
+            end = parseInstant(end),
+            allDayStart = allDayStart,
+            allDayEnd = allDayEnd,
+            isAllDay = isAllDay,
+        )
+}
+
+private fun EventView.toResponse() =
+    EventResponse(
+        id = id,
         title = title,
         description = description,
         location = location,
-        start = parseInstant(start),
-        end = parseInstant(end),
+        start = start?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
+        end = end?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
+        isAllDay = isAllDay,
         allDayStart = allDayStart,
         allDayEnd = allDayEnd,
-        isAllDay = isAllDay,
+        memberId = memberId,
+        calendarId = calendarId,
     )
-}
-
-private fun EventView.toResponse() = EventResponse(
-    id = id,
-    title = title,
-    description = description,
-    location = location,
-    start = start?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
-    end = end?.let { OffsetDateTime.ofInstant(it, ZoneId.of("UTC")) },
-    isAllDay = isAllDay,
-    allDayStart = allDayStart,
-    allDayEnd = allDayEnd,
-    memberId = memberId,
-    calendarId = calendarId,
-)

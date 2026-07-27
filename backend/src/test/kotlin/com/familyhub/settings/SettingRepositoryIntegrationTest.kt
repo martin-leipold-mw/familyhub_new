@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional
 
 @Transactional
 class SettingRepositoryIntegrationTest : BaseIntegrationTest() {
-
     @Autowired
     lateinit var repository: SettingRepository
 

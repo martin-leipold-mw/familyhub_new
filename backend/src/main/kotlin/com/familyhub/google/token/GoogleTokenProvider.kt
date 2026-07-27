@@ -25,23 +25,27 @@ class GoogleTokenProvider(
     @Transactional
     fun validAccessToken(connection: GoogleConnection): String {
         val expiresAt = connection.tokenExpiresAt
-        val needsRefresh = expiresAt == null ||
-            Instant.now(clock).plusSeconds(BUFFER_SECONDS).isAfter(expiresAt)
+        val needsRefresh =
+            expiresAt == null ||
+                Instant.now(clock).plusSeconds(BUFFER_SECONDS).isAfter(expiresAt)
         if (!needsRefresh && connection.accessToken != null) {
             return encryption.decrypt(connection.accessToken!!)
         }
         val credId = connection.credentialsId
-        val cred = if (credId != null) {
-            credentials.entity(credId)
-        } else {
-            credentials.primaryOrNull()
-                ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert.")
-        }
+        val cred =
+            if (credId != null) {
+                credentials.entity(credId)
+            } else {
+                credentials.primaryOrNull()
+                    ?: throw ResourceNotFoundException("Keine Google-Credentials konfiguriert.")
+            }
         try {
-            val newTokens = flow.refresh(
-                encryption.decrypt(cred.clientId), encryption.decrypt(cred.clientSecret),
-                encryption.decrypt(connection.refreshToken),
-            )
+            val newTokens =
+                flow.refresh(
+                    encryption.decrypt(cred.clientId),
+                    encryption.decrypt(cred.clientSecret),
+                    encryption.decrypt(connection.refreshToken),
+                )
             connection.accessToken = encryption.encrypt(newTokens.accessToken)
             connection.tokenExpiresAt = Instant.now(clock).plusSeconds(newTokens.expiresInSeconds)
             connection.status = "active"
@@ -59,12 +63,15 @@ class GoogleTokenProvider(
 
     @Transactional
     fun forceRefresh(connectionId: UUID) {
-        val c = connections.findById(connectionId).orElseThrow {
-            ResourceNotFoundException("Verbindung nicht gefunden")
-        }
+        val c =
+            connections.findById(connectionId).orElseThrow {
+                ResourceNotFoundException("Verbindung nicht gefunden")
+            }
         c.tokenExpiresAt = Instant.EPOCH // force
         validAccessToken(c)
     }
 
-    companion object { private const val BUFFER_SECONDS = 60L }
+    companion object {
+        private const val BUFFER_SECONDS = 60L
+    }
 }

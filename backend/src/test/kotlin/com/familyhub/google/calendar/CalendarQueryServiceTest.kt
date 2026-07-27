@@ -6,7 +6,6 @@ import com.familyhub.shared.exceptions.ResourceNotFoundException
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.Test
 import java.util.UUID
 
 class CalendarQueryServiceTest {
-
     private val connectionRepository = mockk<GoogleConnectionRepository>()
     private val subscriptionRepository = mockk<CalendarSubscriptionRepository>()
     private val calendarSyncService = mockk<CalendarSyncService>()
@@ -25,17 +23,18 @@ class CalendarQueryServiceTest {
     private val memberId: UUID = UUID.fromString("00000000-0000-0000-0000-000000000001")
     private val connectionId: UUID = UUID.fromString("00000000-0000-0000-0000-000000000002")
 
-    private val connection = GoogleConnection(
-        familyMemberId = memberId,
-        credentialsId = null,
-        googleAccountId = "g123",
-        email = "anna@example.com",
-        accessToken = "enc_token",
-        refreshToken = "enc_refresh",
-        tokenExpiresAt = null,
-        status = "active",
-        lastSyncedAt = null,
-    ).also { it.id = connectionId }
+    private val connection =
+        GoogleConnection(
+            familyMemberId = memberId,
+            credentialsId = null,
+            googleAccountId = "g123",
+            email = "anna@example.com",
+            accessToken = "enc_token",
+            refreshToken = "enc_refresh",
+            tokenExpiresAt = null,
+            status = "active",
+            lastSyncedAt = null,
+        ).also { it.id = connectionId }
 
     @BeforeEach
     fun setUp() {
@@ -46,23 +45,25 @@ class CalendarQueryServiceTest {
 
     @Test
     fun `listForMember with connection present calls refreshCalendars and maps subscriptions`() {
-        val sub1 = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            backgroundColor = "#ff0000",
-            isPrimary = true,
-            isSelected = true,
-        ).also { it.id = UUID.randomUUID() }
+        val sub1 =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                backgroundColor = "#ff0000",
+                isPrimary = true,
+                isSelected = true,
+            ).also { it.id = UUID.randomUUID() }
 
-        val sub2 = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal2@gmail.com",
-            summary = "Work",
-            backgroundColor = null,
-            isPrimary = false,
-            isSelected = false,
-        ).also { it.id = UUID.randomUUID() }
+        val sub2 =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal2@gmail.com",
+                summary = "Work",
+                backgroundColor = null,
+                isPrimary = false,
+                isSelected = false,
+            ).also { it.id = UUID.randomUUID() }
 
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         justRun { calendarSyncService.refreshCalendars(connection) }
@@ -100,19 +101,21 @@ class CalendarQueryServiceTest {
 
     @Test
     fun `saveSelection sets isSelected true for included ids and false for excluded ids`() {
-        val subIncluded = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            isSelected = false,
-        ).also { it.id = UUID.randomUUID() }
+        val subIncluded =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                isSelected = false,
+            ).also { it.id = UUID.randomUUID() }
 
-        val subExcluded = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal2@gmail.com",
-            summary = "Work",
-            isSelected = true,
-        ).also { it.id = UUID.randomUUID() }
+        val subExcluded =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal2@gmail.com",
+                summary = "Work",
+                isSelected = true,
+            ).also { it.id = UUID.randomUUID() }
 
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
         every { subscriptionRepository.findAllByConnectionId(connectionId) } returns listOf(subIncluded, subExcluded)

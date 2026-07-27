@@ -26,15 +26,28 @@ class GoogleTokenProviderTest {
     private val enc = EncryptionService("test-key-with-more-than-32-characters-in-it")
     private val provider = GoogleTokenProvider(connections, flow, credentials, enc, clock)
 
-    private val cred = GoogleCredentials(enc.encrypt("cid"), enc.encrypt("sec"),
-        "http://localhost:8080/oauth/callback", "F", true).also { it.id = UUID.randomUUID() }
-
-    private fun conn(expiresAt: Instant?, accessToken: String? = enc.encrypt("OLD"), credentialsId: UUID? = cred.id) =
-        GoogleConnection(
-            familyMemberId = UUID.randomUUID(), credentialsId = credentialsId, googleAccountId = "g",
-            email = "a@b.de", accessToken = accessToken, refreshToken = enc.encrypt("RT"),
-            tokenExpiresAt = expiresAt,
+    private val cred =
+        GoogleCredentials(
+            enc.encrypt("cid"),
+            enc.encrypt("sec"),
+            "http://localhost:8080/oauth/callback",
+            "F",
+            true,
         ).also { it.id = UUID.randomUUID() }
+
+    private fun conn(
+        expiresAt: Instant?,
+        accessToken: String? = enc.encrypt("OLD"),
+        credentialsId: UUID? = cred.id,
+    ) = GoogleConnection(
+        familyMemberId = UUID.randomUUID(),
+        credentialsId = credentialsId,
+        googleAccountId = "g",
+        email = "a@b.de",
+        accessToken = accessToken,
+        refreshToken = enc.encrypt("RT"),
+        tokenExpiresAt = expiresAt,
+    ).also { it.id = UUID.randomUUID() }
 
     // ─── needsRefresh: expiresAt != null and NOT isAfter → no refresh (fresh token) ─
 
@@ -125,9 +138,10 @@ class GoogleTokenProviderTest {
     @Test fun `marks connection revoked on invalid_grant`() {
         val c = conn(now.minusSeconds(10))
         every { credentials.entity(cred.id!!) } returns cred
-        every { flow.refresh(any(), any(), any()) } throws mockk<TokenResponseException>(relaxed = true) {
-            every { details?.error } returns "invalid_grant"
-        }
+        every { flow.refresh(any(), any(), any()) } throws
+            mockk<TokenResponseException>(relaxed = true) {
+                every { details?.error } returns "invalid_grant"
+            }
         every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
 
         assertThatThrownBy { provider.validAccessToken(c) }
@@ -140,9 +154,10 @@ class GoogleTokenProviderTest {
     @Test fun `rethrows TokenResponseException for non-invalid_grant errors`() {
         val c = conn(now.minusSeconds(10))
         every { credentials.entity(cred.id!!) } returns cred
-        val ex = mockk<TokenResponseException>(relaxed = true) {
-            every { details?.error } returns "temporarily_unavailable"
-        }
+        val ex =
+            mockk<TokenResponseException>(relaxed = true) {
+                every { details?.error } returns "temporarily_unavailable"
+            }
         every { flow.refresh(any(), any(), any()) } throws ex
 
         assertThatThrownBy { provider.validAccessToken(c) }
@@ -203,8 +218,12 @@ class GoogleTokenProviderTest {
         every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
 
         provider.validAccessToken(c)
-        verify { connections.save(match {
-            it.status == "active" && it.tokenExpiresAt == now.plusSeconds(3600)
-        }) }
+        verify {
+            connections.save(
+                match {
+                    it.status == "active" && it.tokenExpiresAt == now.plusSeconds(3600)
+                },
+            )
+        }
     }
 }

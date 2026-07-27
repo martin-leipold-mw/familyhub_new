@@ -1,8 +1,8 @@
 package com.familyhub.google.connection
 
-import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.credentials.CredentialsService
 import com.familyhub.google.credentials.GoogleCredentials
+import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.oauth.*
 import com.familyhub.google.token.GoogleTokenProvider
 import com.familyhub.members.FamilyMember
@@ -31,10 +31,14 @@ class ConnectionServiceTest {
     private lateinit var service: ConnectionService
 
     private val credId = UUID.randomUUID()
-    private val credEntity = GoogleCredentials(
-        clientId = enc.encrypt("cid"), clientSecret = enc.encrypt("sec"),
-        redirectUri = "http://localhost:8080/oauth/callback", nickname = "Familie", isPrimary = true,
-    ).also { it.id = credId }
+    private val credEntity =
+        GoogleCredentials(
+            clientId = enc.encrypt("cid"),
+            clientSecret = enc.encrypt("sec"),
+            redirectUri = "http://localhost:8080/oauth/callback",
+            nickname = "Familie",
+            isPrimary = true,
+        ).also { it.id = credId }
 
     @BeforeEach
     fun setup() {
@@ -277,19 +281,21 @@ class ConnectionServiceTest {
     fun `handleCallback re-auth updates existing connection without new refresh token`() {
         val memberId = UUID.randomUUID()
         val connId = UUID.randomUUID()
-        val existingConn = GoogleConnection(
-            familyMemberId = memberId, credentialsId = credId,
-            googleAccountId = "g-existing", email = "old@x.de",
-            accessToken = enc.encrypt("oldAT"), refreshToken = enc.encrypt("oldRT"),
-            tokenExpiresAt = Instant.now(), scopes = listOf("scope1"), status = "active",
-        ).also { it.id = connId }
-        val existingMember = FamilyMember(name = "Existing User", role = "parent", color = "blue")
-            .also { it.id = memberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = memberId, credentialsId = credId,
+                googleAccountId = "g-existing", email = "old@x.de",
+                accessToken = enc.encrypt("oldAT"), refreshToken = enc.encrypt("oldRT"),
+                tokenExpiresAt = Instant.now(), scopes = listOf("scope1"), status = "active",
+            ).also { it.id = connId }
+        val existingMember =
+            FamilyMember(name = "Existing User", role = "parent", color = "blue")
+                .also { it.id = memberId }
 
         every { stateStore.consume("s") } returns OAuthStateEntry(credId, "/home", "verifier")
         every { credentials.entity(credId) } returns credEntity
         every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
-            GoogleTokenSet("newAT", null, 7200, null)  // no refresh token in re-auth
+            GoogleTokenSet("newAT", null, 7200, null) // no refresh token in re-auth
         every { flow.fetchUserInfo("newAT") } returns GoogleUserInfo("g-existing", "old@x.de", "Existing User", null)
         every { connections.findByGoogleAccountId("g-existing") } returns existingConn
         every { members.findById(memberId) } returns Optional.of(existingMember)
@@ -309,14 +315,16 @@ class ConnectionServiceTest {
     fun `handleCallback re-auth updates refresh token when new one is provided`() {
         val memberId = UUID.randomUUID()
         val connId = UUID.randomUUID()
-        val existingConn = GoogleConnection(
-            familyMemberId = memberId, credentialsId = credId,
-            googleAccountId = "g-existing", email = "old@x.de",
-            accessToken = enc.encrypt("oldAT"), refreshToken = enc.encrypt("oldRT"),
-            tokenExpiresAt = Instant.now(), scopes = listOf("scope1"), status = "active",
-        ).also { it.id = connId }
-        val existingMember = FamilyMember(name = "Existing User", role = "parent", color = "blue")
-            .also { it.id = memberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = memberId, credentialsId = credId,
+                googleAccountId = "g-existing", email = "old@x.de",
+                accessToken = enc.encrypt("oldAT"), refreshToken = enc.encrypt("oldRT"),
+                tokenExpiresAt = Instant.now(), scopes = listOf("scope1"), status = "active",
+            ).also { it.id = connId }
+        val existingMember =
+            FamilyMember(name = "Existing User", role = "parent", color = "blue")
+                .also { it.id = memberId }
 
         every { stateStore.consume("s") } returns OAuthStateEntry(credId, "/home", "verifier")
         every { credentials.entity(credId) } returns credEntity
@@ -336,14 +344,16 @@ class ConnectionServiceTest {
     @Test
     fun `handleCallback re-auth updates scopes when provided`() {
         val memberId = UUID.randomUUID()
-        val existingConn = GoogleConnection(
-            familyMemberId = memberId, credentialsId = credId,
-            googleAccountId = "g-ex2", email = "x@y.de",
-            accessToken = enc.encrypt("AT"), refreshToken = enc.encrypt("RT"),
-            tokenExpiresAt = Instant.now(), scopes = listOf("old-scope"), status = "active",
-        ).also { it.id = UUID.randomUUID() }
-        val existingMember = FamilyMember(name = "User", role = "parent", color = "blue")
-            .also { it.id = memberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = memberId, credentialsId = credId,
+                googleAccountId = "g-ex2", email = "x@y.de",
+                accessToken = enc.encrypt("AT"), refreshToken = enc.encrypt("RT"),
+                tokenExpiresAt = Instant.now(), scopes = listOf("old-scope"), status = "active",
+            ).also { it.id = UUID.randomUUID() }
+        val existingMember =
+            FamilyMember(name = "User", role = "parent", color = "blue")
+                .also { it.id = memberId }
 
         every { stateStore.consume("s") } returns OAuthStateEntry(credId, "/", "v")
         every { credentials.entity(credId) } returns credEntity
@@ -366,14 +376,16 @@ class ConnectionServiceTest {
     fun `listConnections returns name from member when found`() {
         val memberId = UUID.randomUUID()
         val connId = UUID.randomUUID()
-        val conn = GoogleConnection(
-            familyMemberId = memberId, credentialsId = credId,
-            googleAccountId = "g-1", email = "test@x.de",
-            accessToken = null, refreshToken = enc.encrypt("RT"),
-            tokenExpiresAt = null, scopes = listOf("s1"), status = "active",
-        ).also { it.id = connId }
-        val member = FamilyMember(name = "Member Name", role = "parent", color = "blue")
-            .also { it.id = memberId }
+        val conn =
+            GoogleConnection(
+                familyMemberId = memberId, credentialsId = credId,
+                googleAccountId = "g-1", email = "test@x.de",
+                accessToken = null, refreshToken = enc.encrypt("RT"),
+                tokenExpiresAt = null, scopes = listOf("s1"), status = "active",
+            ).also { it.id = connId }
+        val member =
+            FamilyMember(name = "Member Name", role = "parent", color = "blue")
+                .also { it.id = memberId }
 
         every { connections.findAll() } returns listOf(conn)
         every { members.findById(memberId) } returns Optional.of(member)
@@ -390,12 +402,13 @@ class ConnectionServiceTest {
     fun `listConnections falls back to email when member not found`() {
         val memberId = UUID.randomUUID()
         val connId = UUID.randomUUID()
-        val conn = GoogleConnection(
-            familyMemberId = memberId, credentialsId = null,
-            googleAccountId = "g-orphan", email = "orphan@x.de",
-            accessToken = null, refreshToken = enc.encrypt("RT"),
-            tokenExpiresAt = null, scopes = emptyList(), status = "inactive",
-        ).also { it.id = connId }
+        val conn =
+            GoogleConnection(
+                familyMemberId = memberId, credentialsId = null,
+                googleAccountId = "g-orphan", email = "orphan@x.de",
+                accessToken = null, refreshToken = enc.encrypt("RT"),
+                tokenExpiresAt = null, scopes = emptyList(), status = "inactive",
+            ).also { it.id = connId }
 
         every { connections.findAll() } returns listOf(conn)
         every { members.findById(memberId) } returns Optional.empty()
@@ -411,16 +424,17 @@ class ConnectionServiceTest {
     @Test
     fun `disconnect revokes token and deletes connection`() {
         val connId = UUID.randomUUID()
-        val conn = GoogleConnection(
-            familyMemberId = UUID.randomUUID(), credentialsId = credId,
-            googleAccountId = "g-1", email = "bye@x.de",
-            accessToken = null, refreshToken = enc.encrypt("RT-to-revoke"),
-            tokenExpiresAt = null, scopes = emptyList(), status = "active",
-        ).also { it.id = connId }
+        val conn =
+            GoogleConnection(
+                familyMemberId = UUID.randomUUID(), credentialsId = credId,
+                googleAccountId = "g-1", email = "bye@x.de",
+                accessToken = null, refreshToken = enc.encrypt("RT-to-revoke"),
+                tokenExpiresAt = null, scopes = emptyList(), status = "active",
+            ).also { it.id = connId }
 
         every { connections.findById(connId) } returns Optional.of(conn)
         every { flow.revoke(any()) } just Runs
-        every { connections.count() } returns 1L  // still 1 after delete (before actual delete)
+        every { connections.count() } returns 1L // still 1 after delete (before actual delete)
 
         service.disconnect(connId)
 
@@ -432,16 +446,17 @@ class ConnectionServiceTest {
     @Test
     fun `disconnect sets google connected false when last connection removed`() {
         val connId = UUID.randomUUID()
-        val conn = GoogleConnection(
-            familyMemberId = UUID.randomUUID(), credentialsId = credId,
-            googleAccountId = "g-last", email = "last@x.de",
-            accessToken = null, refreshToken = enc.encrypt("RT-last"),
-            tokenExpiresAt = null, scopes = emptyList(), status = "active",
-        ).also { it.id = connId }
+        val conn =
+            GoogleConnection(
+                familyMemberId = UUID.randomUUID(), credentialsId = credId,
+                googleAccountId = "g-last", email = "last@x.de",
+                accessToken = null, refreshToken = enc.encrypt("RT-last"),
+                tokenExpiresAt = null, scopes = emptyList(), status = "active",
+            ).also { it.id = connId }
 
         every { connections.findById(connId) } returns Optional.of(conn)
         every { flow.revoke(any()) } just Runs
-        every { connections.count() } returns 0L  // 0 after delete
+        every { connections.count() } returns 0L // 0 after delete
 
         service.disconnect(connId)
 
@@ -461,12 +476,13 @@ class ConnectionServiceTest {
     @Test
     fun `disconnect continues even if revoke throws`() {
         val connId = UUID.randomUUID()
-        val conn = GoogleConnection(
-            familyMemberId = UUID.randomUUID(), credentialsId = credId,
-            googleAccountId = "g-fail", email = "fail@x.de",
-            accessToken = null, refreshToken = enc.encrypt("bad-RT"),
-            tokenExpiresAt = null, scopes = emptyList(), status = "active",
-        ).also { it.id = connId }
+        val conn =
+            GoogleConnection(
+                familyMemberId = UUID.randomUUID(), credentialsId = credId,
+                googleAccountId = "g-fail", email = "fail@x.de",
+                accessToken = null, refreshToken = enc.encrypt("bad-RT"),
+                tokenExpiresAt = null, scopes = emptyList(), status = "active",
+            ).also { it.id = connId }
 
         every { connections.findById(connId) } returns Optional.of(conn)
         every { flow.revoke(any()) } throws RuntimeException("revoke network error")

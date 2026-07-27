@@ -1,9 +1,9 @@
 package com.familyhub.google.credentials
 
 import com.familyhub.google.crypto.EncryptionService
+import com.familyhub.google.oauth.ProbeResult
 import com.familyhub.google.oauth.RedirectUriNormalizer
 import com.familyhub.google.oauth.TokenEndpointProber
-import com.familyhub.google.oauth.ProbeResult
 import com.familyhub.shared.exceptions.ResourceNotFoundException
 import io.mockk.every
 import io.mockk.mockk
@@ -22,7 +22,9 @@ class CredentialsServiceTest {
     private val prober = mockk<TokenEndpointProber>()
     private lateinit var service: CredentialsService
 
-    @BeforeEach fun setup() { service = CredentialsService(repo, enc, normalizer, prober) }
+    @BeforeEach fun setup() {
+        service = CredentialsService(repo, enc, normalizer, prober)
+    }
 
     @Test fun `create encrypts secrets and never returns them`() {
         val saved = slot<GoogleCredentials>()
@@ -65,11 +67,11 @@ class CredentialsServiceTest {
 
     @Test fun `setPrimary is idempotent when target is already primary`() {
         val target = existing(isPrimary = true)
-        every { repo.findByIsPrimaryTrue() } returns target        // same entity
+        every { repo.findByIsPrimaryTrue() } returns target // same entity
         every { repo.findById(target.id!!) } returns Optional.of(target)
         every { repo.save(any()) } answers { firstArg() }
         service.setPrimary(target.id!!)
-        assertThat(target.isPrimary).isTrue()                     // still primary, no demotion
+        assertThat(target.isPrimary).isTrue() // still primary, no demotion
     }
 
     @Test fun `get throws when missing`() {
@@ -101,10 +103,13 @@ class CredentialsServiceTest {
         val e = existing(isPrimary = false)
         every { repo.findById(e.id!!) } returns Optional.of(e)
         every { repo.save(any()) } answers { firstArg() }
-        val cmd = CredentialsCommand(
-            nickname = "Neu", clientId = "newcid.apps.googleusercontent.com",
-            clientSecret = "newSecret", redirectUri = "http://localhost:8080/oauth/callback",
-        )
+        val cmd =
+            CredentialsCommand(
+                nickname = "Neu",
+                clientId = "newcid.apps.googleusercontent.com",
+                clientSecret = "newSecret",
+                redirectUri = "http://localhost:8080/oauth/callback",
+            )
         service.update(e.id!!, cmd)
         assertThat(enc.decrypt(e.clientId)).isEqualTo("newcid.apps.googleusercontent.com")
         assertThat(enc.decrypt(e.clientSecret)).isEqualTo("newSecret")
@@ -116,10 +121,13 @@ class CredentialsServiceTest {
         val originalClientSecret = e.clientSecret
         every { repo.findById(e.id!!) } returns Optional.of(e)
         every { repo.save(any()) } answers { firstArg() }
-        val cmd = CredentialsCommand(
-            nickname = "Neu", clientId = "",
-            clientSecret = "", redirectUri = "http://localhost:8080/oauth/callback",
-        )
+        val cmd =
+            CredentialsCommand(
+                nickname = "Neu",
+                clientId = "",
+                clientSecret = "",
+                redirectUri = "http://localhost:8080/oauth/callback",
+            )
         service.update(e.id!!, cmd)
         assertThat(e.clientId).isEqualTo(originalClientId)
         assertThat(e.clientSecret).isEqualTo(originalClientSecret)
@@ -130,10 +138,13 @@ class CredentialsServiceTest {
         val originalClientSecret = e.clientSecret
         every { repo.findById(e.id!!) } returns Optional.of(e)
         every { repo.save(any()) } answers { firstArg() }
-        val cmd = CredentialsCommand(
-            nickname = "Neu", clientId = "onlycid.apps.googleusercontent.com",
-            clientSecret = "", redirectUri = "http://localhost:8080/oauth/callback",
-        )
+        val cmd =
+            CredentialsCommand(
+                nickname = "Neu",
+                clientId = "onlycid.apps.googleusercontent.com",
+                clientSecret = "",
+                redirectUri = "http://localhost:8080/oauth/callback",
+            )
         service.update(e.id!!, cmd)
         assertThat(enc.decrypt(e.clientId)).isEqualTo("onlycid.apps.googleusercontent.com")
         assertThat(e.clientSecret).isEqualTo(originalClientSecret)
@@ -144,21 +155,32 @@ class CredentialsServiceTest {
         val originalClientId = e.clientId
         every { repo.findById(e.id!!) } returns Optional.of(e)
         every { repo.save(any()) } answers { firstArg() }
-        val cmd = CredentialsCommand(
-            nickname = "Neu", clientId = "",
-            clientSecret = "onlysecret", redirectUri = "http://localhost:8080/oauth/callback",
-        )
+        val cmd =
+            CredentialsCommand(
+                nickname = "Neu",
+                clientId = "",
+                clientSecret = "onlysecret",
+                redirectUri = "http://localhost:8080/oauth/callback",
+            )
         service.update(e.id!!, cmd)
         assertThat(e.clientId).isEqualTo(originalClientId)
         assertThat(enc.decrypt(e.clientSecret)).isEqualTo("onlysecret")
     }
 
-    private fun newRequest() = CredentialsCommand(
-        nickname = "Familie", clientId = "cid.apps.googleusercontent.com",
-        clientSecret = "GOCSPX-secret", redirectUri = "http://localhost:8080/oauth/callback",
-    )
-    private fun existing(isPrimary: Boolean) = GoogleCredentials(
-        clientId = enc.encrypt("cid"), clientSecret = enc.encrypt("sec"),
-        redirectUri = "http://localhost:8080/oauth/callback", nickname = "N", isPrimary = isPrimary,
-    ).also { it.id = UUID.randomUUID() }
+    private fun newRequest() =
+        CredentialsCommand(
+            nickname = "Familie",
+            clientId = "cid.apps.googleusercontent.com",
+            clientSecret = "GOCSPX-secret",
+            redirectUri = "http://localhost:8080/oauth/callback",
+        )
+
+    private fun existing(isPrimary: Boolean) =
+        GoogleCredentials(
+            clientId = enc.encrypt("cid"),
+            clientSecret = enc.encrypt("sec"),
+            redirectUri = "http://localhost:8080/oauth/callback",
+            nickname = "N",
+            isPrimary = isPrimary,
+        ).also { it.id = UUID.randomUUID() }
 }

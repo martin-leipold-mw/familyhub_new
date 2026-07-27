@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.post
 @WebMvcTest(SettingsController::class)
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 class SettingsControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -27,15 +26,16 @@ class SettingsControllerTest {
 
     @Test
     fun `GET setup-status returns status json`() {
-        every { settingsService.getSetupStatus() } returns SetupStatusResponse(
-            setupCompleted = false,
-            currentStep = 1,
-            hasFamilyMembers = false,
-            hasPin = false,
-            hasCredentials = false,
-            hasConnection = false,
-            hasSelectedCalendars = false,
-        )
+        every { settingsService.getSetupStatus() } returns
+            SetupStatusResponse(
+                setupCompleted = false,
+                currentStep = 1,
+                hasFamilyMembers = false,
+                hasPin = false,
+                hasCredentials = false,
+                hasConnection = false,
+                hasSelectedCalendars = false,
+            )
         mockMvc.get("/api/v1/settings/setup-status").andExpect {
             status { isOk() }
             jsonPath("$.setupCompleted") { value(false) }

@@ -12,7 +12,6 @@ class CalendarSyncScheduler(
     private val connectionRepository: GoogleConnectionRepository,
     private val calendarSyncService: CalendarSyncService,
 ) {
-
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** Internal: package-visible for tests to inspect/set the guard. */

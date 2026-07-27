@@ -13,7 +13,6 @@ class GoogleHealthIndicator(
     private val connectionRepository: GoogleConnectionRepository,
     private val clock: Clock,
 ) : HealthIndicator {
-
     override fun health(): Health {
         val active = connectionRepository.findAllByStatus("active")
         val revoked = connectionRepository.findAllByStatus("revoked")
@@ -25,9 +24,10 @@ class GoogleHealthIndicator(
                 .build()
         }
 
-        val builder = Health.up()
-            .withDetail("activeConnections", active.size)
-            .withDetail("revokedConnections", revoked.size)
+        val builder =
+            Health.up()
+                .withDetail("activeConnections", active.size)
+                .withDetail("revokedConnections", revoked.size)
 
         val maxLastSync: Instant? = active.mapNotNull { it.lastSyncedAt }.maxOrNull()
         if (maxLastSync != null) {

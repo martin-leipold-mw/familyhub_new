@@ -22,7 +22,6 @@ import java.util.UUID
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 @ExtendWith(MockKExtension::class)
 class CalendarControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -35,22 +34,23 @@ class CalendarControllerTest {
 
     @Test
     fun `GET calendars returns 200 with array of calendars`() {
-        every { service.listForMember(memberId) } returns listOf(
-            CalendarView(
-                id = "cal1@gmail.com",
-                summary = "Family",
-                backgroundColor = "#ff0000",
-                isPrimary = true,
-                isSelected = true,
-            ),
-            CalendarView(
-                id = "cal2@gmail.com",
-                summary = "Work",
-                backgroundColor = null,
-                isPrimary = false,
-                isSelected = false,
-            ),
-        )
+        every { service.listForMember(memberId) } returns
+            listOf(
+                CalendarView(
+                    id = "cal1@gmail.com",
+                    summary = "Family",
+                    backgroundColor = "#ff0000",
+                    isPrimary = true,
+                    isSelected = true,
+                ),
+                CalendarView(
+                    id = "cal2@gmail.com",
+                    summary = "Work",
+                    backgroundColor = null,
+                    isPrimary = false,
+                    isSelected = false,
+                ),
+            )
 
         mockMvc.get("/api/v1/google/calendars?memberId=$memberId").andExpect {
             status { isOk() }

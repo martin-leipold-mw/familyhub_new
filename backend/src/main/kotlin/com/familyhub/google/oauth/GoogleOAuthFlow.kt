@@ -1,7 +1,10 @@
 package com.familyhub.google.oauth
 
-import com.google.api.client.auth.oauth2.*
-import com.google.api.client.http.*
+import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication
+import com.google.api.client.auth.oauth2.RefreshTokenRequest
+import com.google.api.client.auth.oauth2.TokenResponseException
+import com.google.api.client.http.GenericUrl
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import org.springframework.beans.factory.annotation.Value
@@ -9,6 +12,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
 
 data class GoogleTokenSet(val accessToken: String, val refreshToken: String?, val expiresInSeconds: Long, val scope: String?)
+
 data class GoogleUserInfo(val sub: String, val email: String, val name: String?, val picture: String?)
 
 @Component
@@ -21,13 +25,19 @@ class GoogleOAuthFlow(
 ) : TokenEndpointProber {
     private val transport = NetHttpTransport()
     private val json = GsonFactory.getDefaultInstance()
-    private val scopes = listOf(
-        "https://www.googleapis.com/auth/calendar",
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/userinfo.email",
-    )
+    private val scopes =
+        listOf(
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/userinfo.email",
+        )
 
-    fun buildAuthorizationUrl(clientId: String, redirectUri: String, state: String, codeChallenge: String): String =
+    fun buildAuthorizationUrl(
+        clientId: String,
+        redirectUri: String,
+        state: String,
+        codeChallenge: String,
+    ): String =
         UriComponentsBuilder.fromUriString(authorizeUrl)
             .queryParam("client_id", clientId)
             .queryParam("redirect_uri", redirectUri)
@@ -40,19 +50,31 @@ class GoogleOAuthFlow(
             .queryParam("state", state)
             .build().encode().toUriString()
 
-    fun exchangeCode(clientId: String, clientSecret: String, redirectUri: String, code: String, verifier: String): GoogleTokenSet {
-        val req = AuthorizationCodeTokenRequest(transport, json, GenericUrl(tokenUrl), code)
-            .setRedirectUri(redirectUri)
-            .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
+    fun exchangeCode(
+        clientId: String,
+        clientSecret: String,
+        redirectUri: String,
+        code: String,
+        verifier: String,
+    ): GoogleTokenSet {
+        val req =
+            AuthorizationCodeTokenRequest(transport, json, GenericUrl(tokenUrl), code)
+                .setRedirectUri(redirectUri)
+                .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
         req.set("code_verifier", verifier)
         val resp = req.execute()
         return GoogleTokenSet(resp.accessToken, resp.refreshToken, resp.expiresInSeconds, resp.scope)
     }
 
-    fun refresh(clientId: String, clientSecret: String, refreshToken: String): GoogleTokenSet {
-        val resp = RefreshTokenRequest(transport, json, GenericUrl(tokenUrl), refreshToken)
-            .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
-            .execute()
+    fun refresh(
+        clientId: String,
+        clientSecret: String,
+        refreshToken: String,
+    ): GoogleTokenSet {
+        val resp =
+            RefreshTokenRequest(transport, json, GenericUrl(tokenUrl), refreshToken)
+                .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
+                .execute()
         return GoogleTokenSet(resp.accessToken, resp.refreshToken, resp.expiresInSeconds, resp.scope)
     }
 
@@ -61,7 +83,12 @@ class GoogleOAuthFlow(
         request.headers.authorization = "Bearer $accessToken"
         // HttpResponse is not Closeable, so `use` does not resolve; disconnect() releases the connection.
         val response = request.execute()
-        val body = try { response.parseAsString() } finally { response.disconnect() }
+        val body =
+            try {
+                response.parseAsString()
+            } finally {
+                response.disconnect()
+            }
         val map = json.createJsonParser(body).parse(Map::class.java)
         return GoogleUserInfo(
             sub = (map["id"] ?: map["sub"]).toString(),
@@ -75,10 +102,16 @@ class GoogleOAuthFlow(
         try {
             transport.createRequestFactory()
                 .buildPostRequest(GenericUrl("$revokeUrl?token=$token"), null).execute()
-        } catch (ex: Exception) { /* best-effort: local disconnect proceeds regardless */ }
+        } catch (ex: Exception) {
+            // best-effort: local disconnect proceeds regardless
+        }
     }
 
-    override fun probe(clientId: String, clientSecret: String, redirectUri: String): ProbeResult {
+    override fun probe(
+        clientId: String,
+        clientSecret: String,
+        redirectUri: String,
+    ): ProbeResult {
         return try {
             exchangeCode(clientId, clientSecret, redirectUri, "invalid-probe-code", pkce.generateVerifier())
             ProbeResult.CREDENTIALS_VALID // unexpected success also means creds are fine
@@ -92,6 +125,8 @@ class GoogleOAuthFlow(
                 ex.details?.error == "invalid_client" -> ProbeResult.CLIENT_INVALID
                 else -> ProbeResult.ERROR
             }
-        } catch (ex: Exception) { ProbeResult.ERROR }
+        } catch (ex: Exception) {
+            ProbeResult.ERROR
+        }
     }
 }

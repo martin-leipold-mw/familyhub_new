@@ -1,6 +1,11 @@
 package com.familyhub.shared.exceptions
 
 import com.familyhub.shared.security.SecurityConfig
+import io.mockk.every
+import io.mockk.mockk
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Size
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -9,38 +14,51 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.validation.BindingResult
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import jakarta.validation.Valid
-import jakarta.validation.constraints.Size
-import io.mockk.every
-import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
-import org.springframework.validation.BindingResult
-import org.springframework.web.bind.MethodArgumentNotValidException
 
 @RestController
 @RequestMapping("/api/test-errors")
 private class ErrorProbeController {
-    @GetMapping("/setup-completed") fun setup(): Nothing = throw SetupAlreadyCompletedException()
-    @GetMapping("/invalid-pin") fun pin(): Nothing = throw InvalidPinException()
-    @GetMapping("/validation") fun validation(): Nothing = throw ValidationException("Ungültig")
-    @GetMapping("/not-found") fun notFound(): Nothing = throw MemberNotFoundException()
-    @GetMapping("/too-large") fun tooLarge(): Nothing = throw PayloadTooLargeException()
-    @GetMapping("/resource-not-found") fun rnf(): Nothing = throw ResourceNotFoundException("weg")
-    @GetMapping("/google-revoked") fun rev(): Nothing = throw GoogleConnectionRevokedException()
+    @GetMapping("/setup-completed")
+    fun setup(): Nothing = throw SetupAlreadyCompletedException()
 
-    data class Body(@field:Size(min = 2) val name: String)
-    @PostMapping("/bean") fun bean(@Valid @RequestBody body: Body) = body.name
+    @GetMapping("/invalid-pin")
+    fun pin(): Nothing = throw InvalidPinException()
+
+    @GetMapping("/validation")
+    fun validation(): Nothing = throw ValidationException("Ungültig")
+
+    @GetMapping("/not-found")
+    fun notFound(): Nothing = throw MemberNotFoundException()
+
+    @GetMapping("/too-large")
+    fun tooLarge(): Nothing = throw PayloadTooLargeException()
+
+    @GetMapping("/resource-not-found")
+    fun rnf(): Nothing = throw ResourceNotFoundException("weg")
+
+    @GetMapping("/google-revoked")
+    fun rev(): Nothing = throw GoogleConnectionRevokedException()
+
+    data class Body(
+        @field:Size(min = 2) val name: String,
+    )
+
+    @PostMapping("/bean")
+    fun bean(
+        @Valid @RequestBody body: Body,
+    ) = body.name
 }
 
 @WebMvcTest(ErrorProbeController::class)
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 class DomainExceptionHandlerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 

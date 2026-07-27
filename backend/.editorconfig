@@ -1,0 +1,13 @@
+root = true
+
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = 140
+
+# Test sources may use the wildcard-import + long-line idioms that assertion and
+# mocking DSLs (io.mockk.*, WireMock.*, AssertJ Assertions.*, JUnit api.*) rely
+# on, and long descriptive fixture/expectation lines. Production code under
+# src/main stays fully strict — only these two rules are relaxed, and only here.
+[src/test/kotlin/**/*.kt]
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_max-line-length = disabled

@@ -14,14 +14,13 @@ import java.time.ZoneOffset
 class HealthController(
     @Value("\${familyhub.version:dev}") private val version: String,
 ) : SystemApi {
-
     override fun getHealth(): ResponseEntity<HealthResponse> {
         return ResponseEntity.ok(
             HealthResponse(
                 status = HealthResponse.Status.UP,
                 timestamp = OffsetDateTime.now(ZoneOffset.UTC),
                 version = version,
-            )
+            ),
         )
     }
 }

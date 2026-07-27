@@ -13,7 +13,6 @@ import java.time.Instant
 class Setting(
     @Id
     var key: String,
-
     @Column(nullable = false)
     var value: String,
 ) {

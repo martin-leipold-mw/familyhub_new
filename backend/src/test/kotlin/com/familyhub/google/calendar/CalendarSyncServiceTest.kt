@@ -3,7 +3,6 @@ package com.familyhub.google.calendar
 import com.familyhub.google.connection.GoogleConnection
 import com.familyhub.google.connection.GoogleConnectionRepository
 import com.google.api.client.util.DateTime
-import com.google.api.services.calendar.model.Event as GoogleEvent
 import com.google.api.services.calendar.model.EventDateTime
 import io.mockk.every
 import io.mockk.mockk
@@ -16,9 +15,9 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.UUID
+import com.google.api.services.calendar.model.Event as GoogleEvent
 
 class CalendarSyncServiceTest {
-
     private val calendarClient = mockk<GoogleCalendarClient>()
     private val subscriptionRepo = mockk<CalendarSubscriptionRepository>()
     private val eventRepo = mockk<EventRepository>()
@@ -31,51 +30,55 @@ class CalendarSyncServiceTest {
     private val connectionId = UUID.randomUUID()
     private val memberId = UUID.randomUUID()
 
-    private val activeConnection = GoogleConnection(
-        familyMemberId = memberId,
-        credentialsId = null,
-        googleAccountId = "g123",
-        email = "test@example.com",
-        accessToken = "enc_token",
-        refreshToken = "enc_refresh",
-        tokenExpiresAt = null,
-        status = "active",
-        lastSyncedAt = null,
-    ).also { it.id = connectionId }
+    private val activeConnection =
+        GoogleConnection(
+            familyMemberId = memberId,
+            credentialsId = null,
+            googleAccountId = "g123",
+            email = "test@example.com",
+            accessToken = "enc_token",
+            refreshToken = "enc_refresh",
+            tokenExpiresAt = null,
+            status = "active",
+            lastSyncedAt = null,
+        ).also { it.id = connectionId }
 
-    private val inactiveConnection = GoogleConnection(
-        familyMemberId = memberId,
-        credentialsId = null,
-        googleAccountId = "g456",
-        email = "inactive@example.com",
-        accessToken = "enc_token",
-        refreshToken = "enc_refresh",
-        tokenExpiresAt = null,
-        status = "revoked",
-        lastSyncedAt = null,
-    ).also { it.id = UUID.randomUUID() }
+    private val inactiveConnection =
+        GoogleConnection(
+            familyMemberId = memberId,
+            credentialsId = null,
+            googleAccountId = "g456",
+            email = "inactive@example.com",
+            accessToken = "enc_token",
+            refreshToken = "enc_refresh",
+            tokenExpiresAt = null,
+            status = "revoked",
+            lastSyncedAt = null,
+        ).also { it.id = UUID.randomUUID() }
 
     @BeforeEach
     fun setUp() {
-        service = CalendarSyncService(
-            calendarClient = calendarClient,
-            subscriptionRepo = subscriptionRepo,
-            eventRepo = eventRepo,
-            connectionRepo = connectionRepo,
-            clock = clock,
-        )
+        service =
+            CalendarSyncService(
+                calendarClient = calendarClient,
+                subscriptionRepo = subscriptionRepo,
+                eventRepo = eventRepo,
+                connectionRepo = connectionRepo,
+                clock = clock,
+            )
     }
 
     // ─── refreshCalendars: new subscription ───────────────────────────────────
 
     @Test
     fun `refreshCalendars creates new subscription when not found`() {
-        val calendarInfo = GoogleCalendarInfo(
-            id = "cal1@gmail.com",
-            summary = "Family",
-            backgroundColor = "#ff0000",
-            primary = true,
-        )
+        val calendarInfo =
+            GoogleCalendarInfo(
+                id = "cal1@gmail.com",
+                summary = "Family",
+                backgroundColor = "#ff0000",
+                primary = true,
+            )
         every { calendarClient.listCalendars(activeConnection) } returns listOf(calendarInfo)
         every { subscriptionRepo.findByConnectionIdAndGoogleCalendarId(connectionId, "cal1@gmail.com") } returns null
         val savedSlot = slot<CalendarSubscription>()
@@ -97,21 +100,23 @@ class CalendarSyncServiceTest {
 
     @Test
     fun `refreshCalendars updates existing subscription summary and color`() {
-        val calendarInfo = GoogleCalendarInfo(
-            id = "cal1@gmail.com",
-            summary = "Family Updated",
-            backgroundColor = "#00ff00",
-            primary = false,
-        )
-        val existingSub = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family Old",
-            backgroundColor = "#ff0000",
-            isPrimary = true,
-            isSelected = true,
-            syncToken = "preserve-me",
-        ).also { it.id = UUID.randomUUID() }
+        val calendarInfo =
+            GoogleCalendarInfo(
+                id = "cal1@gmail.com",
+                summary = "Family Updated",
+                backgroundColor = "#00ff00",
+                primary = false,
+            )
+        val existingSub =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family Old",
+                backgroundColor = "#ff0000",
+                isPrimary = true,
+                isSelected = true,
+                syncToken = "preserve-me",
+            ).also { it.id = UUID.randomUUID() }
 
         every { calendarClient.listCalendars(activeConnection) } returns listOf(calendarInfo)
         every { subscriptionRepo.findByConnectionIdAndGoogleCalendarId(connectionId, "cal1@gmail.com") } returns existingSub
@@ -163,34 +168,38 @@ class CalendarSyncServiceTest {
     @Test
     fun `syncConnection incremental sync creates new event and deletes cancelled`() {
         val subId = UUID.randomUUID()
-        val subscription = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            isSelected = true,
-            syncToken = "existing-sync-token",
-        ).also { it.id = subId }
+        val subscription =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                isSelected = true,
+                syncToken = "existing-sync-token",
+            ).also { it.id = subId }
 
         val startMillis = Instant.parse("2026-08-01T10:00:00Z").toEpochMilli()
         val endMillis = Instant.parse("2026-08-01T11:00:00Z").toEpochMilli()
 
-        val newEvent = GoogleEvent()
-            .setId("evt-new")
-            .setSummary("New Meeting")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
+        val newEvent =
+            GoogleEvent()
+                .setId("evt-new")
+                .setSummary("New Meeting")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
 
-        val cancelledEvent = GoogleEvent()
-            .setId("evt-cancelled")
-            .setSummary("Old Event")
-            .setStatus("cancelled")
+        val cancelledEvent =
+            GoogleEvent()
+                .setId("evt-cancelled")
+                .setSummary("Old Event")
+                .setStatus("cancelled")
 
-        val eventPage = EventPage(
-            events = listOf(newEvent, cancelledEvent),
-            nextSyncToken = "new-sync-token",
-            fullResyncRequired = false,
-        )
+        val eventPage =
+            EventPage(
+                events = listOf(newEvent, cancelledEvent),
+                nextSyncToken = "new-sync-token",
+                fullResyncRequired = false,
+            )
 
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every { calendarClient.listEvents(activeConnection, "cal1@gmail.com", "existing-sync-token", null, null) } returns eventPage
@@ -221,39 +230,43 @@ class CalendarSyncServiceTest {
     @Test
     fun `syncConnection updates existing event when found`() {
         val subId = UUID.randomUUID()
-        val subscription = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            isSelected = true,
-            syncToken = "sync-token",
-        ).also { it.id = subId }
+        val subscription =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                isSelected = true,
+                syncToken = "sync-token",
+            ).also { it.id = subId }
 
         val startMillis = Instant.parse("2026-08-01T10:00:00Z").toEpochMilli()
         val endMillis = Instant.parse("2026-08-01T11:00:00Z").toEpochMilli()
 
-        val updatedGoogleEvent = GoogleEvent()
-            .setId("evt-existing")
-            .setSummary("Updated Title")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
+        val updatedGoogleEvent =
+            GoogleEvent()
+                .setId("evt-existing")
+                .setSummary("Updated Title")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
 
-        val existingEntity = Event(
-            subscriptionId = subId,
-            googleEventId = "evt-existing",
-            googleCalendarId = "cal1@gmail.com",
-            ownerMemberId = memberId,
-            title = "Old Title",
-            isAllDay = false,
-            syncStatus = "synced",
-        ).also { it.id = UUID.randomUUID() }
+        val existingEntity =
+            Event(
+                subscriptionId = subId,
+                googleEventId = "evt-existing",
+                googleCalendarId = "cal1@gmail.com",
+                ownerMemberId = memberId,
+                title = "Old Title",
+                isAllDay = false,
+                syncStatus = "synced",
+            ).also { it.id = UUID.randomUUID() }
 
-        val eventPage = EventPage(
-            events = listOf(updatedGoogleEvent),
-            nextSyncToken = "new-sync-token",
-            fullResyncRequired = false,
-        )
+        val eventPage =
+            EventPage(
+                events = listOf(updatedGoogleEvent),
+                nextSyncToken = "new-sync-token",
+                fullResyncRequired = false,
+            )
 
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every { calendarClient.listEvents(activeConnection, "cal1@gmail.com", "sync-token", null, null) } returns eventPage
@@ -275,36 +288,40 @@ class CalendarSyncServiceTest {
     @Test
     fun `syncConnection performs full resync when fullResyncRequired on first call`() {
         val subId = UUID.randomUUID()
-        val subscription = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            isSelected = true,
-            syncToken = "stale-token",
-        ).also { it.id = subId }
+        val subscription =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                isSelected = true,
+                syncToken = "stale-token",
+            ).also { it.id = subId }
 
         val startMillis = Instant.parse("2026-08-15T09:00:00Z").toEpochMilli()
         val endMillis = Instant.parse("2026-08-15T10:00:00Z").toEpochMilli()
 
-        val freshEvent = GoogleEvent()
-            .setId("evt-fresh")
-            .setSummary("Fresh Event")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
+        val freshEvent =
+            GoogleEvent()
+                .setId("evt-fresh")
+                .setSummary("Fresh Event")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
 
         // First call with stale token → fullResyncRequired
-        val fullResyncPage = EventPage(
-            events = emptyList(),
-            nextSyncToken = null,
-            fullResyncRequired = true,
-        )
+        val fullResyncPage =
+            EventPage(
+                events = emptyList(),
+                nextSyncToken = null,
+                fullResyncRequired = true,
+            )
         // Second call with timeMin/timeMax → returns fresh events
-        val fullSyncResult = EventPage(
-            events = listOf(freshEvent),
-            nextSyncToken = "fresh-sync-token",
-            fullResyncRequired = false,
-        )
+        val fullSyncResult =
+            EventPage(
+                events = listOf(freshEvent),
+                nextSyncToken = "fresh-sync-token",
+                fullResyncRequired = false,
+            )
 
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         // First call with stale token
@@ -341,19 +358,21 @@ class CalendarSyncServiceTest {
     @Test
     fun `syncConnection clears syncToken when nextSyncToken is null in response`() {
         val subId = UUID.randomUUID()
-        val subscription = CalendarSubscription(
-            connectionId = connectionId,
-            googleCalendarId = "cal1@gmail.com",
-            summary = "Family",
-            isSelected = true,
-            syncToken = null,
-        ).also { it.id = subId }
+        val subscription =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "cal1@gmail.com",
+                summary = "Family",
+                isSelected = true,
+                syncToken = null,
+            ).also { it.id = subId }
 
-        val eventPage = EventPage(
-            events = emptyList(),
-            nextSyncToken = null,
-            fullResyncRequired = false,
-        )
+        val eventPage =
+            EventPage(
+                events = emptyList(),
+                nextSyncToken = null,
+                fullResyncRequired = false,
+            )
 
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every {
@@ -372,16 +391,17 @@ class CalendarSyncServiceTest {
 
     @Test
     fun `syncAll calls syncConnection for all active connections`() {
-        val conn1 = GoogleConnection(
-            familyMemberId = UUID.randomUUID(),
-            credentialsId = null,
-            googleAccountId = "acc1",
-            email = "a@example.com",
-            accessToken = "t1",
-            refreshToken = "r1",
-            tokenExpiresAt = null,
-            status = "active",
-        ).also { it.id = UUID.randomUUID() }
+        val conn1 =
+            GoogleConnection(
+                familyMemberId = UUID.randomUUID(),
+                credentialsId = null,
+                googleAccountId = "acc1",
+                email = "a@example.com",
+                accessToken = "t1",
+                refreshToken = "r1",
+                tokenExpiresAt = null,
+                status = "active",
+            ).also { it.id = UUID.randomUUID() }
 
         every { connectionRepo.findAllByStatus("active") } returns listOf(conn1)
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(conn1.id!!) } returns emptyList()

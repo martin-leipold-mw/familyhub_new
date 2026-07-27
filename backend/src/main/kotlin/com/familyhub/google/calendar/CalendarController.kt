@@ -15,7 +15,6 @@ import java.util.UUID
 class CalendarController(
     private val service: CalendarQueryService,
 ) : GoogleCalendarsApi {
-
     override fun listGoogleCalendars(memberId: UUID): ResponseEntity<List<CalendarResponse>> =
         ResponseEntity.ok(service.listForMember(memberId).map { it.toResponse() })
 
@@ -31,10 +30,11 @@ class CalendarController(
     }
 }
 
-private fun CalendarView.toResponse() = CalendarResponse(
-    id = id,
-    summary = summary,
-    backgroundColor = backgroundColor,
-    isPrimary = isPrimary,
-    isSelected = isSelected,
-)
+private fun CalendarView.toResponse() =
+    CalendarResponse(
+        id = id,
+        summary = summary,
+        backgroundColor = backgroundColor,
+        isPrimary = isPrimary,
+        isSelected = isSelected,
+    )

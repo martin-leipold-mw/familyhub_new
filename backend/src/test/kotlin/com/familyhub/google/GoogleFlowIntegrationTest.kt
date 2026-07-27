@@ -35,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Transactional
 class GoogleFlowIntegrationTest : BaseIntegrationTest() {
-
     @Autowired
     lateinit var objectMapper: ObjectMapper
 
@@ -81,9 +80,9 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
                       "token_type": "Bearer",
                       "scope": "https://www.googleapis.com/auth/calendar"
                     }
-                    """.trimIndent()
-                )
-            )
+                    """.trimIndent(),
+                ),
+            ),
         )
 
         wm.stubFor(
@@ -95,9 +94,9 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
                       "email": "papa@example.de",
                       "name": "Papa"
                     }
-                    """.trimIndent()
-                )
-            )
+                    """.trimIndent(),
+                ),
+            ),
         )
 
         // Loose regexes so the URL-encoded calendarId ('@' → '%40') doesn't break matching.
@@ -115,9 +114,9 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
                         }
                       ]
                     }
-                    """.trimIndent()
-                )
-            )
+                    """.trimIndent(),
+                ),
+            ),
         )
 
         wm.stubFor(
@@ -136,52 +135,57 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
                       ],
                       "nextSyncToken": "synctoken-1"
                     }
-                    """.trimIndent()
-                )
-            )
+                    """.trimIndent(),
+                ),
+            ),
         )
     }
 
     private fun stateFrom(authUrl: String): String {
-        val match = Regex("[?&]state=([^&]+)").find(authUrl)
-            ?: error("No state param in authUrl: $authUrl")
+        val match =
+            Regex("[?&]state=([^&]+)").find(authUrl)
+                ?: error("No state param in authUrl: $authUrl")
         return java.net.URLDecoder.decode(match.groupValues[1], "UTF-8")
     }
 
     @Test
     fun `full google flow plus pin enforcement`() {
         // 1. Create credentials (setup not completed yet → @RequiresPinSession inactive → no PIN needed).
-        val credBody = mockMvc.post("/api/v1/google/credentials") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """
-                {
-                  "nickname": "Familie",
-                  "clientId": "cid.apps.googleusercontent.com",
-                  "clientSecret": "GOCSPX-x",
-                  "redirectUri": "http://localhost:8080/oauth/callback"
-                }
-            """.trimIndent()
-        }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
+        val credBody =
+            mockMvc.post("/api/v1/google/credentials") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                      "nickname": "Familie",
+                      "clientId": "cid.apps.googleusercontent.com",
+                      "clientSecret": "GOCSPX-x",
+                      "redirectUri": "http://localhost:8080/oauth/callback"
+                    }
+                    """.trimIndent()
+            }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
         val credentialsId = objectMapper.readTree(credBody).get("id").asText()
 
         // 2. Authorize → get authUrl, extract state.
-        val authBody = mockMvc.get("/api/v1/google/auth/authorize") {
-            param("credentialsId", credentialsId)
-            param("returnUrl", "/setup")
-        }.andExpect { status { isOk() } }.andReturn().response.contentAsString
+        val authBody =
+            mockMvc.get("/api/v1/google/auth/authorize") {
+                param("credentialsId", credentialsId)
+                param("returnUrl", "/setup")
+            }.andExpect { status { isOk() } }.andReturn().response.contentAsString
         val authUrl = objectMapper.readTree(authBody).get("authUrl").asText()
         val state = stateFrom(authUrl)
 
         // 3. Callback → hits WireMock /token + /userinfo.
-        val callbackBody = mockMvc.post("/api/v1/google/auth/callback") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(mapOf("code" to "code-123", "state" to state))
-        }.andExpect {
-            status { isOk() }
-            jsonPath("$.memberName") { value("Papa") }
-            jsonPath("$.isNewMember") { value(true) }
-            jsonPath("$.returnUrl") { value("/setup") }
-        }.andReturn().response.contentAsString
+        val callbackBody =
+            mockMvc.post("/api/v1/google/auth/callback") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(mapOf("code" to "code-123", "state" to state))
+            }.andExpect {
+                status { isOk() }
+                jsonPath("$.memberName") { value("Papa") }
+                jsonPath("$.isNewMember") { value(true) }
+                jsonPath("$.returnUrl") { value("/setup") }
+            }.andReturn().response.contentAsString
         val memberId = objectMapper.readTree(callbackBody).get("memberId").asText()
 
         // 4. Connection appears.
@@ -206,12 +210,13 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
         // (created==0), but we assert created==1.
         mockMvc.put("/api/v1/google/calendars/selected") {
             contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(
-                mapOf(
-                    "memberId" to memberId,
-                    "calendarIds" to listOf("cal1@group.calendar.google.com"),
+            content =
+                objectMapper.writeValueAsString(
+                    mapOf(
+                        "memberId" to memberId,
+                        "calendarIds" to listOf("cal1@group.calendar.google.com"),
+                    ),
                 )
-            )
         }.andExpect { status { isOk() } }
 
         // 7. Sync → WireMock events → 1 event imported.
@@ -239,14 +244,15 @@ class GoogleFlowIntegrationTest : BaseIntegrationTest() {
 
         mockMvc.post("/api/v1/google/credentials") {
             contentType = MediaType.APPLICATION_JSON
-            content = """
+            content =
+                """
                 {
                   "nickname": "Zweit",
                   "clientId": "cid2.apps.googleusercontent.com",
                   "clientSecret": "GOCSPX-y",
                   "redirectUri": "http://localhost:8080/oauth/callback"
                 }
-            """.trimIndent()
+                """.trimIndent()
         }.andExpect { status { isUnauthorized() } }
     }
 }

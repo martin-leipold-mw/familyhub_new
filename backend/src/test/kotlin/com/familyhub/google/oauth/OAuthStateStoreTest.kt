@@ -36,9 +36,14 @@ class OAuthStateStoreTest {
     }
 
     private class MutableClock(var now: Instant) : Clock() {
-        fun advance(d: Duration) { now = now.plus(d) }
+        fun advance(d: Duration) {
+            now = now.plus(d)
+        }
+
         override fun instant() = now
+
         override fun getZone() = ZoneOffset.UTC
+
         override fun withZone(z: java.time.ZoneId?) = this
     }
 }

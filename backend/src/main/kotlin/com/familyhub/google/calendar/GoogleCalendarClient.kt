@@ -5,9 +5,9 @@ import com.familyhub.google.token.GoogleTokenProvider
 import com.google.api.client.googleapis.json.GoogleJsonResponseException
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
+import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.Calendar
 import com.google.api.services.calendar.model.Event
-import com.google.api.client.util.DateTime
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -32,11 +32,12 @@ class GoogleCalendarClient(
 ) {
     private fun buildCalendar(connection: GoogleConnection): Calendar {
         val token = tokenProvider.validAccessToken(connection)
-        val initializer = com.google.api.client.http.HttpRequestInitializer { request ->
-            request.headers.authorization = "Bearer $token"
-            request.connectTimeout = 5_000
-            request.readTimeout = 30_000
-        }
+        val initializer =
+            com.google.api.client.http.HttpRequestInitializer { request ->
+                request.headers.authorization = "Bearer $token"
+                request.connectTimeout = 5_000
+                request.readTimeout = 30_000
+            }
         return Calendar.Builder(transport, GsonFactory.getDefaultInstance(), initializer)
             .setApplicationName("FamilyHub")
             .setRootUrl(baseUrl)
@@ -48,16 +49,18 @@ class GoogleCalendarClient(
         val result = mutableListOf<GoogleCalendarInfo>()
         var pageToken: String? = null
         do {
-            val request = calendar.calendarList().list()
-                .also { req -> pageToken?.let { req.pageToken = it } }
+            val request =
+                calendar.calendarList().list()
+                    .also { req -> pageToken?.let { req.pageToken = it } }
             val response = request.execute()
             response.items?.forEach { entry ->
-                result += GoogleCalendarInfo(
-                    id = entry.id,
-                    summary = entry.summary ?: "",
-                    backgroundColor = entry.backgroundColor,
-                    primary = entry.isPrimary == true,
-                )
+                result +=
+                    GoogleCalendarInfo(
+                        id = entry.id,
+                        summary = entry.summary ?: "",
+                        backgroundColor = entry.backgroundColor,
+                        primary = entry.isPrimary == true,
+                    )
             }
             pageToken = response.nextPageToken
         } while (pageToken != null)
@@ -77,9 +80,10 @@ class GoogleCalendarClient(
             var pageToken: String? = null
             var capturedSyncToken: String? = null
             do {
-                val request = calendar.events().list(calendarId)
-                    .setSingleEvents(true)
-                    .setShowDeleted(true)
+                val request =
+                    calendar.events().list(calendarId)
+                        .setSingleEvents(true)
+                        .setShowDeleted(true)
                 if (syncToken != null) {
                     request.syncToken = syncToken
                 } else {
@@ -107,15 +111,27 @@ class GoogleCalendarClient(
         }
     }
 
-    fun insertEvent(connection: GoogleConnection, calendarId: String, googleEvent: Event): Event {
+    fun insertEvent(
+        connection: GoogleConnection,
+        calendarId: String,
+        googleEvent: Event,
+    ): Event {
         return buildCalendar(connection).events().insert(calendarId, googleEvent).execute()
     }
 
-    fun updateEvent(connection: GoogleConnection, calendarId: String, googleEvent: Event): Event {
+    fun updateEvent(
+        connection: GoogleConnection,
+        calendarId: String,
+        googleEvent: Event,
+    ): Event {
         return buildCalendar(connection).events().update(calendarId, googleEvent.id, googleEvent).execute()
     }
 
-    fun deleteEvent(connection: GoogleConnection, calendarId: String, eventId: String) {
+    fun deleteEvent(
+        connection: GoogleConnection,
+        calendarId: String,
+        eventId: String,
+    ) {
         buildCalendar(connection).events().delete(calendarId, eventId).execute()
     }
 }

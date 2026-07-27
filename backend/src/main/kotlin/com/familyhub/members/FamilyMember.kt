@@ -17,22 +17,16 @@ import java.util.UUID
 class FamilyMember(
     @Column(nullable = false)
     var name: String,
-
     @Column(nullable = false)
     var role: String,
-
     @Column(nullable = false)
     var color: String,
-
     @Column(name = "date_of_birth")
     var dateOfBirth: LocalDate? = null,
-
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true,
-
     @Column(name = "avatar_data")
     var avatarData: ByteArray? = null,
-
     @Column(name = "avatar_url")
     var avatarUrl: String? = null,
 ) {

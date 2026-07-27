@@ -5,5 +5,6 @@ import java.util.UUID
 
 interface GoogleCredentialsRepository : JpaRepository<GoogleCredentials, UUID> {
     fun findByIsPrimaryTrue(): GoogleCredentials?
+
     fun findAllByIsActiveTrue(): List<GoogleCredentials>
 }

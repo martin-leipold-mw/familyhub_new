@@ -22,7 +22,6 @@ import java.util.UUID
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 @ExtendWith(MockKExtension::class)
 class GoogleAuthControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
@@ -74,17 +73,18 @@ class GoogleAuthControllerTest {
     @Test
     fun `listConnections includes connection with non-null lastSyncedAt`() {
         val syncedAt = Instant.parse("2026-07-23T10:00:00Z")
-        every { service.listConnections() } returns listOf(
-            ConnectionView(
-                connectionId = connectionId,
-                memberId = memberId,
-                email = "anna@example.com",
-                name = "Anna",
-                status = "active",
-                lastSyncedAt = syncedAt,
-                scopes = listOf("https://www.googleapis.com/auth/calendar"),
+        every { service.listConnections() } returns
+            listOf(
+                ConnectionView(
+                    connectionId = connectionId,
+                    memberId = memberId,
+                    email = "anna@example.com",
+                    name = "Anna",
+                    status = "active",
+                    lastSyncedAt = syncedAt,
+                    scopes = listOf("https://www.googleapis.com/auth/calendar"),
+                ),
             )
-        )
         mockMvc.get("/api/v1/google/connections").andExpect {
             status { isOk() }
             jsonPath("$[0].email") { value("anna@example.com") }
@@ -95,17 +95,18 @@ class GoogleAuthControllerTest {
 
     @Test
     fun `listConnections includes connection with null lastSyncedAt`() {
-        every { service.listConnections() } returns listOf(
-            ConnectionView(
-                connectionId = connectionId,
-                memberId = memberId,
-                email = "bob@example.com",
-                name = "Bob",
-                status = "active",
-                lastSyncedAt = null,
-                scopes = emptyList(),
+        every { service.listConnections() } returns
+            listOf(
+                ConnectionView(
+                    connectionId = connectionId,
+                    memberId = memberId,
+                    email = "bob@example.com",
+                    name = "Bob",
+                    status = "active",
+                    lastSyncedAt = null,
+                    scopes = emptyList(),
+                ),
             )
-        )
         mockMvc.get("/api/v1/google/connections").andExpect {
             status { isOk() }
             jsonPath("$[0].email") { value("bob@example.com") }

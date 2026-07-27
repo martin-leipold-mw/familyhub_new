@@ -5,6 +5,8 @@ import java.util.UUID
 
 interface GoogleConnectionRepository : JpaRepository<GoogleConnection, UUID> {
     fun findByGoogleAccountId(googleAccountId: String): GoogleConnection?
+
     fun findByFamilyMemberId(familyMemberId: UUID): GoogleConnection?
+
     fun findAllByStatus(status: String): List<GoogleConnection>
 }

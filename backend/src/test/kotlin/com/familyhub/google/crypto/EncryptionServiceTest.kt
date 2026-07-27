@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 class EncryptionServiceTest {
-
     private val service = EncryptionService("test-key-with-more-than-32-characters-in-it")
 
     @Test

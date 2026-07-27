@@ -1,10 +1,10 @@
 package com.familyhub
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestMethodOrder
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestMethodOrder
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.get
@@ -15,12 +15,10 @@ import org.springframework.transaction.annotation.Transactional
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 @Transactional
 class Schritt2FlowIntegrationTest : BaseIntegrationTest() {
-
     @Autowired
     lateinit var objectMapper: ObjectMapper
 
-    private fun tokenFrom(json: String): String =
-        objectMapper.readTree(json).get("sessionToken").asText()
+    private fun tokenFrom(json: String): String = objectMapper.readTree(json).get("sessionToken").asText()
 
     @Test
     @Order(1)
@@ -40,10 +38,11 @@ class Schritt2FlowIntegrationTest : BaseIntegrationTest() {
         }.andExpect { status { isCreated() } }
 
         // 3. Complete setup by setting a PIN → returns a session token.
-        val setPinBody = mockMvc.post("/api/v1/settings/set-pin") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"pin":"1234"}"""
-        }.andExpect { status { isOk() } }.andReturn().response.contentAsString
+        val setPinBody =
+            mockMvc.post("/api/v1/settings/set-pin") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"pin":"1234"}"""
+            }.andExpect { status { isOk() } }.andReturn().response.contentAsString
         val token = tokenFrom(setPinBody)
 
         // 4. Setup now complete.
@@ -66,11 +65,12 @@ class Schritt2FlowIntegrationTest : BaseIntegrationTest() {
         }.andExpect { status { isUnauthorized() } }
 
         // 7. With the token it works.
-        val created = mockMvc.post("/api/v1/members") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"name":"Mama","role":"parent","color":"pink"}"""
-            header("X-Pin-Session", token)
-        }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
+        val created =
+            mockMvc.post("/api/v1/members") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"name":"Mama","role":"parent","color":"pink"}"""
+                header("X-Pin-Session", token)
+            }.andExpect { status { isCreated() } }.andReturn().response.contentAsString
         val memberId = objectMapper.readTree(created).get("id").asText()
 
         // 8. Avatar round-trip (upload with token, read publicly).

@@ -35,30 +35,32 @@ data class EventView(
     val calendarId: String,
 )
 
-private fun Event.toView() = EventView(
-    id = id!!,
-    title = title,
-    description = description,
-    location = location,
-    start = startTime,
-    end = endTime,
-    isAllDay = isAllDay,
-    allDayStart = allDayStart,
-    allDayEnd = allDayEnd,
-    memberId = ownerMemberId,
-    calendarId = googleCalendarId,
-)
+private fun Event.toView() =
+    EventView(
+        id = id!!,
+        title = title,
+        description = description,
+        location = location,
+        start = startTime,
+        end = endTime,
+        isAllDay = isAllDay,
+        allDayStart = allDayStart,
+        allDayEnd = allDayEnd,
+        memberId = ownerMemberId,
+        calendarId = googleCalendarId,
+    )
 
-private fun CreateEventCommand.toEventCommand() = EventCommand(
-    title = title,
-    description = description,
-    location = location,
-    start = start,
-    end = end,
-    allDayStart = allDayStart,
-    allDayEnd = allDayEnd,
-    isAllDay = isAllDay,
-)
+private fun CreateEventCommand.toEventCommand() =
+    EventCommand(
+        title = title,
+        description = description,
+        location = location,
+        start = start,
+        end = end,
+        allDayStart = allDayStart,
+        allDayEnd = allDayEnd,
+        isAllDay = isAllDay,
+    )
 
 @Service
 class EventService(
@@ -68,13 +70,18 @@ class EventService(
     private val calendarClient: GoogleCalendarClient,
     private val mapper: EventMapper,
 ) {
-
-    fun list(start: Instant?, end: Instant?, memberId: UUID?, calendarId: String?): List<EventView> {
-        val events = if (start != null && end != null) {
-            eventRepository.findByStartTimeBetween(start, end)
-        } else {
-            eventRepository.findAll()
-        }
+    fun list(
+        start: Instant?,
+        end: Instant?,
+        memberId: UUID?,
+        calendarId: String?,
+    ): List<EventView> {
+        val events =
+            if (start != null && end != null) {
+                eventRepository.findByStartTimeBetween(start, end)
+            } else {
+                eventRepository.findAll()
+            }
         return events
             .let { list -> if (memberId != null) list.filter { it.ownerMemberId == memberId } else list }
             .let { list -> if (calendarId != null) list.filter { it.googleCalendarId == calendarId } else list }
@@ -89,16 +96,18 @@ class EventService(
 
     fun create(cmd: CreateEventCommand): EventView {
         requireValidTiming(cmd)
-        val connection = connectionRepository.findByFamilyMemberId(cmd.memberId)
-            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+        val connection =
+            connectionRepository.findByFamilyMemberId(cmd.memberId)
+                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
 
-        val target: CalendarSubscription = if (cmd.calendarId != null) {
-            subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, cmd.calendarId)
-                ?: throw ValidationException("Kalender nicht gefunden")
-        } else {
-            subscriptionRepository.findAllByConnectionId(connection.id!!).firstOrNull { it.isPrimary }
-                ?: throw ValidationException("Kein Zielkalender vorhanden")
-        }
+        val target: CalendarSubscription =
+            if (cmd.calendarId != null) {
+                subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, cmd.calendarId)
+                    ?: throw ValidationException("Kalender nicht gefunden")
+            } else {
+                subscriptionRepository.findAllByConnectionId(connection.id!!).firstOrNull { it.isPrimary }
+                    ?: throw ValidationException("Kein Zielkalender vorhanden")
+            }
 
         val googleEvent = mapper.toGoogleEvent(cmd.toEventCommand())
         val inserted = calendarClient.insertEvent(connection, target.googleCalendarId, googleEvent)
@@ -106,15 +115,21 @@ class EventService(
         return eventRepository.save(entity).toView()
     }
 
-    fun update(id: UUID, cmd: CreateEventCommand): EventView {
+    fun update(
+        id: UUID,
+        cmd: CreateEventCommand,
+    ): EventView {
         requireValidTiming(cmd)
-        val local = eventRepository.findById(id).orElseThrow {
-            ResourceNotFoundException("Termin nicht gefunden")
-        }
-        val connection = connectionRepository.findByFamilyMemberId(local.ownerMemberId)
-            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
-        val subscription = subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, local.googleCalendarId)
-            ?: throw ResourceNotFoundException("Kalender-Abonnement nicht gefunden")
+        val local =
+            eventRepository.findById(id).orElseThrow {
+                ResourceNotFoundException("Termin nicht gefunden")
+            }
+        val connection =
+            connectionRepository.findByFamilyMemberId(local.ownerMemberId)
+                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+        val subscription =
+            subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, local.googleCalendarId)
+                ?: throw ResourceNotFoundException("Kalender-Abonnement nicht gefunden")
 
         val googleEvent = mapper.toGoogleEvent(cmd.toEventCommand())
         googleEvent.id = local.googleEventId
@@ -125,11 +140,13 @@ class EventService(
     }
 
     fun delete(id: UUID) {
-        val local = eventRepository.findById(id).orElseThrow {
-            ResourceNotFoundException("Termin nicht gefunden")
-        }
-        val connection = connectionRepository.findByFamilyMemberId(local.ownerMemberId)
-            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+        val local =
+            eventRepository.findById(id).orElseThrow {
+                ResourceNotFoundException("Termin nicht gefunden")
+            }
+        val connection =
+            connectionRepository.findByFamilyMemberId(local.ownerMemberId)
+                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
 
         calendarClient.deleteEvent(connection, local.googleCalendarId, local.googleEventId)
         eventRepository.delete(local)

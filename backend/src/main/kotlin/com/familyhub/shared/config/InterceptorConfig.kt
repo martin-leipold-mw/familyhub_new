@@ -1,9 +1,9 @@
 package com.familyhub.shared.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.familyhub.pin.PinSessionInterceptor
 import com.familyhub.pin.PinSessionService
 import com.familyhub.settings.SettingRepository
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
@@ -24,7 +24,6 @@ class InterceptorConfig(
     private val settingRepositoryProvider: ObjectProvider<SettingRepository>,
     private val objectMapper: ObjectMapper,
 ) : WebMvcConfigurer {
-
     override fun addInterceptors(registry: InterceptorRegistry) {
         val pinSessionService = pinSessionServiceProvider.getIfAvailable() ?: return
         val settingRepository = settingRepositoryProvider.getIfAvailable() ?: return

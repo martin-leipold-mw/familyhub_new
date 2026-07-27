@@ -21,7 +21,6 @@ class SettingsService(
     private val googleConnectionRepository: GoogleConnectionRepository,
     private val calendarSubscriptionRepository: CalendarSubscriptionRepository,
 ) {
-
     fun getSetupStatus(): SetupStatusResponse {
         val hasFamilyMembers = memberRepository.countByIsActiveTrue() > 0
         val hasCredentials = googleCredentialsRepository.count() > 0
@@ -45,14 +44,15 @@ class SettingsService(
         hasConnection: Boolean,
         hasSelectedCalendars: Boolean,
         hasPin: Boolean,
-    ): Int = when {
-        !hasMembers -> 2
-        !hasCredentials -> 3
-        !hasConnection -> 5
-        !hasSelectedCalendars -> 6
-        !hasPin -> 7
-        else -> 7
-    }
+    ): Int =
+        when {
+            !hasMembers -> 2
+            !hasCredentials -> 3
+            !hasConnection -> 5
+            !hasSelectedCalendars -> 6
+            !hasPin -> 7
+            else -> 7
+        }
 
     @Transactional
     fun updateSetupStep(step: Int) {
@@ -77,7 +77,10 @@ class SettingsService(
     }
 
     @Transactional
-    fun changePin(currentPin: String, newPin: String) {
+    fun changePin(
+        currentPin: String,
+        newPin: String,
+    ) {
         val stored = getValue(KEY_PIN) ?: throw InvalidPinException()
         if (stored != currentPin) throw InvalidPinException()
         validatePinFormat(newPin)
@@ -94,17 +97,21 @@ class SettingsService(
         }
     }
 
-    private fun getValue(key: String): String? =
-        settingRepository.findById(key).map { it.value }.orElse(null)
+    private fun getValue(key: String): String? = settingRepository.findById(key).map { it.value }.orElse(null)
 
-    private fun setValue(key: String, value: String) {
+    private fun setValue(
+        key: String,
+        value: String,
+    ) {
         val setting = settingRepository.findById(key).orElse(Setting(key = key, value = value))
         setting.value = value
         settingRepository.save(setting)
     }
 
     fun setGoogleConnected(value: Boolean) = setValue(KEY_GOOGLE_CONNECTED, value.toString())
+
     fun timezone(): String = getValue(KEY_TIMEZONE) ?: "Europe/Berlin"
+
     fun syncIntervalMinutes(): Long = getValue(KEY_SYNC_INTERVAL)?.toLongOrNull() ?: 15
 
     companion object {

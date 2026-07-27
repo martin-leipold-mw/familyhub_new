@@ -13,24 +13,26 @@ import java.util.UUID
 class MemberService(
     private val repository: FamilyMemberRepository,
 ) {
-
-    fun list(): List<MemberResponse> =
-        repository.findByIsActiveTrueOrderByCreatedAtAsc().map { it.toResponse() }
+    fun list(): List<MemberResponse> = repository.findByIsActiveTrueOrderByCreatedAtAsc().map { it.toResponse() }
 
     @Transactional
     fun create(req: MemberRequest): MemberResponse {
         val name = validName(req.name)
-        val member = FamilyMember(
-            name = name,
-            role = req.role,
-            color = req.color,
-            dateOfBirth = req.dateOfBirth,
-        )
+        val member =
+            FamilyMember(
+                name = name,
+                role = req.role,
+                color = req.color,
+                dateOfBirth = req.dateOfBirth,
+            )
         return repository.save(member).toResponse()
     }
 
     @Transactional
-    fun update(id: UUID, req: MemberRequest): MemberResponse {
+    fun update(
+        id: UUID,
+        req: MemberRequest,
+    ): MemberResponse {
         val member = repository.findById(id).orElseThrow { MemberNotFoundException() }
         member.name = validName(req.name)
         member.role = req.role
@@ -52,7 +54,10 @@ class MemberService(
     }
 
     @Transactional
-    fun saveAvatar(id: UUID, bytes: ByteArray) {
+    fun saveAvatar(
+        id: UUID,
+        bytes: ByteArray,
+    ) {
         val member = repository.findById(id).orElseThrow { MemberNotFoundException() }
         member.avatarData = bytes
         repository.save(member)
@@ -64,15 +69,16 @@ class MemberService(
         return name
     }
 
-    private fun FamilyMember.toResponse(): MemberResponse = MemberResponse(
-        id = this.id!!,
-        name = this.name,
-        role = this.role,
-        color = this.color,
-        isActive = this.isActive,
-        createdAt = this.createdAt!!.atOffset(ZoneOffset.UTC),
-        updatedAt = this.updatedAt!!.atOffset(ZoneOffset.UTC),
-        dateOfBirth = this.dateOfBirth,
-        avatarUrl = if (this.avatarData != null) "/api/v1/members/${this.id}/avatar" else null,
-    )
+    private fun FamilyMember.toResponse(): MemberResponse =
+        MemberResponse(
+            id = this.id!!,
+            name = this.name,
+            role = this.role,
+            color = this.color,
+            isActive = this.isActive,
+            createdAt = this.createdAt!!.atOffset(ZoneOffset.UTC),
+            updatedAt = this.updatedAt!!.atOffset(ZoneOffset.UTC),
+            dateOfBirth = this.dateOfBirth,
+            avatarUrl = if (this.avatarData != null) "/api/v1/members/${this.id}/avatar" else null,
+        )
 }

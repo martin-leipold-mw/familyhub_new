@@ -1,7 +1,6 @@
 package com.familyhub.google.calendar
 
 import com.google.api.client.util.DateTime
-import com.google.api.services.calendar.model.Event as GoogleEvent
 import com.google.api.services.calendar.model.EventDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -9,19 +8,20 @@ import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import com.google.api.services.calendar.model.Event as GoogleEvent
 
 class EventMapperTest {
-
     private lateinit var mapper: EventMapper
 
     private val subscriptionId = UUID.randomUUID()
     private val ownerMemberId = UUID.randomUUID()
 
-    private val subscription = CalendarSubscription(
-        connectionId = UUID.randomUUID(),
-        googleCalendarId = "test@gmail.com",
-        summary = "Test Calendar",
-    ).also { it.id = subscriptionId }
+    private val subscription =
+        CalendarSubscription(
+            connectionId = UUID.randomUUID(),
+            googleCalendarId = "test@gmail.com",
+            summary = "Test Calendar",
+        ).also { it.id = subscriptionId }
 
     @BeforeEach
     fun setUp() {
@@ -54,19 +54,20 @@ class EventMapperTest {
     fun `toEntity maps timed event dateTime to UTC Instants`() {
         // 2026-03-15T10:00:00Z = 1742032800000 ms
         val startMillis = Instant.parse("2026-03-15T10:00:00Z").toEpochMilli()
-        val endMillis   = Instant.parse("2026-03-15T11:00:00Z").toEpochMilli()
+        val endMillis = Instant.parse("2026-03-15T11:00:00Z").toEpochMilli()
 
-        val google = GoogleEvent()
-            .setId("evt-001")
-            .setSummary("Arzttermin")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
-            .setEtag("\"etag-abc\"")
-            .setRecurringEventId("recurring-001")
-            .setDescription("Beim Hausarzt")
-            .setLocation("Musterstraße 1")
-            .setUpdated(DateTime(startMillis))
+        val google =
+            GoogleEvent()
+                .setId("evt-001")
+                .setSummary("Arzttermin")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(startMillis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(endMillis)))
+                .setEtag("\"etag-abc\"")
+                .setRecurringEventId("recurring-001")
+                .setDescription("Beim Hausarzt")
+                .setLocation("Musterstraße 1")
+                .setUpdated(DateTime(startMillis))
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
 
@@ -95,14 +96,15 @@ class EventMapperTest {
         // Google sends start=2026-07-01 (inclusive) and end=2026-07-02 (exclusive)
         // We expect allDayStart=2026-07-01 and allDayEnd=2026-07-01 (end -1 day)
         val startDate = DateTime("2026-07-01") // date-only
-        val endDate   = DateTime("2026-07-02") // date-only, exclusive per Google
+        val endDate = DateTime("2026-07-02") // date-only, exclusive per Google
 
-        val google = GoogleEvent()
-            .setId("evt-allday")
-            .setSummary("Urlaub")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDate(startDate))
-            .setEnd(EventDateTime().setDate(endDate))
+        val google =
+            GoogleEvent()
+                .setId("evt-allday")
+                .setSummary("Urlaub")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDate(startDate))
+                .setEnd(EventDateTime().setDate(endDate))
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
 
@@ -118,14 +120,15 @@ class EventMapperTest {
     fun `toEntity maps multi-day all-day event with correct exclusive end minus 1`() {
         // Google: start=2026-08-01, end=2026-08-05 (exclusive) → stored end=2026-08-04
         val startDate = DateTime("2026-08-01")
-        val endDate   = DateTime("2026-08-05")
+        val endDate = DateTime("2026-08-05")
 
-        val google = GoogleEvent()
-            .setId("evt-multiday")
-            .setSummary("Familienurlaub")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDate(startDate))
-            .setEnd(EventDateTime().setDate(endDate))
+        val google =
+            GoogleEvent()
+                .setId("evt-multiday")
+                .setSummary("Familienurlaub")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDate(startDate))
+                .setEnd(EventDateTime().setDate(endDate))
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
 
@@ -139,12 +142,13 @@ class EventMapperTest {
     @Test
     fun `toEntity uses summary when present`() {
         val millis = Instant.parse("2026-01-01T09:00:00Z").toEpochMilli()
-        val google = GoogleEvent()
-            .setId("evt-title")
-            .setSummary("Geburtstagsparty")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(millis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(millis + 3600_000L)))
+        val google =
+            GoogleEvent()
+                .setId("evt-title")
+                .setSummary("Geburtstagsparty")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(millis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(millis + 3600_000L)))
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
         assertThat(entity.title).isEqualTo("Geburtstagsparty")
@@ -153,12 +157,13 @@ class EventMapperTest {
     @Test
     fun `toEntity falls back to 'Ohne Titel' when summary is null`() {
         val millis = Instant.parse("2026-01-01T09:00:00Z").toEpochMilli()
-        val google = GoogleEvent()
-            .setId("evt-notitle")
-            // no setSummary → null
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(millis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(millis + 3600_000L)))
+        val google =
+            GoogleEvent()
+                .setId("evt-notitle")
+                // no setSummary → null
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(millis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(millis + 3600_000L)))
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
         assertThat(entity.title).isEqualTo("Ohne Titel")
@@ -169,12 +174,13 @@ class EventMapperTest {
     @Test
     fun `toEntity sets null for optional fields when absent`() {
         val millis = Instant.parse("2026-02-10T14:00:00Z").toEpochMilli()
-        val google = GoogleEvent()
-            .setId("evt-minimal")
-            .setSummary("Minimal")
-            .setStatus("confirmed")
-            .setStart(EventDateTime().setDateTime(DateTime(millis)))
-            .setEnd(EventDateTime().setDateTime(DateTime(millis + 1800_000L)))
+        val google =
+            GoogleEvent()
+                .setId("evt-minimal")
+                .setSummary("Minimal")
+                .setStatus("confirmed")
+                .setStart(EventDateTime().setDateTime(DateTime(millis)))
+                .setEnd(EventDateTime().setDateTime(DateTime(millis + 1800_000L)))
         // no description, location, etag, recurringEventId, updated
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
@@ -190,10 +196,11 @@ class EventMapperTest {
     @Test
     fun `toEntity handles null start and end gracefully`() {
         // google.start == null → isAllDay=false (safe-call null path), startTime=null, endTime=null
-        val google = GoogleEvent()
-            .setId("evt-nostart")
-            .setSummary("Kein Termin")
-            .setStatus("confirmed")
+        val google =
+            GoogleEvent()
+                .setId("evt-nostart")
+                .setSummary("Kein Termin")
+                .setStatus("confirmed")
         // No setStart / setEnd → both null
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
@@ -207,12 +214,13 @@ class EventMapperTest {
     @Test
     fun `toEntity handles EventDateTime with null dateTime (timed path, no dateTime set)`() {
         // start.dateTime == null but start.date also null → isAllDay=false, startTime/endTime=null
-        val google = GoogleEvent()
-            .setId("evt-empty-dt")
-            .setSummary("Leerer Zeitblock")
-            .setStatus("confirmed")
-            .setStart(EventDateTime()) // date=null, dateTime=null
-            .setEnd(EventDateTime())   // date=null, dateTime=null
+        val google =
+            GoogleEvent()
+                .setId("evt-empty-dt")
+                .setSummary("Leerer Zeitblock")
+                .setStatus("confirmed")
+                .setStart(EventDateTime()) // date=null, dateTime=null
+                .setEnd(EventDateTime()) // date=null, dateTime=null
 
         val entity = mapper.toEntity(google, subscription, ownerMemberId)
         assertThat(entity.isAllDay).isFalse()
@@ -225,18 +233,19 @@ class EventMapperTest {
     @Test
     fun `toGoogleEvent maps timed EventCommand to Google Event with dateTime`() {
         val start = Instant.parse("2026-09-10T09:30:00Z")
-        val end   = Instant.parse("2026-09-10T10:30:00Z")
+        val end = Instant.parse("2026-09-10T10:30:00Z")
 
-        val cmd = EventCommand(
-            title = "Meeting",
-            description = "Wöchentliches Teammeeting",
-            location = "Konferenzraum A",
-            start = start,
-            end = end,
-            allDayStart = null,
-            allDayEnd = null,
-            isAllDay = false,
-        )
+        val cmd =
+            EventCommand(
+                title = "Meeting",
+                description = "Wöchentliches Teammeeting",
+                location = "Konferenzraum A",
+                start = start,
+                end = end,
+                allDayStart = null,
+                allDayEnd = null,
+                isAllDay = false,
+            )
 
         val googleEvent = mapper.toGoogleEvent(cmd)
 
@@ -261,16 +270,17 @@ class EventMapperTest {
     fun `toGoogleEvent maps all-day EventCommand and adds 1 day back to end`() {
         // Our internal representation stores inclusive end (allDayEnd=2026-12-25)
         // Google expects exclusive end → stored end + 1 day = 2026-12-26
-        val cmd = EventCommand(
-            title = "Weihnachten",
-            description = null,
-            location = null,
-            start = null,
-            end = null,
-            allDayStart = LocalDate.of(2026, 12, 25),
-            allDayEnd = LocalDate.of(2026, 12, 25),
-            isAllDay = true,
-        )
+        val cmd =
+            EventCommand(
+                title = "Weihnachten",
+                description = null,
+                location = null,
+                start = null,
+                end = null,
+                allDayStart = LocalDate.of(2026, 12, 25),
+                allDayEnd = LocalDate.of(2026, 12, 25),
+                isAllDay = true,
+            )
 
         val googleEvent = mapper.toGoogleEvent(cmd)
 
@@ -294,16 +304,17 @@ class EventMapperTest {
     fun `toGoogleEvent maps multi-day all-day event with correct exclusive end`() {
         // Internal: start=2026-08-01, end=2026-08-04 (inclusive)
         // Google expected: start=2026-08-01, end=2026-08-05 (exclusive)
-        val cmd = EventCommand(
-            title = "Familienurlaub",
-            description = null,
-            location = null,
-            start = null,
-            end = null,
-            allDayStart = LocalDate.of(2026, 8, 1),
-            allDayEnd = LocalDate.of(2026, 8, 4),
-            isAllDay = true,
-        )
+        val cmd =
+            EventCommand(
+                title = "Familienurlaub",
+                description = null,
+                location = null,
+                start = null,
+                end = null,
+                allDayStart = LocalDate.of(2026, 8, 1),
+                allDayEnd = LocalDate.of(2026, 8, 4),
+                isAllDay = true,
+            )
 
         val googleEvent = mapper.toGoogleEvent(cmd)
 

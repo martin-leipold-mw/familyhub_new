@@ -28,20 +28,20 @@ import java.util.UUID
 @Import(SecurityConfig::class, GlobalExceptionHandler::class)
 @ExtendWith(MockKExtension::class)
 class MembersControllerTest {
-
     @Autowired
     lateinit var mockMvc: MockMvc
 
     @MockkBean
     lateinit var memberService: MemberService
 
-    private fun response(id: UUID = UUID.randomUUID()) = MemberResponse(
-        id = id, name = "Anna", role = "parent", color = "blue",
-        isActive = true,
-        createdAt = OffsetDateTime.of(2026, 7, 22, 10, 0, 0, 0, ZoneOffset.UTC),
-        updatedAt = OffsetDateTime.of(2026, 7, 22, 10, 0, 0, 0, ZoneOffset.UTC),
-        dateOfBirth = null, avatarUrl = null,
-    )
+    private fun response(id: UUID = UUID.randomUUID()) =
+        MemberResponse(
+            id = id, name = "Anna", role = "parent", color = "blue",
+            isActive = true,
+            createdAt = OffsetDateTime.of(2026, 7, 22, 10, 0, 0, 0, ZoneOffset.UTC),
+            updatedAt = OffsetDateTime.of(2026, 7, 22, 10, 0, 0, 0, ZoneOffset.UTC),
+            dateOfBirth = null, avatarUrl = null,
+        )
 
     @Test
     fun `GET members returns list`() {

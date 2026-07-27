@@ -11,12 +11,13 @@ import java.util.UUID
 
 private class MutableClock(var instant: Instant) : Clock() {
     override fun getZone(): ZoneId = ZoneOffset.UTC
+
     override fun withZone(zone: ZoneId): Clock = this
+
     override fun instant(): Instant = instant
 }
 
 class PinSessionServiceTest {
-
     private val clock = MutableClock(Instant.parse("2026-07-22T10:00:00Z"))
     private val service = PinSessionService(clock)
 
@@ -44,7 +45,7 @@ class PinSessionServiceTest {
     fun `activity within the window slides the timeout`() {
         val token = service.createSession()
         clock.instant = clock.instant.plus(Duration.ofMinutes(14))
-        assertThat(service.isValid(token)).isTrue()   // refreshes last-accessed
+        assertThat(service.isValid(token)).isTrue() // refreshes last-accessed
         clock.instant = clock.instant.plus(Duration.ofMinutes(14))
         assertThat(service.isValid(token)).isTrue()
     }

@@ -13,7 +13,6 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 class GoogleHealthIndicatorTest {
-
     private val repo = mockk<GoogleConnectionRepository>()
     private val fixedNow = Instant.parse("2026-07-24T12:00:00Z")
     private val clock = Clock.fixed(fixedNow, ZoneOffset.UTC)

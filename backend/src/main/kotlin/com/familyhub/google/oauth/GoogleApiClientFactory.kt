@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class GoogleApiClientFactory {
-
     /** Plain transport; per-request timeouts (connect 5 s / read 30 s) are set on each HttpRequest. */
     @Bean
     fun netHttpTransport(): NetHttpTransport = NetHttpTransport()

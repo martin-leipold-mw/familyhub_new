@@ -1,0 +1,31 @@
+# detekt overrides on top of the default ruleset (buildUponDefaultConfig = true).
+# Kept intentionally lean — tighten over time rather than starting draconian.
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 80
+  LongParameterList:
+    # Spring constructor injection + generated DTOs legitimately take many params.
+    active: true
+    functionThreshold: 10
+    constructorThreshold: 12
+  TooManyFunctions:
+    active: false
+
+style:
+  MagicNumber:
+    # Too noisy for HTTP status codes, durations, test fixtures.
+    active: false
+  ReturnCount:
+    active: true
+    max: 4
+  MaxLineLength:
+    maxLineLength: 140
+
+naming:
+  # Kotlin test method names often use backticks with spaces.
+  FunctionNaming:
+    ignoreAnnotated: ['Test', 'ParameterizedTest']

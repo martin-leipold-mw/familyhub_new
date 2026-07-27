@@ -15,17 +15,17 @@ import java.util.UUID
 class MembersController(
     private val memberService: MemberService,
 ) : MembersApi {
-
-    override fun listMembers(): ResponseEntity<List<MemberResponse>> =
-        ResponseEntity.ok(memberService.list())
+    override fun listMembers(): ResponseEntity<List<MemberResponse>> = ResponseEntity.ok(memberService.list())
 
     @RequiresPinSession
     override fun createMember(memberRequest: MemberRequest): ResponseEntity<MemberResponse> =
         ResponseEntity.status(HttpStatus.CREATED).body(memberService.create(memberRequest))
 
     @RequiresPinSession
-    override fun updateMember(id: UUID, memberRequest: MemberRequest): ResponseEntity<MemberResponse> =
-        ResponseEntity.ok(memberService.update(id, memberRequest))
+    override fun updateMember(
+        id: UUID,
+        memberRequest: MemberRequest,
+    ): ResponseEntity<MemberResponse> = ResponseEntity.ok(memberService.update(id, memberRequest))
 
     @RequiresPinSession
     override fun deleteMember(id: UUID): ResponseEntity<Unit> {

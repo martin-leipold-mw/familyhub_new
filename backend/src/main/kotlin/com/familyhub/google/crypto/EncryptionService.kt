@@ -13,10 +13,11 @@ import javax.crypto.spec.SecretKeySpec
 class EncryptionService(
     @Value("\${familyhub.security.encryption-key}") rawKey: String,
 ) {
-    private val key = SecretKeySpec(
-        MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray(Charsets.UTF_8)),
-        "AES",
-    )
+    private val key =
+        SecretKeySpec(
+            MessageDigest.getInstance("SHA-256").digest(rawKey.toByteArray(Charsets.UTF_8)),
+            "AES",
+        )
     private val random = SecureRandom()
 
     fun encrypt(plaintext: String): String {

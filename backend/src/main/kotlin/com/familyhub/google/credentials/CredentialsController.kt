@@ -17,7 +17,6 @@ import java.util.UUID
 class CredentialsController(
     private val service: CredentialsService,
 ) : GoogleCredentialsApi {
-
     @RequiresPinSession
     override fun listCredentials(): ResponseEntity<List<GoogleCredentialsResponse>> =
         ResponseEntity.ok(service.list().map { it.toResponse() })
@@ -27,12 +26,13 @@ class CredentialsController(
         ResponseEntity.status(HttpStatus.CREATED).body(service.create(googleCredentialsRequest.toCommand()).toResponse())
 
     @RequiresPinSession
-    override fun getCredentials(id: UUID): ResponseEntity<GoogleCredentialsResponse> =
-        ResponseEntity.ok(service.get(id).toResponse())
+    override fun getCredentials(id: UUID): ResponseEntity<GoogleCredentialsResponse> = ResponseEntity.ok(service.get(id).toResponse())
 
     @RequiresPinSession
-    override fun updateCredentials(id: UUID, googleCredentialsRequest: GoogleCredentialsRequest): ResponseEntity<GoogleCredentialsResponse> =
-        ResponseEntity.ok(service.update(id, googleCredentialsRequest.toCommand()).toResponse())
+    override fun updateCredentials(
+        id: UUID,
+        googleCredentialsRequest: GoogleCredentialsRequest,
+    ): ResponseEntity<GoogleCredentialsResponse> = ResponseEntity.ok(service.update(id, googleCredentialsRequest.toCommand()).toResponse())
 
     @RequiresPinSession
     override fun deleteCredentials(id: UUID): ResponseEntity<Unit> {
@@ -45,17 +45,19 @@ class CredentialsController(
         ResponseEntity.ok(service.setPrimary(id).toResponse())
 
     @RequiresPinSession
-    override fun validateCredentials(credentialsValidationRequest: CredentialsValidationRequest): ResponseEntity<CredentialsValidationResponse> {
-        val r = service.validate(
-            credentialsValidationRequest.clientId,
-            credentialsValidationRequest.clientSecret,
-            credentialsValidationRequest.redirectUri,
-        )
+    override fun validateCredentials(
+        credentialsValidationRequest: CredentialsValidationRequest,
+    ): ResponseEntity<CredentialsValidationResponse> {
+        val r =
+            service.validate(
+                credentialsValidationRequest.clientId,
+                credentialsValidationRequest.clientSecret,
+                credentialsValidationRequest.redirectUri,
+            )
         return ResponseEntity.ok(CredentialsValidationResponse(isValid = r.isValid, message = r.message))
     }
 
-    private fun GoogleCredentialsRequest.toCommand() =
-        CredentialsCommand(nickname, clientId ?: "", clientSecret ?: "", redirectUri)
+    private fun GoogleCredentialsRequest.toCommand() = CredentialsCommand(nickname, clientId ?: "", clientSecret ?: "", redirectUri)
 
     private fun GoogleCredentialsView.toResponse() =
         GoogleCredentialsResponse(

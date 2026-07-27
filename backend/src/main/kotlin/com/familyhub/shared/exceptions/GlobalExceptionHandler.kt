@@ -3,76 +3,76 @@ package com.familyhub.shared.exceptions
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import java.util.UUID
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
-
     private val log = LoggerFactory.getLogger(javaClass)
 
     @ExceptionHandler(NoResourceFoundException::class)
     fun handleNotFound(ex: NoResourceFoundException): ResponseEntity<ErrorResponse> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(code = "NOT_FOUND", message = "Ressource nicht gefunden")
+            ErrorResponse(code = "NOT_FOUND", message = "Ressource nicht gefunden"),
         )
     }
 
     @ExceptionHandler(SetupAlreadyCompletedException::class)
     fun handleSetupCompleted(ex: SetupAlreadyCompletedException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-            ErrorResponse(code = "SETUP_COMPLETED", message = ex.message)
+            ErrorResponse(code = "SETUP_COMPLETED", message = ex.message),
         )
 
     @ExceptionHandler(InvalidPinException::class)
     fun handleInvalidPin(ex: InvalidPinException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-            ErrorResponse(code = "INVALID_PIN", message = ex.message)
+            ErrorResponse(code = "INVALID_PIN", message = ex.message),
         )
 
     @ExceptionHandler(ValidationException::class)
     fun handleValidation(ex: ValidationException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ErrorResponse(code = "VALIDATION_ERROR", message = ex.message)
+            ErrorResponse(code = "VALIDATION_ERROR", message = ex.message),
         )
 
     @ExceptionHandler(MemberNotFoundException::class)
     fun handleMemberNotFound(ex: MemberNotFoundException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(code = "NOT_FOUND", message = ex.message)
+            ErrorResponse(code = "NOT_FOUND", message = ex.message),
         )
 
     @ExceptionHandler(ResourceNotFoundException::class)
     fun handleResourceNotFound(ex: ResourceNotFoundException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            ErrorResponse(code = "NOT_FOUND", message = ex.message)
+            ErrorResponse(code = "NOT_FOUND", message = ex.message),
         )
 
     @ExceptionHandler(PayloadTooLargeException::class)
     fun handlePayloadTooLarge(ex: PayloadTooLargeException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(
-            ErrorResponse(code = "PAYLOAD_TOO_LARGE", message = ex.message)
+            ErrorResponse(code = "PAYLOAD_TOO_LARGE", message = ex.message),
         )
 
     @ExceptionHandler(GoogleConnectionRevokedException::class)
     fun handleGoogleConnectionRevoked(ex: GoogleConnectionRevokedException): ResponseEntity<ErrorResponse> =
         ResponseEntity.status(HttpStatus.CONFLICT).body(
-            ErrorResponse(code = "GOOGLE_CONNECTION_REVOKED", message = ex.message)
+            ErrorResponse(code = "GOOGLE_CONNECTION_REVOKED", message = ex.message),
         )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleBeanValidation(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
         val firstError = ex.bindingResult.fieldErrors.firstOrNull()
-        val detail = if (firstError != null) {
-            "${firstError.field}: ${firstError.defaultMessage}"
-        } else {
-            "Ungültige Anfrage"
-        }
+        val detail =
+            if (firstError != null) {
+                "${firstError.field}: ${firstError.defaultMessage}"
+            } else {
+                "Ungültige Anfrage"
+            }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            ErrorResponse(code = "VALIDATION_ERROR", message = detail)
+            ErrorResponse(code = "VALIDATION_ERROR", message = detail),
         )
     }
 
@@ -85,7 +85,7 @@ class GlobalExceptionHandler {
                 code = "INTERNAL_ERROR",
                 message = "Ein interner Fehler ist aufgetreten",
                 correlationId = correlationId,
-            )
+            ),
         )
     }
 }
