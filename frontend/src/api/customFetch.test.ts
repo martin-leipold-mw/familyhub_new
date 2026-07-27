@@ -11,6 +11,10 @@ function mockFetch(status = 200, body: unknown = { ok: true }, jsonRejects = fal
     json: jsonRejects
       ? () => Promise.reject(new Error('not JSON'))
       : async () => body,
+    // Mirror real fetch: an empty body yields '' (and .json() would reject).
+    // Pass `null` as body to simulate an empty response (explicit `undefined`
+    // would trigger the parameter default instead).
+    text: async () => (body == null ? '' : JSON.stringify(body)),
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
@@ -66,6 +70,19 @@ describe('customFetch', () => {
     mockFetch(204)
     const result = await customFetch<{ data: undefined; status: 204 }>('/api/v1/members/1')
     expect(result.status).toBe(204)
+    expect(result.data).toBeUndefined()
+  })
+
+  it('returns undefined data for a 200 with an empty body (no-content operation)', async () => {
+    // saveSelectedCalendars/disconnect/refresh are declared 200-without-content in the
+    // OpenAPI spec, so the server sends 200 with an empty body. Real fetch .json() rejects
+    // on that ("Unexpected end of JSON input"); jsonRejects=true reproduces it.
+    mockFetch(200, null, true)
+    const result = await customFetch<{ data: undefined; status: number }>(
+      '/api/v1/google/calendars/selected',
+      { method: 'PUT' },
+    )
+    expect(result.status).toBe(200)
     expect(result.data).toBeUndefined()
   })
 

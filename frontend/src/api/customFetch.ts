@@ -23,6 +23,10 @@ export async function customFetch<T>(
 
   if (response.status === 204) return { data: undefined, status: 204, headers: response.headers } as T
 
-  const data = await response.json()
+  // Some operations are declared 200-without-content in the OpenAPI spec (e.g.
+  // saveSelectedCalendars, disconnect, refresh); the server then sends an empty body.
+  // Reading text first avoids response.json() throwing "Unexpected end of JSON input".
+  const body = await response.text()
+  const data = body ? JSON.parse(body) : undefined
   return { data, status: response.status, headers: response.headers } as T
 }
