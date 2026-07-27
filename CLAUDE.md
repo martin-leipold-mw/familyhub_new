@@ -4,7 +4,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-This repository currently contains **only concept documentation** — no code exists yet. The `concept/` folder is a complete requirements specification (Lastenheft) for a ground-up rewrite of FamilyHub, a self-hosted family dashboard. The old system exists elsewhere; this repo is a clean slate.
+Active codebase under construction. Implemented through **Sprint 3** (Google OAuth + Calendar read/write): backend (`backend/`), frontend (`frontend/`), OpenAPI contract (`api/openapi.yml`), and CI (`.github/workflows/ci.yml`) all exist. The original requirements spec (Lastenheft) now lives in `docs/concept/` — it is the source of truth for *what* to build; this file plus the code are the source of truth for *how* it is built.
+
+## Build, test & lint commands
+
+Backend (`cd backend`, needs **Java 21** — see gotchas):
+- `./gradlew check` — full gate: OpenAPI codegen → compile → ktlint + detekt → tests → JaCoCo coverage verify. Tests use Testcontainers (Docker required).
+- `./gradlew test` / `./gradlew bootRun`
+
+Frontend (`cd frontend`, Node ≥ 20):
+- `npm run check` — full gate: `tsc --noEmit` + eslint (`--max-warnings 0`) + dependency-cruiser + coverage.
+- `npm test` (watch) / `npm run test:run` / `npm run test:e2e` (Playwright) / `npm run generate:api` (orval)
+
+Before committing, run `scripts/pre-commit-check.sh` (backend `./gradlew check` + frontend `npm run check`) — mirrors CI.
+
+## Contract-first workflow
+
+`api/openapi.yml` is the **single source of truth** for the REST API. Do not hand-edit generated clients:
+- Backend: `openApiGenerate` (kotlin-spring, interfaces only) → controllers implement generated interfaces.
+- Frontend: `orval` generates the typed API client + React Query hooks.
+- CI validates the spec and **fails PRs on breaking changes** (oasdiff); use a `breaking-change` label for intentional breaks.
 
 ## What FamilyHub is
 
@@ -12,17 +31,24 @@ A self-hosted family dashboard PWA running as Docker containers on a Synology NA
 
 Leitprinzip: **Datenhoheit** — runs entirely in the home network. No third-party cloud service except Google (Calendar/Tasks, user-authorised) and a weather API.
 
-## Planned technology stack
+## Technology stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Kotlin / Spring Boot 3.x, Java 17, Gradle |
-| Frontend | React / TypeScript / Vite (PWA) |
+| Backend | Kotlin 2.0.21 / Spring Boot 3.3.5, **Java 21** (Gradle toolchain), Gradle KTS |
+| Frontend | React 18 / TypeScript / Vite (PWA), Tailwind, TanStack Query, React Router |
 | Database | PostgreSQL (schema managed via Flyway migrations) |
 | Runtime | Docker containers on Synology NAS, fronted by nginx |
-| API | REST under `/api/v1/`, OpenAPI spec generated |
+| API | REST under `/api/v1/`, generated from `api/openapi.yml` |
+| Quality | Backend: ktlint + detekt + JaCoCo. Frontend: eslint + dependency-cruiser + vitest/Playwright. |
 
 Redis: explicitly **not** used — drop it from the stack.
+
+## Code layout
+
+- Backend is **package-by-feature** under `com.familyhub` (`members`, `settings`, `pin`, `google/{oauth,calendar,token,crypto,connection,sync,credentials}`, `shared/{security,health,exceptions}`). An ArchUnit test in `architecture/` enforces module boundaries.
+- Flyway migrations live in `backend/src/main/resources/db/migration/` (`V1__…` → `V8__…`). Never edit an applied migration — add a new `V{n}__…` file.
+- Frontend is feature-sliced under `frontend/src/` (`features/`, `api/`, `routing/`).
 
 ## Key architectural decisions (from concept docs)
 
@@ -36,7 +62,7 @@ Redis: explicitly **not** used — drop it from the stack.
 
 ## Concept documentation
 
-All requirements are in `concept/`. Start with `concept/00-README.md` for the index and reading paths.
+All requirements are in `docs/concept/`. Start with `docs/concept/00-README.md` for the index and reading paths. Operational guides live alongside in `docs/` (`google-oauth-setup.md`, `synology-https-reverse-proxy.md`, `REVIEW-GUIDE.md`).
 
 | Document | Content |
 |----------|---------|
@@ -53,11 +79,11 @@ All requirements are in `concept/`. Start with `concept/00-README.md` for the in
 
 Requirements are tagged with IDs like `FA-KAL-01` (functional) or `TA-BUILD-01` (technical). Priority: **MUSS** / **SOLL** / **KANN**. Old-system status: `Umgesetzt` / `Teilweise` / `Prototyp` / `Mock/Dummy` / `Nicht umgesetzt`.
 
-## Recommended build order (from `concept/10-neuauflage.md`)
+## Recommended build order (from `docs/concept/10-neuauflage.md`)
 
-1. Project scaffold, CI, DB schema, API skeleton, security model
-2. Family members, settings, PIN protection, setup wizard
-3. Google OAuth + Calendar read/write
+1. ✅ Project scaffold, CI, DB schema, API skeleton, security model
+2. ✅ Family members, settings, PIN protection, setup wizard
+3. ✅ Google OAuth + Calendar read/write ← *current*
 4. Calendar view (week + day)
 5. Tasks + Google Tasks sync
 6. Household chores: templates, rotation, completion
@@ -81,3 +107,9 @@ A feature is only done when it is **reachable through the UI, tests are green, a
 - No user accounts or password-based login
 - Not designed for internet exposure (LAN only; VPN if remote access is wanted)
 - No smart-home integration, no media management
+
+## Gotchas
+
+- **Backend needs Java 21.** `./gradlew` fails with `IllegalArgumentException: 25.0.3` if `JAVA_HOME` points elsewhere — point it at a JDK 21 first.
+- **Backend tests require Docker** (Testcontainers spins up PostgreSQL).
+- **Never hand-edit generated API code** — change `api/openapi.yml` and regenerate (see contract-first workflow above).
