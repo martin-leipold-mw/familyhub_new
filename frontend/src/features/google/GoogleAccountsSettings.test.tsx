@@ -216,7 +216,7 @@ describe('GoogleAccountsSettings', () => {
     render(<GoogleAccountsSettings />)
     fireEvent.click(screen.getByRole('button', { name: 'Weiteres Konto verbinden' }))
     await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
-    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/' })
+    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/settings' })
   })
 
   it('clicking "Neu verbinden" on revoked connection redirects to authUrl', async () => {
@@ -229,6 +229,6 @@ describe('GoogleAccountsSettings', () => {
     render(<GoogleAccountsSettings />)
     fireEvent.click(screen.getByRole('button', { name: 'Neu verbinden' }))
     await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
-    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/' })
+    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/settings' })
   })
 })

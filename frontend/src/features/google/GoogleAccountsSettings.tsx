@@ -9,12 +9,13 @@ export function GoogleAccountsSettings() {
   const { hasPinSession } = usePinSession()
 
   async function handleConnect() {
-    const authUrl = await startAuth.mutateAsync({ returnUrl: '/' })
+    // Return to the settings page after the OAuth round-trip, not the calendar start page.
+    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings' })
     window.location.href = authUrl
   }
 
   async function handleReconnect() {
-    const authUrl = await startAuth.mutateAsync({ returnUrl: '/' })
+    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings' })
     window.location.href = authUrl
   }
 

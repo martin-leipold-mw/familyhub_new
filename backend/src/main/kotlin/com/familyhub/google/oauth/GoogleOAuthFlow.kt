@@ -5,6 +5,7 @@ import com.google.api.client.auth.oauth2.ClientParametersAuthentication
 import com.google.api.client.auth.oauth2.RefreshTokenRequest
 import com.google.api.client.auth.oauth2.TokenResponseException
 import com.google.api.client.http.GenericUrl
+import com.google.api.client.http.HttpRequestInitializer
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import org.springframework.beans.factory.annotation.Value
@@ -25,6 +26,14 @@ class GoogleOAuthFlow(
 ) : TokenEndpointProber {
     private val transport = NetHttpTransport()
     private val json = GsonFactory.getDefaultInstance()
+
+    // Bound every Google call so a slow/unreachable Google can't block the request thread
+    // indefinitely (mirrors GoogleCalendarClient: connect 5 s / read 30 s).
+    private val timeouts =
+        HttpRequestInitializer { request ->
+            request.connectTimeout = CONNECT_TIMEOUT_MS
+            request.readTimeout = READ_TIMEOUT_MS
+        }
     private val scopes =
         listOf(
             "https://www.googleapis.com/auth/calendar",
@@ -61,6 +70,7 @@ class GoogleOAuthFlow(
             AuthorizationCodeTokenRequest(transport, json, GenericUrl(tokenUrl), code)
                 .setRedirectUri(redirectUri)
                 .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
+                .setRequestInitializer(timeouts)
         req.set("code_verifier", verifier)
         val resp = req.execute()
         return GoogleTokenSet(resp.accessToken, resp.refreshToken, resp.expiresInSeconds, resp.scope)
@@ -74,12 +84,13 @@ class GoogleOAuthFlow(
         val resp =
             RefreshTokenRequest(transport, json, GenericUrl(tokenUrl), refreshToken)
                 .setClientAuthentication(ClientParametersAuthentication(clientId, clientSecret))
+                .setRequestInitializer(timeouts)
                 .execute()
         return GoogleTokenSet(resp.accessToken, resp.refreshToken, resp.expiresInSeconds, resp.scope)
     }
 
     fun fetchUserInfo(accessToken: String): GoogleUserInfo {
-        val request = transport.createRequestFactory().buildGetRequest(GenericUrl(userInfoUrl))
+        val request = transport.createRequestFactory(timeouts).buildGetRequest(GenericUrl(userInfoUrl))
         request.headers.authorization = "Bearer $accessToken"
         // HttpResponse is not Closeable, so `use` does not resolve; disconnect() releases the connection.
         val response = request.execute()
@@ -100,7 +111,7 @@ class GoogleOAuthFlow(
 
     fun revoke(token: String) {
         try {
-            transport.createRequestFactory()
+            transport.createRequestFactory(timeouts)
                 .buildPostRequest(GenericUrl("$revokeUrl?token=$token"), null).execute()
         } catch (ex: Exception) {
             // best-effort: local disconnect proceeds regardless
@@ -128,5 +139,10 @@ class GoogleOAuthFlow(
         } catch (ex: Exception) {
             ProbeResult.ERROR
         }
+    }
+
+    private companion object {
+        const val CONNECT_TIMEOUT_MS = 5_000
+        const val READ_TIMEOUT_MS = 30_000
     }
 }
