@@ -1,9 +1,13 @@
 import { TimeGrid } from './TimeGrid'
-import { DayColumn, type DayColumnItem } from './DayColumn'
-import { AllDayRow, type AllDayChip } from './AllDayRow'
-import { weekdayHeader, isSameDayAs, allDaySpansDay } from './dates'
-import { buildColorMap, type CalendarGridProps } from './WeekGrid'
-import type { CalendarEvent } from './useCalendarEvents'
+import { DayColumn } from './DayColumn'
+import { AllDayRow } from './AllDayRow'
+import { weekdayHeader, isSameDayAs } from './dates'
+import {
+  buildColorMap,
+  timedForDay,
+  allDayChipsForDay,
+  type CalendarGridProps,
+} from './WeekGrid'
 
 export function DayGrid({
   anchor,
@@ -15,20 +19,9 @@ export function DayGrid({
 }: CalendarGridProps) {
   const colors = buildColorMap(members)
 
-  const timed: DayColumnItem[] = events
-    .filter((e) => !e.isAllDay && e.start && isSameDayAs(e.start, anchor))
-    .map((event) => ({ event, colorHex: colors.get(event.memberId) ?? '#888' }))
+  const timed = timedForDay(events, anchor, colors)
 
-  const chips: AllDayChip[] = events
-    .filter(
-      (e) => e.isAllDay && e.allDayStart && allDaySpansDay(e.allDayStart, e.allDayEnd, anchor),
-    )
-    .map((event: CalendarEvent) => ({
-      id: event.id,
-      title: event.title,
-      colorHex: colors.get(event.memberId) ?? '#888',
-      onClick: () => onEventClick(event),
-    }))
+  const chips = allDayChipsForDay(events, anchor, colors, onEventClick)
 
   return (
     <div>

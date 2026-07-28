@@ -24,7 +24,7 @@ export function buildColorMap(members: MemberResponse[]): Map<string, string> {
   return new Map(members.map((m) => [m.id, memberColorHex(m.color)]))
 }
 
-function timedForDay(
+export function timedForDay(
   events: CalendarEvent[],
   day: Date,
   colors: Map<string, string>,
@@ -34,7 +34,7 @@ function timedForDay(
     .map((event) => ({ event, colorHex: colors.get(event.memberId) ?? '#888' }))
 }
 
-function allDayChipsForDay(
+export function allDayChipsForDay(
   events: CalendarEvent[],
   day: Date,
   colors: Map<string, string>,
