@@ -64,7 +64,7 @@ export function EventDialog({
     }
 
     const data: EventCreateRequest = isAllDay
-      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: null, location: location || null, description: description || null }
+      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: initial?.allDayEnd && initial.allDayEnd > date ? initial.allDayEnd : null, location: location || null, description: description || null }
       : { memberId, title: title.trim(), isAllDay: false, start: isoFromParts(date, startTime), end: isoFromParts(date, endTime), location: location || null, description: description || null }
 
     try {

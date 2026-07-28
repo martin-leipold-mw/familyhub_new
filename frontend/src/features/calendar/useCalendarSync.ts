@@ -23,9 +23,10 @@ export function useCalendarSync() {
             .map((c) => c.memberId),
         ),
       ]
-      for (const memberId of memberIds) {
-        await syncCalendars({ memberId })
-      }
+      const results = await Promise.allSettled(
+        memberIds.map((memberId) => syncCalendars({ memberId })),
+      )
+      if (results.some((r) => r.status === 'rejected')) setIsError(true)
       await queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() })
     } catch {
       setIsError(true)

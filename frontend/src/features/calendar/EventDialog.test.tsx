@@ -201,4 +201,49 @@ describe('EventDialog (edit + delete)', () => {
     expect(updateMock.mock.calls[0][0].data.title).toBe('Schule (neu)')
     expect(onClose).toHaveBeenCalled()
   })
+
+  it('preserves the original allDayEnd when editing a multi-day all-day event without changing the date', async () => {
+    const onClose = vi.fn()
+    const multiDay = {
+      id: 'e9',
+      title: 'Urlaub',
+      memberId: 'm1',
+      isAllDay: true,
+      start: null,
+      end: null,
+      allDayStart: '2026-07-21',
+      allDayEnd: '2026-07-23',
+      location: null,
+      description: null,
+    }
+    renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledOnce())
+    const arg = updateMock.mock.calls[0][0].data
+    expect(arg.allDayEnd).toBe('2026-07-23')
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('drops allDayEnd when the edited date is moved past the original end', async () => {
+    const onClose = vi.fn()
+    const multiDay = {
+      id: 'e9',
+      title: 'Urlaub',
+      memberId: 'm1',
+      isAllDay: true,
+      start: null,
+      end: null,
+      allDayStart: '2026-07-21',
+      allDayEnd: '2026-07-23',
+      location: null,
+      description: null,
+    }
+    renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
+    fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-07-25' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledOnce())
+    const arg = updateMock.mock.calls[0][0].data
+    expect(arg.allDayEnd).toBeNull()
+    expect(onClose).toHaveBeenCalled()
+  })
 })

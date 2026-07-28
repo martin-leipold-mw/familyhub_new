@@ -70,4 +70,22 @@ describe('useCalendarSync', () => {
     })
     await waitFor(() => expect(result.current.isError).toBe(true))
   })
+
+  it('syncs all members independently even if one rejects, and still invalidates', async () => {
+    connectionsRef.current = [
+      { memberId: 'm1', status: 'connected' },
+      { memberId: 'm2', status: 'connected' },
+    ]
+    syncCalendars.mockImplementation((p: { memberId: string }) =>
+      p.memberId === 'm1' ? Promise.reject(new Error('boom')) : Promise.resolve({ status: 200, data: {} }),
+    )
+    const { result } = renderHook(() => useCalendarSync(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    expect(syncCalendars).toHaveBeenCalledTimes(2)
+    expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm1' })
+    expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm2' })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
 })
