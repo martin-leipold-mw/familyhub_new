@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { SetupGuard } from '@/routing/SetupGuard'
+import { AppShell } from '@/routing/AppShell'
 import NotFound from '@/routing/NotFound'
 import { SetupWizard } from '@/features/setup/SetupWizard'
+import { CalendarView } from '@/features/calendar/CalendarView'
 import { SettingsView } from '@/features/settings/SettingsView'
 import { OAuthCallback } from '@/features/google/OAuthCallback'
 
@@ -15,7 +17,19 @@ export default function App() {
           path="/"
           element={
             <SetupGuard>
-              <SettingsView />
+              <AppShell>
+                <CalendarView />
+              </AppShell>
+            </SetupGuard>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <SetupGuard>
+              <AppShell>
+                <SettingsView />
+              </AppShell>
             </SetupGuard>
           }
         />

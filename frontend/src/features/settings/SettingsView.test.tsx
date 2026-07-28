@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 
 vi.mock('@/features/members/useMembersQuery', () => ({ useMembers: vi.fn() }))
 vi.mock('@/api/generated/endpoints/familyHubAPI', () => ({ useVerifyPin: vi.fn() }))
@@ -55,7 +56,7 @@ describe('SettingsView', () => {
   })
 
   it('shows a locked state and unlocks via PIN', async () => {
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     expect(screen.getByRole('button', { name: 'Zum Bearbeiten entsperren' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Zum Bearbeiten entsperren' }))
     for (const d of '1234') fireEvent.click(screen.getByRole('button', { name: d }))
@@ -65,34 +66,34 @@ describe('SettingsView', () => {
 
   it('shows management actions when unlocked', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     expect(screen.getByRole('button', { name: 'Mitglied hinzufügen' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'PIN ändern' })).toBeInTheDocument()
   })
 
   it('opens the edit dialog when a member tile is tapped while unlocked', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Anna' }))
     expect(screen.getByText('EditDialog')).toBeInTheDocument()
   })
 
   it('opens AddMemberDialog when Mitglied hinzufügen is clicked', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Mitglied hinzufügen' }))
     expect(screen.getByText('AddDialog')).toBeInTheDocument()
   })
 
   it('opens ChangePinDialog when PIN ändern is clicked', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'PIN ändern' }))
     expect(screen.getByText('ChangePinDialog')).toBeInTheDocument()
   })
 
   it('closes the unlock dialog when Abbrechen is clicked', () => {
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Zum Bearbeiten entsperren' }))
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
@@ -103,7 +104,7 @@ describe('SettingsView', () => {
     vi.mocked(useVerifyPin).mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue(new Error('Falsche PIN')),
     } as never)
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Zum Bearbeiten entsperren' }))
     for (const d of '1234') fireEvent.click(screen.getByRole('button', { name: d }))
     fireEvent.click(screen.getByRole('button', { name: 'Bestätigen' }))
@@ -114,7 +115,7 @@ describe('SettingsView', () => {
     vi.mocked(useVerifyPin).mockReturnValue({
       mutateAsync: vi.fn().mockRejectedValue('bad'),
     } as never)
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Zum Bearbeiten entsperren' }))
     for (const d of '1234') fireEvent.click(screen.getByRole('button', { name: d }))
     fireEvent.click(screen.getByRole('button', { name: 'Bestätigen' }))
@@ -123,14 +124,14 @@ describe('SettingsView', () => {
 
   it('does not open edit dialog when a tile is tapped while locked', () => {
     hasPinSession = false
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Anna' }))
     expect(screen.queryByText('EditDialog')).not.toBeInTheDocument()
   })
 
   it('closes AddMemberDialog when its onClose is called', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Mitglied hinzufügen' }))
     expect(screen.getByText('AddDialog')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'CloseAdd' }))
@@ -139,7 +140,7 @@ describe('SettingsView', () => {
 
   it('closes EditMemberDialog when its onClose is called', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Anna' }))
     expect(screen.getByText('EditDialog')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'CloseEdit' }))
@@ -148,7 +149,7 @@ describe('SettingsView', () => {
 
   it('closes ChangePinDialog when its onClose is called', () => {
     hasPinSession = true
-    render(<SettingsView />)
+    render(<MemoryRouter><SettingsView /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'PIN ändern' }))
     expect(screen.getByText('ChangePinDialog')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'CloseChangePin' }))

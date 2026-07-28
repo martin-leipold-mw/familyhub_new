@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { MemberResponse } from '@/api/generated/model'
 import { MemberGrid } from '@/features/members/MemberGrid'
 import { AddMemberDialog } from '@/features/members/AddMemberDialog'
@@ -36,6 +37,9 @@ export function SettingsView() {
   return (
     <div className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-4xl mx-auto flex flex-col gap-6">
+        <Link to="/" className="self-start text-blue-400 min-h-[44px] flex items-center">
+          ← Zum Kalender
+        </Link>
         <h1 className="text-3xl font-bold text-white">Einstellungen</h1>
 
         <MemberGrid members={members} onSelect={hasPinSession ? setEditing : undefined} />
