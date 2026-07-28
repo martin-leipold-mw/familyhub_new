@@ -1,0 +1,36 @@
+import type { MemberResponse } from '@/api/generated/model'
+import { memberColorHex } from '@/features/members/colors'
+
+export function MemberSelect({
+  members,
+  value,
+  onChange,
+}: {
+  members: MemberResponse[]
+  value: string | null
+  onChange: (id: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1 text-white">
+      <span>Mitglied</span>
+      <div className="flex flex-wrap gap-2">
+        {members.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            aria-label={m.name}
+            aria-pressed={value === m.id}
+            onClick={() => onChange(m.id)}
+            className="rounded-full px-4 py-2 min-h-[44px] text-slate-900 font-medium"
+            style={{
+              backgroundColor: memberColorHex(m.color),
+              outline: value === m.id ? '3px solid white' : 'none',
+            }}
+          >
+            {m.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
