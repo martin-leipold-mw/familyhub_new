@@ -61,6 +61,27 @@ describe('DayColumn', () => {
     expect(screen.queryByTestId('current-time-line')).toBeNull()
   })
 
+  it('silently drops an event that layoutDay filters out as fully outside the visible window', () => {
+    const outsideEvent: CalendarEvent = {
+      ...timedEvent,
+      id: 'e-outside',
+      title: 'Mitternachtstermin',
+      start: new Date(2026, 6, 21, 2, 0),
+      end: new Date(2026, 6, 21, 3, 0),
+    }
+    render(
+      <DayColumn
+        day={day}
+        timed={[{ event: outsideEvent, colorHex: '#abc' }]}
+        now={new Date(2026, 6, 21, 12, 0)}
+        isToday={false}
+        onEventClick={vi.fn()}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText('Mitternachtstermin')).toBeNull()
+  })
+
   it('fires onSlotClick with the day + hour of the clicked slot', async () => {
     const onSlotClick = vi.fn()
     render(

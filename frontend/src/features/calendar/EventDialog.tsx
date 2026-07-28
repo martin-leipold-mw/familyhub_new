@@ -80,9 +80,8 @@ export function EventDialog({
   }
 
   async function doDelete() {
-    if (!initial) return
     try {
-      await remove.mutateAsync({ id: initial.id })
+      await remove.mutateAsync({ id: initial!.id })
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen.')

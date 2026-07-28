@@ -46,4 +46,9 @@ describe('CalendarHeader', () => {
     expect(props.onSync).toHaveBeenCalled()
     expect(props.onOpenSettings).toHaveBeenCalled()
   })
+  it('spins the sync icon while syncing', () => {
+    setup({ isSyncing: true })
+    const button = screen.getByRole('button', { name: 'Synchronisieren' })
+    expect(button.querySelector('svg')).toHaveClass('animate-spin')
+  })
 })

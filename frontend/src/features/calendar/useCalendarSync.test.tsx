@@ -47,6 +47,20 @@ describe('useCalendarSync', () => {
     expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm2' })
   })
 
+  it('skips revoked connections regardless of case', async () => {
+    connectionsRef.current = [
+      { memberId: 'm1', status: 'Revoked' },
+      { memberId: 'm2', status: 'REVOKED' },
+      { memberId: 'm3', status: 'connected' },
+    ]
+    const { result } = renderHook(() => useCalendarSync(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    expect(syncCalendars).toHaveBeenCalledTimes(1)
+    expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm3' })
+  })
+
   it('sets isError when a sync call fails', async () => {
     connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
     syncCalendars.mockRejectedValueOnce(new Error('boom'))

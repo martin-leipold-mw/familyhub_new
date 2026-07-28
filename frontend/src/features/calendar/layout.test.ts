@@ -59,6 +59,17 @@ describe('layoutDay overlap columns', () => {
     ])
     expect(out.every((x) => x.widthPct === 100)).toBe(true)
   })
+  it('breaks a tie in start time by sorting the shorter event first', () => {
+    const out = layoutDay([
+      { id: 'a', start: at(9), end: at(11) },
+      { id: 'b', start: at(9), end: at(10) },
+    ])
+    const a = out.find((x) => x.id === 'a')!
+    const b = out.find((x) => x.id === 'b')!
+    // same start time: b ends earlier, so it is sorted first and claims column 0
+    expect(b.leftPct).toBe(0)
+    expect(a.leftPct).toBe(50)
+  })
 })
 
 describe('nowLineTop', () => {

@@ -91,6 +91,52 @@ describe('WeekGrid', () => {
     )
     expect(screen.getByText('Urlaub Papa')).toBeInTheDocument()
   })
+
+  it('falls back to grey for a timed event whose member is unknown', () => {
+    render(
+      <WeekGrid
+        anchor={anchor}
+        events={[{ ...timed, memberId: 'ghost' }]}
+        members={members}
+        now={anchor}
+        onEventClick={vi.fn()}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /Schule/ })).toHaveStyle({
+      backgroundColor: '#888',
+    })
+  })
+
+  it('falls back to grey for an all-day event whose member is unknown', () => {
+    render(
+      <WeekGrid
+        anchor={anchor}
+        events={[{ ...allDay, memberId: 'ghost' }]}
+        members={members}
+        now={anchor}
+        onEventClick={vi.fn()}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Urlaub Papa' })).toHaveStyle({
+      backgroundColor: '#888',
+    })
+  })
+
+  it('excludes a non-all-day event that has no start time', () => {
+    render(
+      <WeekGrid
+        anchor={anchor}
+        events={[{ ...timed, start: null }]}
+        members={members}
+        now={anchor}
+        onEventClick={vi.fn()}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: /Schule/ })).toBeNull()
+  })
 })
 
 describe('DayGrid', () => {
@@ -106,5 +152,21 @@ describe('DayGrid', () => {
       />,
     )
     expect(screen.getByRole('button', { name: /Schule/ })).toBeInTheDocument()
+  })
+
+  it('does not bold the header when the anchor is not today', () => {
+    render(
+      <DayGrid
+        anchor={new Date(2026, 6, 21, 12)}
+        events={[]}
+        members={members}
+        now={new Date(2026, 6, 25, 12)}
+        onEventClick={vi.fn()}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    const header = screen.getByText(/Di 21/)
+    expect(header).toHaveClass('text-slate-300')
+    expect(header).not.toHaveClass('font-bold')
   })
 })

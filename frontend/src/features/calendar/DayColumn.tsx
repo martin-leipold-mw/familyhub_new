@@ -59,7 +59,7 @@ export function DayColumn({
           <EventBlock
             key={t.event.id}
             title={t.event.title}
-            timeLabel={t.event.start ? formatTime(t.event.start) : undefined}
+            timeLabel={formatTime(t.event.start!)}
             colorHex={t.colorHex}
             top={p.top}
             height={p.height}
