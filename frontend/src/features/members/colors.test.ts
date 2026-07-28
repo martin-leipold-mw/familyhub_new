@@ -1,4 +1,5 @@
-import { MEMBER_COLORS, MEMBER_COLOR_KEYS, roleLabel } from './colors'
+import { describe, it, expect } from 'vitest'
+import { MEMBER_COLORS, MEMBER_COLOR_KEYS, roleLabel, memberColorHex } from './colors'
 
 describe('colors', () => {
   it('maps every color to its HSL value', () => {
@@ -17,5 +18,14 @@ describe('colors', () => {
   it('translates roles to German labels', () => {
     expect(roleLabel('parent')).toBe('Elternteil')
     expect(roleLabel('child')).toBe('Kind')
+  })
+})
+
+describe('memberColorHex', () => {
+  it('resolves a known color key', () => {
+    expect(memberColorHex('green')).toBe(MEMBER_COLORS.green)
+  })
+  it('falls back to blue for an unknown key', () => {
+    expect(memberColorHex('chartreuse')).toBe(MEMBER_COLORS.blue)
   })
 })

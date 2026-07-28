@@ -12,6 +12,10 @@ export const MEMBER_COLORS: Record<MemberColor, string> = {
 
 export const MEMBER_COLOR_KEYS = Object.keys(MEMBER_COLORS) as MemberColor[]
 
+export function memberColorHex(color: string): string {
+  return MEMBER_COLORS[color as MemberColor] ?? MEMBER_COLORS.blue
+}
+
 export function roleLabel(role: string): string {
   return role === 'parent' ? 'Elternteil' : 'Kind'
 }
