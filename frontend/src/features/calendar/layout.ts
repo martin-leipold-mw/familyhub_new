@@ -50,9 +50,17 @@ export function nowLineTop(now: Date): number | null {
 /**
  * Groups events that overlap in time into side-by-side columns and splits the
  * available width evenly within each connected overlap cluster (FA-KAL-07).
+ *
+ * Lays out timed events. Events lying entirely outside the visible
+ * 06:00–22:00 window are dropped (they would otherwise render as a phantom
+ * MIN_BLOCK_PX block at the grid edge). Events that partially overlap are
+ * kept and clamped by verticalPosition.
  */
 export function layoutDay(events: TimedInput[]): Positioned[] {
-  const sorted = [...events].sort(
+  const visible = events.filter(
+    (e) => minutesFromGridStart(e.end) > 0 && minutesFromGridStart(e.start) < GRID_MINUTES,
+  )
+  const sorted = [...visible].sort(
     (a, b) => a.start.getTime() - b.start.getTime() || a.end.getTime() - b.end.getTime(),
   )
 

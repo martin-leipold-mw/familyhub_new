@@ -73,3 +73,41 @@ describe('nowLineTop', () => {
     expect(nowLineTop(at(23))).toBeNull()
   })
 })
+
+describe('layoutDay visible-window filtering', () => {
+  it('excludes events entirely outside 06:00–22:00', () => {
+    expect(layoutDay([{ id: 'early', start: at(2), end: at(3) }])).toEqual([])
+    expect(layoutDay([{ id: 'late', start: at(23), end: at(23, 30) }])).toEqual([])
+  })
+  it('keeps an event that partially overlaps the window', () => {
+    const out = layoutDay([{ id: 'edge', start: at(5), end: at(7) }])
+    expect(out).toHaveLength(1)
+    expect(out[0].top).toBe(0)
+  })
+})
+
+describe('layoutDay column reuse and touching boundaries', () => {
+  it('reuses a freed column within a transitive cluster', () => {
+    const out = layoutDay([
+      { id: 'a', start: at(9), end: at(10) },
+      { id: 'b', start: at(9, 30), end: at(10, 30) },
+      { id: 'c', start: at(10, 15), end: at(11) },
+    ])
+    const a = out.find((x) => x.id === 'a')!
+    const b = out.find((x) => x.id === 'b')!
+    const c = out.find((x) => x.id === 'c')!
+    expect(a.widthPct).toBe(50)
+    expect(b.widthPct).toBe(50)
+    expect(c.widthPct).toBe(50)
+    expect(a.leftPct).toBe(0)
+    expect(b.leftPct).toBe(50)
+    expect(c.leftPct).toBe(0) // reuses column 0 freed by a
+  })
+  it('treats back-to-back events as separate full-width clusters', () => {
+    const out = layoutDay([
+      { id: 'a', start: at(9), end: at(10) },
+      { id: 'b', start: at(10), end: at(11) },
+    ])
+    expect(out.every((x) => x.widthPct === 100)).toBe(true)
+  })
+})
