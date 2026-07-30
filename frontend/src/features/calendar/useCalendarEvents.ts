@@ -20,6 +20,8 @@ export interface CalendarEvent {
   allDayEnd: string | null
   location: string | null
   description: string | null
+  reminderUseDefault: boolean
+  reminderMinutes: number | null
 }
 
 export function toCalendarEvent(e: EventResponse): CalendarEvent {
@@ -34,6 +36,8 @@ export function toCalendarEvent(e: EventResponse): CalendarEvent {
     allDayEnd: e.allDayEnd ?? null,
     location: e.location ?? null,
     description: e.description ?? null,
+    reminderUseDefault: e.reminderUseDefault ?? true,
+    reminderMinutes: e.reminderMinutes ?? null,
   }
 }
 

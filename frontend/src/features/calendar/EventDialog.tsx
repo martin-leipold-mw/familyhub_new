@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import type { EventCreateRequest, MemberResponse } from '@/api/generated/model'
 import { MemberSelect } from './MemberSelect'
 import { formatTime } from './dates'
+import { REMINDER_OPTIONS, presetToApi, apiToPreset, type ReminderPreset } from './reminders'
 import {
   useCreateEventMutation,
   useUpdateEventMutation,
@@ -40,6 +41,9 @@ export function EventDialog({
   )
   const [location, setLocation] = useState(initial?.location ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
+  const [reminder, setReminder] = useState<ReminderPreset>(
+    initial ? apiToPreset(initial.reminderUseDefault, initial.reminderMinutes) : 'default',
+  )
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -63,9 +67,10 @@ export function EventDialog({
       return
     }
 
+    const reminderFields = presetToApi(reminder)
     const data: EventCreateRequest = isAllDay
-      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: initial?.allDayEnd && initial.allDayEnd > date ? initial.allDayEnd : null, location: location || null, description: description || null }
-      : { memberId, title: title.trim(), isAllDay: false, start: isoFromParts(date, startTime), end: isoFromParts(date, endTime), location: location || null, description: description || null }
+      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: initial?.allDayEnd && initial.allDayEnd > date ? initial.allDayEnd : null, location: location || null, description: description || null, ...reminderFields }
+      : { memberId, title: title.trim(), isAllDay: false, start: isoFromParts(date, startTime), end: isoFromParts(date, endTime), location: location || null, description: description || null, ...reminderFields }
 
     try {
       if (editing && initial) {
@@ -170,6 +175,22 @@ export function EventDialog({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
+        </label>
+
+        <label className="flex flex-col gap-1 text-white">
+          Erinnerung
+          <select
+            aria-label="Erinnerung"
+            className="rounded-lg px-3 py-3 min-h-[44px] text-slate-900"
+            value={reminder}
+            onChange={(e) => setReminder(e.target.value as ReminderPreset)}
+          >
+            {REMINDER_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
         </label>
 
         {error && <p className="text-red-400 text-sm">{error}</p>}

@@ -31,6 +31,8 @@ const timed: CalendarEvent = {
   allDayEnd: null,
   location: null,
   description: null,
+  reminderUseDefault: true,
+  reminderMinutes: null,
 }
 
 const allDay: CalendarEvent = {
@@ -44,6 +46,8 @@ const allDay: CalendarEvent = {
   allDayEnd: null,
   location: null,
   description: null,
+  reminderUseDefault: true,
+  reminderMinutes: null,
 }
 
 describe('WeekGrid', () => {

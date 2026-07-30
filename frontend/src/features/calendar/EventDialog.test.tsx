@@ -74,6 +74,22 @@ describe('EventDialog (create)', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  it('sends the selected reminder preset when creating an event', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(
+      <EventDialog members={members} defaultDate={new Date(2026, 6, 21, 8, 0)} onClose={onClose} />,
+    )
+    await userEvent.type(screen.getByLabelText('Titel'), 'Zahnarzt')
+    await userEvent.click(screen.getByRole('button', { name: 'Anna' }))
+    await userEvent.selectOptions(screen.getByLabelText('Erinnerung'), '30 Minuten vorher')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    const arg = createMock.mock.calls[0][0].data
+    expect(arg.reminderUseDefault).toBe(false)
+    expect(arg.reminderMinutes).toBe(30)
+    expect(onClose).toHaveBeenCalled()
+  })
+
   it('creates an all-day event when Ganztägig is toggled', async () => {
     const onClose = vi.fn()
     renderWithProviders(
@@ -138,6 +154,8 @@ describe('EventDialog (edit + delete)', () => {
     allDayEnd: null,
     location: null,
     description: null,
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
 
   const existingAllDay = {
@@ -151,7 +169,15 @@ describe('EventDialog (edit + delete)', () => {
     allDayEnd: '2026-07-23',
     location: 'Zuhause',
     description: 'Ferien',
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
+
+  it('pre-selects the reminder preset from an existing event', () => {
+    const eventWith30MinReminder = { ...existing, reminderUseDefault: false, reminderMinutes: 30 }
+    renderWithProviders(<EventDialog members={members} initial={eventWith30MinReminder} onClose={vi.fn()} />)
+    expect(screen.getByLabelText('Erinnerung')).toHaveValue('30m')
+  })
 
   it('prefills date, Ganztägig, location and description for an existing all-day event', () => {
     renderWithProviders(<EventDialog members={members} initial={existingAllDay} onClose={vi.fn()} />)
@@ -215,6 +241,8 @@ describe('EventDialog (edit + delete)', () => {
       allDayEnd: '2026-07-23',
       location: null,
       description: null,
+      reminderUseDefault: true,
+      reminderMinutes: null,
     }
     renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -237,6 +265,8 @@ describe('EventDialog (edit + delete)', () => {
       allDayEnd: '2026-07-23',
       location: null,
       description: null,
+      reminderUseDefault: true,
+      reminderMinutes: null,
     }
     renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
     fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-07-25' } })

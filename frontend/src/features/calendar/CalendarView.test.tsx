@@ -114,6 +114,8 @@ describe('CalendarView', () => {
       allDayEnd: null,
       location: null,
       description: null,
+      reminderUseDefault: true,
+      reminderMinutes: null,
     }
     eventsRef.current = { events: [event], isLoading: false, isError: false, refetch: vi.fn() }
     renderWithProviders(<CalendarView />)

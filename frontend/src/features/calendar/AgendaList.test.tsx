@@ -30,6 +30,8 @@ function timed(id: string, iso: string): CalendarEvent {
     allDayEnd: null,
     location: null,
     description: null,
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
 }
 
@@ -68,6 +70,8 @@ it('shows an all-day event that spans into a day', () => {
     allDayEnd: '2026-07-31',
     location: null,
     description: null,
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
   render(<AgendaList {...base} events={[spanning]} onEventClick={() => {}} />)
   expect(screen.getByText('Urlaub')).toBeInTheDocument()
@@ -86,6 +90,8 @@ it('sorts a day with all-day and timed events: all-day first, then by start time
     allDayEnd: null,
     location: null,
     description: null,
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
   const events = [
     timed('late', '2026-07-30T14:00:00'),
@@ -109,6 +115,8 @@ it('falls back to a default color when the member is unknown', () => {
     allDayEnd: null,
     location: null,
     description: null,
+    reminderUseDefault: true,
+    reminderMinutes: null,
   }
   const { container } = render(<AgendaList {...base} events={[event]} onEventClick={() => {}} />)
   const swatch = container.querySelector('.rounded-full') as HTMLElement
