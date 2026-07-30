@@ -46,6 +46,7 @@ class EventControllerTest {
         end: Instant? = Instant.parse("2026-07-24T11:00:00Z"),
         allDayStart: LocalDate? = null,
         allDayEnd: LocalDate? = null,
+        recurringEventId: String? = null,
     ) = EventView(
         id = id,
         title = title,
@@ -60,6 +61,7 @@ class EventControllerTest {
         calendarId = "primary",
         reminderUseDefault = true,
         reminderMinutes = null,
+        recurringEventId = recurringEventId,
     )
 
     // ─── GET /v1/events — with full ISO instant start/end ─────────────────────

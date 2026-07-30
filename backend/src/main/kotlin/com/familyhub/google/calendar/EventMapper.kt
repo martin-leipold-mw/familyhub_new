@@ -24,6 +24,7 @@ data class EventCommand(
     val isAllDay: Boolean,
     val reminderUseDefault: Boolean = true,
     val reminderMinutes: Int? = null,
+    val recurrenceRule: String? = null,
 )
 
 @Component
@@ -128,6 +129,10 @@ class EventMapper {
                     } ?: emptyList(),
                 )
             }
+
+        if (cmd.recurrenceRule != null) {
+            googleEvent.recurrence = listOf(cmd.recurrenceRule)
+        }
 
         return googleEvent
     }

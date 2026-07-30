@@ -343,6 +343,19 @@ class EventMapperTest {
     }
 
     @Test
+    fun `toGoogleEvent sets recurrence when a rule is present`() {
+        val cmd =
+            EventCommand(
+                title = "Sport", isAllDay = false,
+                start = Instant.parse("2026-07-31T18:00:00Z"),
+                end = Instant.parse("2026-07-31T19:00:00Z"),
+                recurrenceRule = "RRULE:FREQ=WEEKLY;BYDAY=FR",
+            )
+        val g = EventMapper().toGoogleEvent(cmd)
+        assertThat(g.recurrence).containsExactly("RRULE:FREQ=WEEKLY;BYDAY=FR")
+    }
+
+    @Test
     fun `toEntity reads popup reminder minutes back`() {
         val g =
             GoogleEvent()

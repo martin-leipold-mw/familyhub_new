@@ -60,12 +60,18 @@ class EventController(
     override fun createEvent(eventCreateRequest: EventCreateRequest): ResponseEntity<EventResponse> =
         ResponseEntity.status(201).body(eventService.create(eventCreateRequest.toCommand()).toResponse())
 
+    // scope accepted for contract compatibility, not yet wired into the service — Task 11 adds series-scoped update
     override fun updateEvent(
         id: UUID,
         eventCreateRequest: EventCreateRequest,
+        scope: String,
     ): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.update(id, eventCreateRequest.toCommand()).toResponse())
 
-    override fun deleteEvent(id: UUID): ResponseEntity<Unit> {
+    // scope accepted for contract compatibility, not yet wired into the service — Task 11 adds series-scoped delete
+    override fun deleteEvent(
+        id: UUID,
+        scope: String,
+    ): ResponseEntity<Unit> {
         eventService.delete(id)
         return ResponseEntity.noContent().build()
     }
@@ -89,6 +95,7 @@ class EventController(
             isAllDay = isAllDay,
             reminderUseDefault = reminderUseDefault ?: true,
             reminderMinutes = reminderMinutes,
+            recurrenceRule = recurrenceRule,
         )
 }
 
@@ -107,4 +114,7 @@ private fun EventView.toResponse() =
         calendarId = calendarId,
         reminderUseDefault = reminderUseDefault,
         reminderMinutes = reminderMinutes,
+        recurringEventId = recurringEventId,
+        // Normal responses never carry the rule; only getEventSeries will set it — Task 11.
+        recurrenceRule = null,
     )

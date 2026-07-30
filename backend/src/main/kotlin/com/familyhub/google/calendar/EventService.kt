@@ -21,6 +21,7 @@ data class CreateEventCommand(
     val isAllDay: Boolean,
     val reminderUseDefault: Boolean = true,
     val reminderMinutes: Int? = null,
+    val recurrenceRule: String? = null,
 )
 
 data class EventView(
@@ -37,6 +38,7 @@ data class EventView(
     val calendarId: String,
     val reminderUseDefault: Boolean,
     val reminderMinutes: Int?,
+    val recurringEventId: String?,
 )
 
 private fun Event.toView() =
@@ -54,6 +56,7 @@ private fun Event.toView() =
         calendarId = googleCalendarId,
         reminderUseDefault = reminderUseDefault,
         reminderMinutes = reminderMinutes,
+        recurringEventId = recurrenceId,
     )
 
 private fun CreateEventCommand.toEventCommand() =
@@ -68,6 +71,7 @@ private fun CreateEventCommand.toEventCommand() =
         isAllDay = isAllDay,
         reminderUseDefault = reminderUseDefault,
         reminderMinutes = reminderMinutes,
+        recurrenceRule = recurrenceRule,
     )
 
 @Service
