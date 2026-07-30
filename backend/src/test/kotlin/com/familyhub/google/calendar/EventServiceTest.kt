@@ -648,4 +648,7 @@ class EventServiceTest {
             eventRepository.delete(timedEvent)
         }
     }
+
+    // Series-scoped update/delete and getSeries() are covered in EventServiceSeriesTest
+    // (split out to keep this class under the detekt LargeClass threshold).
 }

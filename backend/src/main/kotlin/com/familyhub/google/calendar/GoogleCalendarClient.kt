@@ -134,4 +134,10 @@ class GoogleCalendarClient(
     ) {
         buildCalendar(connection).events().delete(calendarId, eventId).execute()
     }
+
+    fun getEvent(
+        connection: GoogleConnection,
+        calendarId: String,
+        eventId: String,
+    ): Event = buildCalendar(connection).events().get(calendarId, eventId).execute()
 }

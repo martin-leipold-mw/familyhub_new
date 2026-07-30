@@ -123,11 +123,17 @@ class EventMapper {
             if (cmd.reminderUseDefault) {
                 GoogleEvent.Reminders().setUseDefault(true)
             } else {
-                GoogleEvent.Reminders().setUseDefault(false).setOverrides(
-                    cmd.reminderMinutes?.let {
-                        listOf(EventReminder().setMethod("popup").setMinutes(it))
-                    } ?: emptyList(),
-                )
+                // Plain if/else (not `?.let {} ?: emptyList()`): the elvis form compiles to two
+                // chained null-checks whose 4 branch-slots cover only 2 reachable outcomes,
+                // which JaCoCo can never see as 100% covered no matter the test inputs.
+                val minutes = cmd.reminderMinutes
+                val overrides =
+                    if (minutes != null) {
+                        listOf(EventReminder().setMethod("popup").setMinutes(minutes))
+                    } else {
+                        emptyList()
+                    }
+                GoogleEvent.Reminders().setUseDefault(false).setOverrides(overrides)
             }
 
         if (cmd.recurrenceRule != null) {

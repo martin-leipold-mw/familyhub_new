@@ -39,6 +39,7 @@ data class EventView(
     val reminderUseDefault: Boolean,
     val reminderMinutes: Int?,
     val recurringEventId: String?,
+    val recurrenceRule: String? = null,
 )
 
 private fun Event.toView() =
@@ -130,38 +131,82 @@ class EventService(
     fun update(
         id: UUID,
         cmd: CreateEventCommand,
+        scope: String = "instance",
     ): EventView {
         requireValidTiming(cmd)
         val local =
             eventRepository.findById(id).orElseThrow {
                 ResourceNotFoundException("Termin nicht gefunden")
             }
-        val connection =
-            connectionRepository.findByFamilyMemberId(local.ownerMemberId)
-                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
-        val subscription =
-            subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, local.googleCalendarId)
-                ?: throw ResourceNotFoundException("Kalender-Abonnement nicht gefunden")
+        val connection = requireConnection(local.ownerMemberId)
+        val subscription = requireSubscription(connection.id!!, local.googleCalendarId)
 
         val googleEvent = mapper.toGoogleEvent(cmd.toEventCommand())
-        googleEvent.id = local.googleEventId
+        googleEvent.id = resolveTargetGoogleId(local, scope)
         val updated = calendarClient.updateEvent(connection, local.googleCalendarId, googleEvent)
         val entity = mapper.toEntity(updated, subscription, local.ownerMemberId)
         entity.id = local.id
         return eventRepository.save(entity).toView()
     }
 
-    fun delete(id: UUID) {
+    fun delete(
+        id: UUID,
+        scope: String = "instance",
+    ) {
         val local =
             eventRepository.findById(id).orElseThrow {
                 ResourceNotFoundException("Termin nicht gefunden")
             }
-        val connection =
-            connectionRepository.findByFamilyMemberId(local.ownerMemberId)
-                ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+        val connection = requireConnection(local.ownerMemberId)
 
-        calendarClient.deleteEvent(connection, local.googleCalendarId, local.googleEventId)
+        val targetGoogleId = resolveTargetGoogleId(local, scope)
+        calendarClient.deleteEvent(connection, local.googleCalendarId, targetGoogleId)
         eventRepository.delete(local)
+        // Remaining series instances are pruned on the next sync (cancelled entries).
+    }
+
+    fun getSeries(id: UUID): EventView {
+        val local =
+            eventRepository.findById(id).orElseThrow {
+                ResourceNotFoundException("Termin nicht gefunden")
+            }
+        val parentId = local.recurrenceId ?: throw ValidationException("Termin gehört zu keiner Serie")
+        val connection = requireConnection(local.ownerMemberId)
+        val subscription = requireSubscription(connection.id!!, local.googleCalendarId)
+
+        val master = calendarClient.getEvent(connection, local.googleCalendarId, parentId)
+        val entity = mapper.toEntity(master, subscription, local.ownerMemberId)
+        // This is a projection, not a persisted row: reuse the requesting instance's id
+        // (mapper.toEntity never sets one) so entity.toView()'s id!! doesn't NPE.
+        entity.id = local.id
+        return entity.toView().copy(
+            recurringEventId = parentId,
+            recurrenceRule = master.recurrence?.firstOrNull { it.startsWith("RRULE") },
+        )
+    }
+
+    private fun requireConnection(memberId: UUID) =
+        connectionRepository.findByFamilyMemberId(memberId)
+            ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
+
+    private fun requireSubscription(
+        connectionId: UUID,
+        calendarId: String,
+    ) = subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, calendarId)
+        ?: throw ResourceNotFoundException("Kalender-Abonnement nicht gefunden")
+
+    /**
+     * Resolves which Google event id an update/delete should target:
+     * scope "series" targets the parent recurring event (requires [Event.recurrenceId]);
+     * scope "instance" (default) targets the event itself.
+     */
+    private fun resolveTargetGoogleId(
+        local: Event,
+        scope: String,
+    ) = if (scope == "series") {
+        local.recurrenceId ?: throw ValidationException("Termin gehört zu keiner Serie")
+    } else {
+        local.googleEventId
     }
 
     private fun requireValidTiming(cmd: CreateEventCommand) {

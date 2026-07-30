@@ -7,6 +7,8 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.justRun
+import io.mockk.slot
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -222,6 +224,63 @@ class EventControllerTest {
         }.andExpect {
             status { isBadRequest() }
         }
+    }
+
+    // ─── POST /v1/events — explicit reminderUseDefault in body (branch coverage) ──
+
+    @Test
+    fun `POST event with explicit reminderUseDefault false passes it through`() {
+        every { settingsService.timezone() } returns "Europe/Berlin"
+        val cmdSlot = slot<CreateEventCommand>()
+        every { eventService.create(capture(cmdSlot)) } returns aView()
+
+        mockMvc.post("/api/v1/events") {
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                """
+                {
+                  "memberId": "$memberId",
+                  "title": "Test Event",
+                  "isAllDay": false,
+                  "start": "2026-07-24T10:00:00Z",
+                  "end": "2026-07-24T11:00:00Z",
+                  "reminderUseDefault": false,
+                  "reminderMinutes": 15
+                }
+                """.trimIndent()
+        }.andExpect {
+            status { isCreated() }
+        }
+
+        assertThat(cmdSlot.captured.reminderUseDefault).isFalse()
+    }
+
+    @Test
+    fun `POST event with explicit null reminderUseDefault defaults to true`() {
+        // Exercises the missed branch: reminderUseDefault ?: true when the JSON value is
+        // actually null (not merely omitted — an omitted field takes the DTO's own default).
+        every { settingsService.timezone() } returns "Europe/Berlin"
+        val cmdSlot = slot<CreateEventCommand>()
+        every { eventService.create(capture(cmdSlot)) } returns aView()
+
+        mockMvc.post("/api/v1/events") {
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                """
+                {
+                  "memberId": "$memberId",
+                  "title": "Test Event",
+                  "isAllDay": false,
+                  "start": "2026-07-24T10:00:00Z",
+                  "end": "2026-07-24T11:00:00Z",
+                  "reminderUseDefault": null
+                }
+                """.trimIndent()
+        }.andExpect {
+            status { isCreated() }
+        }
+
+        assertThat(cmdSlot.captured.reminderUseDefault).isTrue()
     }
 
     // ─── PUT /v1/events/{id} → 200 ────────────────────────────────────────────

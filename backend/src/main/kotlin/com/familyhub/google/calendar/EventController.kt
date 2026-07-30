@@ -60,21 +60,23 @@ class EventController(
     override fun createEvent(eventCreateRequest: EventCreateRequest): ResponseEntity<EventResponse> =
         ResponseEntity.status(201).body(eventService.create(eventCreateRequest.toCommand()).toResponse())
 
-    // scope accepted for contract compatibility, not yet wired into the service — Task 11 adds series-scoped update
+    // scope: "instance" (default) targets this event only; "series" targets the parent recurring event.
     override fun updateEvent(
         id: UUID,
         eventCreateRequest: EventCreateRequest,
         scope: String,
-    ): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.update(id, eventCreateRequest.toCommand()).toResponse())
+    ): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.update(id, eventCreateRequest.toCommand(), scope).toResponse())
 
-    // scope accepted for contract compatibility, not yet wired into the service — Task 11 adds series-scoped delete
+    // scope: "instance" (default) deletes this event only; "series" deletes the parent recurring event.
     override fun deleteEvent(
         id: UUID,
         scope: String,
     ): ResponseEntity<Unit> {
-        eventService.delete(id)
+        eventService.delete(id, scope)
         return ResponseEntity.noContent().build()
     }
+
+    override fun getEventSeries(id: UUID): ResponseEntity<EventResponse> = ResponseEntity.ok(eventService.getSeries(id).toResponse())
 
     // Reuses parseInstant so body start/end get the same handling as the GET
     // query params: garbage → ValidationException → 400, date-only → timezone-
@@ -115,6 +117,6 @@ private fun EventView.toResponse() =
         reminderUseDefault = reminderUseDefault,
         reminderMinutes = reminderMinutes,
         recurringEventId = recurringEventId,
-        // Normal responses never carry the rule; only getEventSeries will set it — Task 11.
-        recurrenceRule = null,
+        // Only getSeries() populates this; normal views carry the default null.
+        recurrenceRule = recurrenceRule,
     )

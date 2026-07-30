@@ -346,7 +346,8 @@ class EventMapperTest {
     fun `toGoogleEvent sets recurrence when a rule is present`() {
         val cmd =
             EventCommand(
-                title = "Sport", isAllDay = false,
+                title = "Sport",
+                isAllDay = false,
                 start = Instant.parse("2026-07-31T18:00:00Z"),
                 end = Instant.parse("2026-07-31T19:00:00Z"),
                 recurrenceRule = "RRULE:FREQ=WEEKLY;BYDAY=FR",
@@ -371,5 +372,57 @@ class EventMapperTest {
         val entity = mapper.toEntity(g, subscription, ownerMemberId)
         assertThat(entity.reminderUseDefault).isFalse()
         assertThat(entity.reminderMinutes).isEqualTo(30)
+    }
+
+    @Test
+    fun `toEntity defaults reminderUseDefault to true when reminders present but useDefault unset`() {
+        // Exercises the missed branch: reminders != null but useDefault itself is null → elvis default
+        val g =
+            GoogleEvent()
+                .setId("g2")
+                .setSummary("Ohne Erinnerung")
+                .setStart(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T09:00:00Z").toEpochMilli())))
+                .setEnd(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T10:00:00Z").toEpochMilli())))
+                .setReminders(GoogleEvent.Reminders()) // useDefault and overrides both unset (null)
+
+        val entity = mapper.toEntity(g, subscription, ownerMemberId)
+        assertThat(entity.reminderUseDefault).isTrue()
+        assertThat(entity.reminderMinutes).isNull()
+    }
+
+    @Test
+    fun `toEntity reminderMinutes is null when no override uses the popup method`() {
+        // Exercises the missed branch: overrides present but firstOrNull{method == "popup"} finds nothing
+        val g =
+            GoogleEvent()
+                .setId("g3")
+                .setSummary("Email-Erinnerung")
+                .setStart(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T09:00:00Z").toEpochMilli())))
+                .setEnd(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T10:00:00Z").toEpochMilli())))
+                .setReminders(
+                    GoogleEvent.Reminders()
+                        .setUseDefault(false)
+                        .setOverrides(listOf(com.google.api.services.calendar.model.EventReminder().setMethod("email").setMinutes(60))),
+                )
+
+        val entity = mapper.toEntity(g, subscription, ownerMemberId)
+        assertThat(entity.reminderMinutes).isNull()
+    }
+
+    @Test
+    fun `toGoogleEvent sets empty overrides when not using default and no reminderMinutes given`() {
+        // Exercises the missed branch: reminderMinutes == null → emptyList() branch of the elvis
+        val cmd =
+            EventCommand(
+                title = "Ohne Minuten",
+                isAllDay = false,
+                start = Instant.parse("2026-07-31T09:00:00Z"),
+                end = Instant.parse("2026-07-31T10:00:00Z"),
+                reminderUseDefault = false,
+                reminderMinutes = null,
+            )
+        val g = mapper.toGoogleEvent(cmd)
+        assertThat(g.reminders.useDefault).isFalse()
+        assertThat(g.reminders.overrides).isEmpty()
     }
 }
