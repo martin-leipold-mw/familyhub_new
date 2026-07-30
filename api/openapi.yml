@@ -1001,6 +1001,12 @@ components:
           nullable: true
         isAllDay:
           type: boolean
+        reminderUseDefault:
+          type: boolean
+          default: true
+        reminderMinutes:
+          type: integer
+          nullable: true
 
     EventResponse:
       type: object
@@ -1040,3 +1046,9 @@ components:
           format: uuid
         calendarId:
           type: string
+        reminderUseDefault:
+          type: boolean
+          default: true
+        reminderMinutes:
+          type: integer
+          nullable: true
