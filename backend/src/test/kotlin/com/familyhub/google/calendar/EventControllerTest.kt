@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.justRun
 import io.mockk.slot
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -49,6 +50,7 @@ class EventControllerTest {
         allDayStart: LocalDate? = null,
         allDayEnd: LocalDate? = null,
         recurringEventId: String? = null,
+        recurrenceRule: String? = null,
     ) = EventView(
         id = id,
         title = title,
@@ -64,6 +66,7 @@ class EventControllerTest {
         reminderUseDefault = true,
         reminderMinutes = null,
         recurringEventId = recurringEventId,
+        recurrenceRule = recurrenceRule,
     )
 
     // ─── GET /v1/events — with full ISO instant start/end ─────────────────────
@@ -306,6 +309,32 @@ class EventControllerTest {
         }
     }
 
+    // ─── PUT /v1/events/{id}?scope=series → scope reaches the service ─────────
+
+    @Test
+    fun `PUT event with scope=series query param passes series scope to service`() {
+        every { settingsService.timezone() } returns "Europe/Berlin"
+        every { eventService.update(eventId, any(), "series") } returns aView(title = "Updated Series")
+
+        mockMvc.put("/api/v1/events/$eventId?scope=series") {
+            contentType = MediaType.APPLICATION_JSON
+            content =
+                """
+                {
+                  "memberId": "$memberId",
+                  "title": "Updated Series",
+                  "isAllDay": false
+                }
+                """.trimIndent()
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.title") { value("Updated Series") }
+        }
+
+        verify(exactly = 1) { eventService.update(eventId, any(), "series") }
+        verify(exactly = 0) { eventService.update(eventId, any(), "instance") }
+    }
+
     // ─── DELETE /v1/events/{id} → 204 ─────────────────────────────────────────
 
     @Test
@@ -315,6 +344,42 @@ class EventControllerTest {
         mockMvc.delete("/api/v1/events/$eventId")
             .andExpect {
                 status { isNoContent() }
+            }
+    }
+
+    // ─── DELETE /v1/events/{id}?scope=series → scope reaches the service ──────
+
+    @Test
+    fun `DELETE event with scope=series query param passes series scope to service`() {
+        justRun { eventService.delete(eventId, "series") }
+
+        mockMvc.delete("/api/v1/events/$eventId?scope=series")
+            .andExpect {
+                status { isNoContent() }
+            }
+
+        verify(exactly = 1) { eventService.delete(eventId, "series") }
+        verify(exactly = 0) { eventService.delete(eventId, "instance") }
+    }
+
+    // ─── GET /v1/events/{id}/series → 200 with parent recurrence data ─────────
+
+    @Test
+    fun `GET event series returns 200 with recurrenceRule and recurringEventId`() {
+        every { eventService.getSeries(eventId) } returns
+            aView(
+                title = "Weekly Sync",
+                recurringEventId = "master1",
+                recurrenceRule = "RRULE:FREQ=WEEKLY",
+            )
+
+        mockMvc.get("/api/v1/events/$eventId/series")
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.id") { value(eventId.toString()) }
+                jsonPath("$.title") { value("Weekly Sync") }
+                jsonPath("$.recurringEventId") { value("master1") }
+                jsonPath("$.recurrenceRule") { value("RRULE:FREQ=WEEKLY") }
             }
     }
 
