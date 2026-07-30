@@ -8,6 +8,8 @@ type Event = {
   isAllDay: boolean
   start?: string
   end?: string
+  recurringEventId?: string | null
+  recurrenceRule?: string | null
 }
 
 test('create, edit and delete a calendar event', async ({ page }) => {
@@ -90,4 +92,108 @@ test('create, edit and delete a calendar event', async ({ page }) => {
   await page.getByRole('button', { name: 'Löschen' }).click()
   await page.getByRole('button', { name: 'Wirklich löschen' }).click()
   await expect(page.getByRole('button', { name: /Zahnarzt/ })).toHaveCount(0)
+})
+
+test('create a recurring weekly event, see the series badge, then delete the whole series', async ({ page }) => {
+  const events: Event[] = []
+  let nextId = 1
+  let nextSeriesId = 1
+
+  await page.route('**/api/v1/settings/setup-status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ setupCompleted: true, currentStep: 6, hasFamilyMembers: true, hasPin: true }),
+    }),
+  )
+
+  await page.route('**/api/v1/members', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'm1', name: 'Anna', role: 'child', color: 'pink', isActive: true, createdAt: '', updatedAt: '' },
+      ]),
+    }),
+  )
+
+  await page.route('**/api/v1/google/connections', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  )
+
+  // list + create events
+  await page.route(/\/api\/v1\/events(\?.*)?$/, (route) => {
+    const req = route.request()
+    if (req.method() === 'GET') {
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(events) })
+    }
+    if (req.method() === 'POST') {
+      const body = JSON.parse(req.postData() ?? '{}')
+      const created: Event = { id: String(nextId++), calendarId: 'c1', ...body }
+      if (body.recurrenceRule) {
+        created.recurringEventId = `series-${nextSeriesId++}`
+      }
+      events.push(created)
+      return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(created) })
+    }
+    return route.fallback()
+  })
+
+  // series lookup (fetched when the edit dialog switches scope to "Ganze Serie")
+  await page.route(/\/api\/v1\/events\/[^/?]+\/series$/, (route) => {
+    const parts = new URL(route.request().url()).pathname.split('/')
+    const id = parts[parts.length - 2]
+    const found = events.find((e) => e.id === id)
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(found) })
+  })
+
+  // update + delete a single event (allow an optional ?scope=... query)
+  await page.route(/\/api\/v1\/events\/[^/?]+(\?.*)?$/, (route) => {
+    const req = route.request()
+    const url = new URL(req.url())
+    const id = url.pathname.split('/').pop()!
+    const scope = url.searchParams.get('scope')
+    if (req.method() === 'PUT') {
+      const body = JSON.parse(req.postData() ?? '{}')
+      const idx = events.findIndex((e) => e.id === id)
+      if (idx >= 0) events[idx] = { ...events[idx], ...body }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(events[idx]) })
+    }
+    if (req.method() === 'DELETE') {
+      if (scope === 'series') {
+        const seriesId = events.find((e) => e.id === id)?.recurringEventId
+        for (let i = events.length - 1; i >= 0; i--) {
+          if (events[i].recurringEventId === seriesId) events.splice(i, 1)
+        }
+      } else {
+        const idx = events.findIndex((e) => e.id === id)
+        if (idx >= 0) events.splice(idx, 1)
+      }
+      return route.fulfill({ status: 204, body: '' })
+    }
+    return route.fallback()
+  })
+
+  await page.goto('/')
+
+  // Create: weekly recurring event via an empty slot
+  await page.getByLabel('Neuer Termin 08:00').first().click()
+  await page.getByLabel('Titel').fill('Sport')
+  await page.getByRole('button', { name: 'Anna' }).click()
+  await page.getByLabel('Wiederholung').selectOption('weekly')
+  await page.getByRole('button', { name: 'Speichern' }).click()
+
+  // Visible with the 🔁 series marker
+  await expect(page.getByRole('button', { name: /Sport/ })).toBeVisible()
+  await expect(page.locator('[aria-label="Serie"]')).toBeVisible()
+
+  // Open it, choose "Ganze Serie", delete
+  await page.getByRole('button', { name: /Sport/ }).click()
+  await page.getByLabel('Ganze Serie').check()
+  await page.getByRole('button', { name: 'Löschen' }).click()
+  await page.getByRole('button', { name: 'Wirklich löschen' }).click()
+
+  // Gone from the view
+  await expect(page.getByRole('button', { name: /Sport/ })).toHaveCount(0)
+  await expect(page.locator('[aria-label="Serie"]')).toHaveCount(0)
 })
