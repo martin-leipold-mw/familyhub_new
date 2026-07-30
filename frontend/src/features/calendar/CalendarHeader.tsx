@@ -31,7 +31,7 @@ export function CalendarHeader({
       <h1 className="text-2xl font-bold text-white mr-auto">{label}</h1>
 
       <div className="flex overflow-hidden rounded-xl">
-        {(['day', 'week'] as CalendarViewMode[]).map((v) => (
+        {(['day', 'week', 'agenda'] as CalendarViewMode[]).map((v) => (
           <button
             key={v}
             type="button"
@@ -39,20 +39,29 @@ export function CalendarHeader({
             onClick={() => onViewChange(v)}
             className={`px-4 py-3 min-h-[44px] text-white ${view === v ? 'bg-blue-500' : 'bg-slate-700'}`}
           >
-            {v === 'day' ? 'Tag' : 'Woche'}
+            {v === 'day' ? 'Tag' : v === 'week' ? 'Woche' : 'Agenda'}
           </button>
         ))}
       </div>
 
-      <button type="button" aria-label="Vorheriger Zeitraum" onClick={onPrev} className={BTN}>
-        <ChevronLeft aria-hidden />
-      </button>
-      <button type="button" onClick={onToday} className={BTN}>
-        Heute
-      </button>
-      <button type="button" aria-label="Nächster Zeitraum" onClick={onNext} className={BTN}>
-        <ChevronRight aria-hidden />
-      </button>
+      {view !== 'agenda' && (
+        <>
+          <button type="button" aria-label="Vorheriger Zeitraum" onClick={onPrev} className={BTN}>
+            <ChevronLeft aria-hidden />
+          </button>
+          <button type="button" onClick={onToday} className={BTN}>
+            Heute
+          </button>
+          <button type="button" aria-label="Nächster Zeitraum" onClick={onNext} className={BTN}>
+            <ChevronRight aria-hidden />
+          </button>
+        </>
+      )}
+      {view === 'agenda' && (
+        <button type="button" onClick={onToday} className={BTN}>
+          Heute
+        </button>
+      )}
 
       <button
         type="button"

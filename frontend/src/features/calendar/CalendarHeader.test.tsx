@@ -51,4 +51,16 @@ describe('CalendarHeader', () => {
     const button = screen.getByRole('button', { name: 'Synchronisieren' })
     expect(button.querySelector('svg')).toHaveClass('animate-spin')
   })
+  it('shows an Agenda toggle and hides prev/next in agenda mode', () => {
+    render(
+      <CalendarHeader
+        label="Juli 2026" view="agenda"
+        onViewChange={() => {}} onPrev={() => {}} onNext={() => {}}
+        onToday={() => {}} onSync={() => {}} isSyncing={false} onOpenSettings={() => {}}
+      />,
+    )
+    expect(screen.getByRole('button', { name: 'Agenda' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Vorheriger Zeitraum' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Nächster Zeitraum' })).toBeNull()
+  })
 })
