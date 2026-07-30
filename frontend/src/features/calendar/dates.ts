@@ -8,7 +8,7 @@ import {
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 
-export type CalendarViewMode = 'week' | 'day'
+export type CalendarViewMode = 'week' | 'day' | 'agenda'
 
 export interface VisibleRange {
   start: Date
@@ -30,6 +30,10 @@ export function visibleRange(anchor: Date, view: CalendarViewMode): VisibleRange
 
 export function shiftAnchor(anchor: Date, view: CalendarViewMode, dir: 1 | -1): Date {
   return view === 'day' ? addDays(anchor, dir) : addDays(anchor, dir * 7)
+}
+
+export function agendaRange(today: Date, days = 30): VisibleRange {
+  return { start: startOfDay(today), end: endOfDay(addDays(today, days)) }
 }
 
 export function rangeParams(range: VisibleRange): { start: string; end: string } {

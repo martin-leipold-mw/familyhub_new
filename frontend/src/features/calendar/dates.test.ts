@@ -10,6 +10,7 @@ import {
   isSameDayAs,
   formatTime,
   allDaySpansDay,
+  agendaRange,
 } from './dates'
 
 // Monday 2026-07-20 .. Sunday 2026-07-26; anchor Wed 2026-07-22 12:00 local
@@ -94,5 +95,22 @@ describe('allDaySpansDay (end exclusive)', () => {
     expect(allDaySpansDay('2026-07-21', '2026-07-23', day21)).toBe(true)
     expect(allDaySpansDay('2026-07-21', '2026-07-23', day22)).toBe(true)
     expect(allDaySpansDay('2026-07-21', '2026-07-23', new Date(2026, 6, 23))).toBe(false)
+  })
+})
+
+describe('agendaRange', () => {
+  it('spans from start of today through end of today + 30 days', () => {
+    const today = new Date('2026-07-30T14:00:00Z')
+    const { start, end } = agendaRange(today)
+    expect(start.toISOString()).toBe(new Date('2026-07-30T00:00:00').toISOString())
+    // 30 days later, end of day
+    expect(end.getDate()).toBe(new Date('2026-08-29T00:00:00').getDate())
+    expect(end.getHours()).toBe(23)
+  })
+
+  it('honours a custom window length', () => {
+    const { start, end } = agendaRange(new Date('2026-07-30T00:00:00'), 6)
+    const spanDays = Math.round((end.getTime() - start.getTime()) / 86_400_000)
+    expect(spanDays).toBe(7)
   })
 })
