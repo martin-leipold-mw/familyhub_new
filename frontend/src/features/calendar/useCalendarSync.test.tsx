@@ -5,9 +5,10 @@ import { createTestQueryClient } from '@/test/testUtils'
 import type { ReactNode } from 'react'
 
 const syncCalendars = vi.fn()
+const getListEventsQueryKey = vi.fn(() => ['/api/v1/events'])
 vi.mock('@/api/generated/endpoints/familyHubAPI', () => ({
   syncCalendars: (params: { memberId: string }) => syncCalendars(params),
-  getListEventsQueryKey: () => ['/api/v1/events'],
+  getListEventsQueryKey: () => getListEventsQueryKey(),
 }))
 
 const connectionsRef = { current: [] as Array<{ memberId: string; status: string }> }
@@ -28,6 +29,7 @@ function wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   syncCalendars.mockReset().mockResolvedValue({ status: 200, data: {} })
+  getListEventsQueryKey.mockReset().mockReturnValue(['/api/v1/events'])
 })
 
 describe('useCalendarSync', () => {
@@ -64,6 +66,18 @@ describe('useCalendarSync', () => {
   it('sets isError when a sync call fails', async () => {
     connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
     syncCalendars.mockRejectedValueOnce(new Error('boom'))
+    const { result } = renderHook(() => useCalendarSync(), { wrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+
+  it('sets isError when invalidating the query cache throws', async () => {
+    connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
+    getListEventsQueryKey.mockImplementationOnce(() => {
+      throw new Error('boom')
+    })
     const { result } = renderHook(() => useCalendarSync(), { wrapper })
     await act(async () => {
       await result.current.sync()

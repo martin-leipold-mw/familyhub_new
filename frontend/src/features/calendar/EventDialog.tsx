@@ -1,15 +1,20 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import type { EventCreateRequest, MemberResponse } from '@/api/generated/model'
+import { getEventSeries } from '@/api/generated/endpoints/familyHubAPI'
 import { MemberSelect } from './MemberSelect'
 import { formatTime } from './dates'
 import { REMINDER_OPTIONS, presetToApi, apiToPreset, type ReminderPreset } from './reminders'
+import { RecurrenceFields } from './RecurrenceFields'
+import { buildRrule, parseRrule, EMPTY_RECURRENCE, type RecurrenceState } from './recurrence'
 import {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
   type CalendarEvent,
 } from './useCalendarEvents'
+
+type EventScope = 'instance' | 'series'
 
 function isoFromParts(date: string, time: string): string {
   return new Date(`${date}T${time}:00`).toISOString()
@@ -46,10 +51,30 @@ export function EventDialog({
   )
   const [error, setError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [recurrence, setRecurrence] = useState<RecurrenceState>(EMPTY_RECURRENCE)
+  const isRecurringInstance = !!initial?.recurringEventId
+  const [scope, setScope] = useState<EventScope>('instance')
+  const [seriesLoading, setSeriesLoading] = useState(false)
 
   const create = useCreateEventMutation()
   const update = useUpdateEventMutation()
   const remove = useDeleteEventMutation()
+
+  async function handleScopeChange(next: EventScope) {
+    setScope(next)
+    if (next === 'series' && initial) {
+      setError(null)
+      setSeriesLoading(true)
+      try {
+        const res = await getEventSeries(initial.id)
+        setRecurrence(parseRrule(res.data.recurrenceRule ?? null))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Serie konnte nicht geladen werden.')
+      } finally {
+        setSeriesLoading(false)
+      }
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -68,13 +93,18 @@ export function EventDialog({
     }
 
     const reminderFields = presetToApi(reminder)
+    const includeRecurrence = !editing || (isRecurringInstance && scope === 'series')
+    const recurrenceField = includeRecurrence
+      ? { recurrenceRule: buildRrule(recurrence, { isAllDay }) ?? null }
+      : {}
     const data: EventCreateRequest = isAllDay
-      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: initial?.allDayEnd && initial.allDayEnd > date ? initial.allDayEnd : null, location: location || null, description: description || null, ...reminderFields }
-      : { memberId, title: title.trim(), isAllDay: false, start: isoFromParts(date, startTime), end: isoFromParts(date, endTime), location: location || null, description: description || null, ...reminderFields }
+      ? { memberId, title: title.trim(), isAllDay: true, allDayStart: date, allDayEnd: initial?.allDayEnd && initial.allDayEnd > date ? initial.allDayEnd : null, location: location || null, description: description || null, ...reminderFields, ...recurrenceField }
+      : { memberId, title: title.trim(), isAllDay: false, start: isoFromParts(date, startTime), end: isoFromParts(date, endTime), location: location || null, description: description || null, ...reminderFields, ...recurrenceField }
 
     try {
       if (editing && initial) {
-        await update.mutateAsync({ id: initial.id, data })
+        const params = isRecurringInstance ? { scope } : undefined
+        await update.mutateAsync({ id: initial.id, data, params })
       } else {
         await create.mutateAsync({ data })
       }
@@ -86,7 +116,8 @@ export function EventDialog({
 
   async function doDelete() {
     try {
-      await remove.mutateAsync({ id: initial!.id })
+      const params = isRecurringInstance ? { scope } : undefined
+      await remove.mutateAsync({ id: initial!.id, params })
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Löschen fehlgeschlagen.')
@@ -192,6 +223,46 @@ export function EventDialog({
             ))}
           </select>
         </label>
+
+        {!editing && (
+          <RecurrenceFields
+            state={recurrence}
+            onChange={setRecurrence}
+            eventDate={new Date(`${date}T${startTime}:00`)}
+          />
+        )}
+
+        {editing && isRecurringInstance && (
+          <fieldset className="flex flex-col gap-2 text-white">
+            <legend>Serie</legend>
+            <label className="flex items-center gap-2 min-h-[44px]">
+              <input
+                type="radio"
+                name="event-scope"
+                checked={scope === 'instance'}
+                onChange={() => handleScopeChange('instance')}
+              />
+              Nur diesen Termin
+            </label>
+            <label className="flex items-center gap-2 min-h-[44px]">
+              <input
+                type="radio"
+                name="event-scope"
+                checked={scope === 'series'}
+                onChange={() => handleScopeChange('series')}
+              />
+              Ganze Serie
+            </label>
+            {scope === 'series' && seriesLoading && <p>Serie wird geladen…</p>}
+            {scope === 'series' && !seriesLoading && (
+              <RecurrenceFields
+                state={recurrence}
+                onChange={setRecurrence}
+                eventDate={new Date(`${date}T${startTime}:00`)}
+              />
+            )}
+          </fieldset>
+        )}
 
         {error && <p className="text-red-400 text-sm">{error}</p>}
 

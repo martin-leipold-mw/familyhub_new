@@ -18,6 +18,11 @@ vi.mock('./useCalendarEvents', async () => {
   }
 })
 
+const getEventSeriesMock = vi.fn()
+vi.mock('@/api/generated/endpoints/familyHubAPI', () => ({
+  getEventSeries: (...args: unknown[]) => getEventSeriesMock(...args),
+}))
+
 const members: MemberResponse[] = [
   { id: 'm1', name: 'Anna', role: 'child', color: 'pink', isActive: true, createdAt: '', updatedAt: '' },
 ]
@@ -26,6 +31,7 @@ beforeEach(() => {
   createMock.mockReset().mockResolvedValue({})
   updateMock.mockReset().mockResolvedValue({})
   deleteMock.mockReset().mockResolvedValue({})
+  getEventSeriesMock.mockReset().mockResolvedValue({ data: { recurrenceRule: 'RRULE:FREQ=WEEKLY;INTERVAL=1;BYDAY=TU' } })
 })
 
 describe('EventDialog (create)', () => {
@@ -140,6 +146,56 @@ describe('EventDialog (create)', () => {
     expect(onClose).toHaveBeenCalled()
     expect(createMock).not.toHaveBeenCalled()
   })
+
+  it('sends a weekly RRULE when a recurrence is configured', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(
+      <EventDialog members={members} defaultDate={new Date(2026, 6, 21, 8, 0)} onClose={onClose} />,
+    )
+    await userEvent.type(screen.getByLabelText('Titel'), 'Training')
+    await userEvent.click(screen.getByRole('button', { name: 'Anna' }))
+    await userEvent.selectOptions(screen.getByLabelText('Wiederholung'), 'Wöchentlich')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    const arg = createMock.mock.calls[0][0].data
+    expect(arg.recurrenceRule).toMatch(/^RRULE:FREQ=WEEKLY/)
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('fills location, description and start time and sends them when creating', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(
+      <EventDialog members={members} defaultDate={new Date(2026, 6, 21, 8, 0)} onClose={onClose} />,
+    )
+    await userEvent.type(screen.getByLabelText('Titel'), 'Zahnarzt')
+    await userEvent.click(screen.getByRole('button', { name: 'Anna' }))
+    fireEvent.change(screen.getByLabelText('Von'), { target: { value: '08:15' } })
+    await userEvent.type(screen.getByLabelText('Ort (optional)'), 'Praxis')
+    await userEvent.type(screen.getByLabelText('Beschreibung (optional)'), 'Kontrolle')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    const arg = createMock.mock.calls[0][0].data
+    expect(arg.location).toBe('Praxis')
+    expect(arg.description).toBe('Kontrolle')
+    const start = new Date(arg.start as string)
+    expect(start.getHours()).toBe(8)
+    expect(start.getMinutes()).toBe(15)
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('sends a null recurrenceRule when no recurrence is configured', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(
+      <EventDialog members={members} defaultDate={new Date(2026, 6, 21, 8, 0)} onClose={onClose} />,
+    )
+    await userEvent.type(screen.getByLabelText('Titel'), 'Zahnarzt')
+    await userEvent.click(screen.getByRole('button', { name: 'Anna' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(createMock).toHaveBeenCalledOnce())
+    const arg = createMock.mock.calls[0][0].data
+    expect(arg.recurrenceRule).toBeNull()
+    expect(onClose).toHaveBeenCalled()
+  })
 })
 
 describe('EventDialog (edit + delete)', () => {
@@ -156,6 +212,7 @@ describe('EventDialog (edit + delete)', () => {
     description: null,
     reminderUseDefault: true,
     reminderMinutes: null,
+    recurringEventId: null,
   }
 
   const existingAllDay = {
@@ -171,6 +228,7 @@ describe('EventDialog (edit + delete)', () => {
     description: 'Ferien',
     reminderUseDefault: true,
     reminderMinutes: null,
+    recurringEventId: null,
   }
 
   it('pre-selects the reminder preset from an existing event', () => {
@@ -243,6 +301,7 @@ describe('EventDialog (edit + delete)', () => {
       description: null,
       reminderUseDefault: true,
       reminderMinutes: null,
+      recurringEventId: null,
     }
     renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
@@ -267,6 +326,7 @@ describe('EventDialog (edit + delete)', () => {
       description: null,
       reminderUseDefault: true,
       reminderMinutes: null,
+      recurringEventId: null,
     }
     renderWithProviders(<EventDialog members={members} initial={multiDay} onClose={onClose} />)
     fireEvent.change(screen.getByLabelText('Datum'), { target: { value: '2026-07-25' } })
@@ -275,5 +335,90 @@ describe('EventDialog (edit + delete)', () => {
     const arg = updateMock.mock.calls[0][0].data
     expect(arg.allDayEnd).toBeNull()
     expect(onClose).toHaveBeenCalled()
+  })
+
+  const recurringInstance = {
+    ...existing,
+    id: 'e5',
+    recurringEventId: 'series-1',
+  }
+
+  it('does not show a scope choice for a non-recurring event', () => {
+    renderWithProviders(<EventDialog members={members} initial={existing} onClose={vi.fn()} />)
+    expect(screen.queryByLabelText('Ganze Serie')).not.toBeInTheDocument()
+  })
+
+  it('shows the scope choice for an event that belongs to a series', () => {
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={vi.fn()} />)
+    expect(screen.getByLabelText('Nur diesen Termin')).toBeInTheDocument()
+    expect(screen.getByLabelText('Ganze Serie')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nur diesen Termin')).toBeChecked()
+  })
+
+  it('switches back to "Nur diesen Termin" after choosing "Ganze Serie"', async () => {
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    await waitFor(() => expect(getEventSeriesMock).toHaveBeenCalled())
+    await userEvent.click(screen.getByLabelText('Nur diesen Termin'))
+    expect(screen.getByLabelText('Nur diesen Termin')).toBeChecked()
+    expect(screen.queryByLabelText('Wiederholung')).not.toBeInTheDocument()
+  })
+
+  it('deletes a recurring instance with scope=instance by default', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={onClose} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Wirklich löschen' }))
+    await waitFor(() =>
+      expect(deleteMock).toHaveBeenCalledWith({ id: 'e5', params: { scope: 'instance' } }),
+    )
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('fetches the series and deletes with scope=series when "Ganze Serie" is chosen', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={onClose} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    await waitFor(() => expect(getEventSeriesMock).toHaveBeenCalledWith('e5'))
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Wirklich löschen' }))
+    await waitFor(() =>
+      expect(deleteMock).toHaveBeenCalledWith({ id: 'e5', params: { scope: 'series' } }),
+    )
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('prefills the recurrence fields from the fetched series and includes them in the update', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={onClose} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    await waitFor(() => expect(screen.getByLabelText('Wiederholung')).toHaveValue('weekly'))
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledOnce())
+    const call = updateMock.mock.calls[0][0]
+    expect(call.params).toEqual({ scope: 'series' })
+    expect(call.data.recurrenceRule).toMatch(/^RRULE:FREQ=WEEKLY/)
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('shows an error banner when fetching the series fails', async () => {
+    getEventSeriesMock.mockRejectedValueOnce(new Error('Serie nicht gefunden'))
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    expect(await screen.findByText('Serie nicht gefunden')).toBeInTheDocument()
+  })
+
+  it('shows a generic error when fetching the series fails with a non-Error rejection', async () => {
+    getEventSeriesMock.mockRejectedValueOnce('boom')
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    expect(await screen.findByText('Serie konnte nicht geladen werden.')).toBeInTheDocument()
+  })
+
+  it('treats a series response without a recurrenceRule as no recurrence', async () => {
+    getEventSeriesMock.mockResolvedValueOnce({ data: {} })
+    renderWithProviders(<EventDialog members={members} initial={recurringInstance} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByLabelText('Ganze Serie'))
+    await waitFor(() => expect(screen.getByLabelText('Wiederholung')).toHaveValue('none'))
   })
 })

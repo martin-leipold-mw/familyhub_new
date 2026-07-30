@@ -19,6 +19,7 @@ const timedEvent: CalendarEvent = {
   description: null,
   reminderUseDefault: true,
   reminderMinutes: null,
+  recurringEventId: null,
 }
 
 describe('DayColumn', () => {

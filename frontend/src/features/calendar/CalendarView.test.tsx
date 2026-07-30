@@ -101,6 +101,15 @@ describe('CalendarView', () => {
     expect(screen.getByRole('dialog', { name: 'Termin anlegen' })).toBeInTheDocument()
   })
 
+  it('closes the dialog when Abbrechen is clicked', async () => {
+    renderWithProviders(<CalendarView />)
+    const [slotButton] = screen.getAllByLabelText(/^Neuer Termin/)
+    await userEvent.click(slotButton)
+    expect(screen.getByRole('dialog', { name: 'Termin anlegen' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
   it('opens the edit dialog when an existing event is clicked', async () => {
     const today = new Date()
     const event: CalendarEvent = {
@@ -116,6 +125,7 @@ describe('CalendarView', () => {
       description: null,
       reminderUseDefault: true,
       reminderMinutes: null,
+      recurringEventId: null,
     }
     eventsRef.current = { events: [event], isLoading: false, isError: false, refetch: vi.fn() }
     renderWithProviders(<CalendarView />)

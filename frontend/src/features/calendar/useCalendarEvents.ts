@@ -22,6 +22,7 @@ export interface CalendarEvent {
   description: string | null
   reminderUseDefault: boolean
   reminderMinutes: number | null
+  recurringEventId: string | null
 }
 
 export function toCalendarEvent(e: EventResponse): CalendarEvent {
@@ -38,6 +39,7 @@ export function toCalendarEvent(e: EventResponse): CalendarEvent {
     description: e.description ?? null,
     reminderUseDefault: e.reminderUseDefault ?? true,
     reminderMinutes: e.reminderMinutes ?? null,
+    recurringEventId: e.recurringEventId ?? null,
   }
 }
 

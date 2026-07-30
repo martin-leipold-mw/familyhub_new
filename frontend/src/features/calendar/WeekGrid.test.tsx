@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { WeekGrid } from './WeekGrid'
 import { DayGrid } from './DayGrid'
 import type { CalendarEvent } from './useCalendarEvents'
@@ -33,6 +34,7 @@ const timed: CalendarEvent = {
   description: null,
   reminderUseDefault: true,
   reminderMinutes: null,
+  recurringEventId: null,
 }
 
 const allDay: CalendarEvent = {
@@ -48,6 +50,7 @@ const allDay: CalendarEvent = {
   description: null,
   reminderUseDefault: true,
   reminderMinutes: null,
+  recurringEventId: null,
 }
 
 describe('WeekGrid', () => {
@@ -94,6 +97,22 @@ describe('WeekGrid', () => {
       />,
     )
     expect(screen.getByText('Urlaub Papa')).toBeInTheDocument()
+  })
+
+  it('fires onEventClick when an all-day chip is tapped', async () => {
+    const onEventClick = vi.fn()
+    render(
+      <WeekGrid
+        anchor={anchor}
+        events={[allDay]}
+        members={members}
+        now={anchor}
+        onEventClick={onEventClick}
+        onSlotClick={vi.fn()}
+      />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Urlaub Papa' }))
+    expect(onEventClick).toHaveBeenCalledWith(allDay)
   })
 
   it('falls back to grey for a timed event whose member is unknown', () => {

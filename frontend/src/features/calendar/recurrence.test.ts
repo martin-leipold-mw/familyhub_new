@@ -37,3 +37,47 @@ it('round-trips through parseRrule', () => {
 it('parseRrule of null/empty yields no recurrence', () => {
   expect(parseRrule(null)).toEqual(EMPTY_RECURRENCE)
 })
+
+it('parses a COUNT end back into a RecurrenceState', () => {
+  expect(parseRrule('RRULE:FREQ=DAILY;INTERVAL=2;COUNT=5')).toEqual({
+    frequency: 'daily',
+    interval: 2,
+    weekdays: [],
+    end: { type: 'count', count: 5 },
+  })
+})
+
+it('ignores malformed segments without a key=value pair', () => {
+  expect(parseRrule('RRULE:FREQ=DAILY;;INTERVAL=1')).toEqual({
+    frequency: 'daily',
+    interval: 1,
+    weekdays: [],
+    end: { type: 'never' },
+  })
+})
+
+it('returns no recurrence for an unrecognized frequency', () => {
+  expect(parseRrule('RRULE:FREQ=SECONDLY')).toEqual(EMPTY_RECURRENCE)
+})
+
+it('returns no recurrence when the FREQ key is missing entirely', () => {
+  expect(parseRrule('RRULE:INTERVAL=2')).toEqual(EMPTY_RECURRENCE)
+})
+
+it('defaults the interval to 1 when INTERVAL is missing', () => {
+  expect(parseRrule('RRULE:FREQ=WEEKLY')).toEqual({
+    frequency: 'weekly',
+    interval: 1,
+    weekdays: [],
+    end: { type: 'never' },
+  })
+})
+
+it('parses an UNTIL end back into a RecurrenceState', () => {
+  expect(parseRrule('RRULE:FREQ=MONTHLY;INTERVAL=1;UNTIL=20261231T235959Z')).toEqual({
+    frequency: 'monthly',
+    interval: 1,
+    weekdays: [],
+    end: { type: 'until', date: '2026-12-31' },
+  })
+})
