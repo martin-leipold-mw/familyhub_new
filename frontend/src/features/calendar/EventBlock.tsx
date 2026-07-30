@@ -7,6 +7,7 @@ export interface EventBlockProps {
   leftPct: number
   widthPct: number
   onClick: () => void
+  isRecurring?: boolean
 }
 
 export function EventBlock({
@@ -18,6 +19,7 @@ export function EventBlock({
   leftPct,
   widthPct,
   onClick,
+  isRecurring,
 }: EventBlockProps) {
   return (
     <button
@@ -33,7 +35,14 @@ export function EventBlock({
         backgroundColor: colorHex,
       }}
     >
-      <span className="block truncate">{title}</span>
+      <span className="block truncate">
+        {isRecurring && (
+          <span aria-label="Serie" className="mr-1">
+            🔁
+          </span>
+        )}
+        {title}
+      </span>
       {timeLabel && <span className="block truncate text-xs opacity-80">{timeLabel}</span>}
     </button>
   )

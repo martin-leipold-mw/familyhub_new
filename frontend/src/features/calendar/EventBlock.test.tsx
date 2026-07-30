@@ -23,4 +23,35 @@ describe('EventBlock', () => {
     await userEvent.click(btn)
     expect(onClick).toHaveBeenCalledOnce()
   })
+
+  it('shows a series marker when recurring', () => {
+    render(
+      <EventBlock
+        title="Sport"
+        colorHex="#f00"
+        top={0}
+        height={40}
+        leftPct={0}
+        widthPct={100}
+        onClick={() => {}}
+        isRecurring
+      />,
+    )
+    expect(screen.getByLabelText('Serie')).toBeInTheDocument()
+  })
+
+  it('does not show a series marker when not recurring', () => {
+    render(
+      <EventBlock
+        title="Sport"
+        colorHex="#f00"
+        top={0}
+        height={40}
+        leftPct={0}
+        widthPct={100}
+        onClick={() => {}}
+      />,
+    )
+    expect(screen.queryByLabelText('Serie')).toBeNull()
+  })
 })

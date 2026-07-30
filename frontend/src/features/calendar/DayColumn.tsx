@@ -66,6 +66,7 @@ export function DayColumn({
             leftPct={p.leftPct}
             widthPct={p.widthPct}
             onClick={() => onEventClick(t.event)}
+            isRecurring={t.event.recurringEventId != null}
           />
         )
       })}

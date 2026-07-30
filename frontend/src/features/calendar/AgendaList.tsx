@@ -52,7 +52,14 @@ export function AgendaList({ events, members, now, onEventClick }: CalendarGridP
                     <span className="w-28 shrink-0 text-slate-300">
                       {e.isAllDay ? 'Ganztägig' : formatTime(e.start as Date)}
                     </span>
-                    <span className="truncate font-medium text-white">{e.title}</span>
+                    <span className="truncate font-medium text-white">
+                      {e.recurringEventId != null && (
+                        <span aria-label="Serie" className="mr-1">
+                          🔁
+                        </span>
+                      )}
+                      {e.title}
+                    </span>
                   </button>
                 </li>
               )

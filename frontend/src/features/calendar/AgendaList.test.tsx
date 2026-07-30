@@ -106,6 +106,18 @@ it('sorts a day with all-day and timed events: all-day first, then by start time
   expect(titles).toEqual(['Urlaub', 'E-early', 'E-late'])
 })
 
+it('shows a series marker for a recurring event', () => {
+  const event = { ...timed('a', '2026-07-30T10:00:00'), recurringEventId: 'series-1' }
+  render(<AgendaList {...base} events={[event]} onEventClick={() => {}} />)
+  expect(screen.getByLabelText('Serie')).toBeInTheDocument()
+})
+
+it('does not show a series marker for a non-recurring event', () => {
+  const event = timed('a', '2026-07-30T10:00:00')
+  render(<AgendaList {...base} events={[event]} onEventClick={() => {}} />)
+  expect(screen.queryByLabelText('Serie')).toBeNull()
+})
+
 it('falls back to a default color when the member is unknown', () => {
   const event: CalendarEvent = {
     id: 'x',
