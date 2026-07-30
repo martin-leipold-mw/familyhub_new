@@ -130,9 +130,9 @@ export function EventDialog({
     <div
       role="dialog"
       aria-label={editing ? 'Termin bearbeiten' : 'Termin anlegen'}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
     >
-      <form onSubmit={submit} className="w-full max-w-lg rounded-2xl bg-slate-800 p-6 flex flex-col gap-4">
+      <form onSubmit={submit} className="my-8 w-full max-w-lg rounded-2xl bg-slate-800 p-6 flex flex-col gap-4">
         <h2 className="text-xl font-bold text-white">{editing ? 'Termin bearbeiten' : 'Termin anlegen'}</h2>
 
         <label className="flex flex-col gap-1 text-white">
