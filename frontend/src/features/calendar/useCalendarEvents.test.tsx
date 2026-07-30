@@ -130,6 +130,24 @@ describe('useCalendarEvents', () => {
     expect(result.current.isError).toBe(false)
   })
 
+  it('uses the 30-day agenda range when view is agenda', () => {
+    vi.mocked(useListEvents).mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useListEvents>)
+
+    renderHook(() => useCalendarEvents(new Date(2026, 6, 21), 'agenda'), {
+      wrapper: makeWrapper(),
+    })
+
+    expect(useListEvents).toHaveBeenCalledWith({
+      start: new Date(2026, 6, 21, 0, 0, 0, 0).toISOString(),
+      end: new Date(2026, 7, 20, 23, 59, 59, 999).toISOString(),
+    })
+  })
+
   it('defaults to an empty array when data is missing and forwards refetch', () => {
     const refetch = vi.fn()
     vi.mocked(useListEvents).mockReturnValue({

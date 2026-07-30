@@ -7,7 +7,7 @@ import {
   getListEventsQueryKey,
 } from '@/api/generated/endpoints/familyHubAPI'
 import type { EventResponse } from '@/api/generated/model'
-import { visibleRange, rangeParams, type CalendarViewMode } from './dates'
+import { visibleRange, agendaRange, rangeParams, type CalendarViewMode } from './dates'
 
 export interface CalendarEvent {
   id: string
@@ -38,7 +38,8 @@ export function toCalendarEvent(e: EventResponse): CalendarEvent {
 }
 
 export function useCalendarEvents(anchor: Date, view: CalendarViewMode) {
-  const params = rangeParams(visibleRange(anchor, view))
+  const range = view === 'agenda' ? agendaRange(anchor) : visibleRange(anchor, view)
+  const params = rangeParams(range)
   const query = useListEvents(params)
   const events: CalendarEvent[] = (query.data?.data ?? []).map(toCalendarEvent)
   return {

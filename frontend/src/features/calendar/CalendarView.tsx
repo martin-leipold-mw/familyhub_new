@@ -4,6 +4,7 @@ import { useMembers } from '@/features/members/useMembersQuery'
 import { CalendarHeader } from './CalendarHeader'
 import { WeekGrid } from './WeekGrid'
 import { DayGrid } from './DayGrid'
+import { AgendaList } from './AgendaList'
 import { EventDialog } from './EventDialog'
 import { useCalendarEvents, type CalendarEvent } from './useCalendarEvents'
 import { useCalendarSync } from './useCalendarSync'
@@ -73,7 +74,9 @@ export function CalendarView() {
       {isLoading && <p className="px-4 py-2 text-slate-400">Termine werden geladen …</p>}
 
       <div className="overflow-y-auto px-2 pb-4">
-        {view === 'week' ? <WeekGrid {...gridProps} /> : <DayGrid {...gridProps} />}
+        {view === 'week' && <WeekGrid {...gridProps} />}
+        {view === 'day' && <DayGrid {...gridProps} />}
+        {view === 'agenda' && <AgendaList {...gridProps} />}
       </div>
 
       {dialog && (

@@ -55,3 +55,62 @@ it('calls onEventClick when a row is tapped', () => {
   fireEvent.click(screen.getByText('E-a'))
   expect(onEventClick).toHaveBeenCalledTimes(1)
 })
+
+it('shows an all-day event that spans into a day', () => {
+  const spanning: CalendarEvent = {
+    id: 'span',
+    title: 'Urlaub',
+    memberId: 'm1',
+    isAllDay: true,
+    start: null,
+    end: null,
+    allDayStart: '2026-07-29',
+    allDayEnd: '2026-07-31',
+    location: null,
+    description: null,
+  }
+  render(<AgendaList {...base} events={[spanning]} onEventClick={() => {}} />)
+  expect(screen.getByText('Urlaub')).toBeInTheDocument()
+  expect(screen.getByText('Ganztägig')).toBeInTheDocument()
+})
+
+it('sorts a day with all-day and timed events: all-day first, then by start time', () => {
+  const spanning: CalendarEvent = {
+    id: 'span',
+    title: 'Urlaub',
+    memberId: 'm1',
+    isAllDay: true,
+    start: null,
+    end: null,
+    allDayStart: '2026-07-30',
+    allDayEnd: null,
+    location: null,
+    description: null,
+  }
+  const events = [
+    timed('late', '2026-07-30T14:00:00'),
+    spanning,
+    timed('early', '2026-07-30T09:00:00'),
+  ]
+  render(<AgendaList {...base} events={events} onEventClick={() => {}} />)
+  const titles = screen.getAllByText(/^(E-|Urlaub)/).map((el) => el.textContent)
+  expect(titles).toEqual(['Urlaub', 'E-early', 'E-late'])
+})
+
+it('falls back to a default color when the member is unknown', () => {
+  const event: CalendarEvent = {
+    id: 'x',
+    title: 'E-x',
+    memberId: 'unknown',
+    isAllDay: false,
+    start: new Date('2026-07-30T10:00:00'),
+    end: null,
+    allDayStart: null,
+    allDayEnd: null,
+    location: null,
+    description: null,
+  }
+  const { container } = render(<AgendaList {...base} events={[event]} onEventClick={() => {}} />)
+  const swatch = container.querySelector('.rounded-full') as HTMLElement
+  expect(swatch.style.backgroundColor).toBe('rgb(136, 136, 136)')
+})

@@ -50,7 +50,7 @@ export function AgendaList({ events, members, now, onEventClick }: CalendarGridP
                   >
                     <span className="h-8 w-1.5 rounded-full" style={{ backgroundColor: color }} />
                     <span className="w-28 shrink-0 text-slate-300">
-                      {e.isAllDay ? 'Ganztägig' : e.start ? formatTime(e.start) : ''}
+                      {e.isAllDay ? 'Ganztägig' : formatTime(e.start as Date)}
                     </span>
                     <span className="truncate font-medium text-white">{e.title}</span>
                   </button>

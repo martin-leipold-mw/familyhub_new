@@ -120,4 +120,10 @@ describe('CalendarView', () => {
     await userEvent.click(screen.getByRole('button', { name: /Schule/ }))
     expect(screen.getByRole('dialog', { name: 'Termin bearbeiten' })).toBeInTheDocument()
   })
+
+  it('renders the agenda list when the agenda view is selected', async () => {
+    renderWithProviders(<CalendarView />)
+    await userEvent.click(screen.getByRole('button', { name: 'Agenda' }))
+    expect(await screen.findByRole('button', { name: 'Agenda', pressed: true })).toBeInTheDocument()
+  })
 })
