@@ -321,4 +321,42 @@ class EventMapperTest {
         assertThat(googleEvent.start.date.toString()).isEqualTo("2026-08-01")
         assertThat(googleEvent.end.date.toString()).isEqualTo("2026-08-05")
     }
+
+    // ─── reminders ────────────────────────────────────────────────────────────
+
+    @Test
+    fun `toGoogleEvent sets popup reminder override when not using default`() {
+        val cmd =
+            EventCommand(
+                title = "Zahnarzt",
+                isAllDay = false,
+                start = Instant.parse("2026-07-31T09:00:00Z"),
+                end = Instant.parse("2026-07-31T10:00:00Z"),
+                reminderUseDefault = false,
+                reminderMinutes = 30,
+            )
+        val g = mapper.toGoogleEvent(cmd)
+        assertThat(g.reminders.useDefault).isFalse()
+        assertThat(g.reminders.overrides).hasSize(1)
+        assertThat(g.reminders.overrides[0].method).isEqualTo("popup")
+        assertThat(g.reminders.overrides[0].minutes).isEqualTo(30)
+    }
+
+    @Test
+    fun `toEntity reads popup reminder minutes back`() {
+        val g =
+            GoogleEvent()
+                .setId("g1")
+                .setSummary("Zahnarzt")
+                .setStart(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T09:00:00Z").toEpochMilli())))
+                .setEnd(EventDateTime().setDateTime(DateTime(Instant.parse("2026-07-31T10:00:00Z").toEpochMilli())))
+                .setReminders(
+                    GoogleEvent.Reminders()
+                        .setUseDefault(false)
+                        .setOverrides(listOf(com.google.api.services.calendar.model.EventReminder().setMethod("popup").setMinutes(30))),
+                )
+        val entity = mapper.toEntity(g, subscription, ownerMemberId)
+        assertThat(entity.reminderUseDefault).isFalse()
+        assertThat(entity.reminderMinutes).isEqualTo(30)
+    }
 }

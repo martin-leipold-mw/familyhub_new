@@ -19,6 +19,8 @@ data class CreateEventCommand(
     val allDayStart: LocalDate? = null,
     val allDayEnd: LocalDate? = null,
     val isAllDay: Boolean,
+    val reminderUseDefault: Boolean = true,
+    val reminderMinutes: Int? = null,
 )
 
 data class EventView(
@@ -33,6 +35,8 @@ data class EventView(
     val allDayEnd: LocalDate?,
     val memberId: UUID,
     val calendarId: String,
+    val reminderUseDefault: Boolean,
+    val reminderMinutes: Int?,
 )
 
 private fun Event.toView() =
@@ -48,6 +52,8 @@ private fun Event.toView() =
         allDayEnd = allDayEnd,
         memberId = ownerMemberId,
         calendarId = googleCalendarId,
+        reminderUseDefault = reminderUseDefault,
+        reminderMinutes = reminderMinutes,
     )
 
 private fun CreateEventCommand.toEventCommand() =
@@ -60,6 +66,8 @@ private fun CreateEventCommand.toEventCommand() =
         allDayStart = allDayStart,
         allDayEnd = allDayEnd,
         isAllDay = isAllDay,
+        reminderUseDefault = reminderUseDefault,
+        reminderMinutes = reminderMinutes,
     )
 
 @Service

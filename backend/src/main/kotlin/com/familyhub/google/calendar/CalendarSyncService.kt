@@ -136,6 +136,8 @@ class CalendarSyncService(
                     existing.allDayStart = mapped.allDayStart
                     existing.allDayEnd = mapped.allDayEnd
                     existing.recurrenceId = mapped.recurrenceId
+                    existing.reminderUseDefault = mapped.reminderUseDefault
+                    existing.reminderMinutes = mapped.reminderMinutes
                     existing.etag = mapped.etag
                     existing.googleUpdated = mapped.googleUpdated
                     existing.syncStatus = "synced"

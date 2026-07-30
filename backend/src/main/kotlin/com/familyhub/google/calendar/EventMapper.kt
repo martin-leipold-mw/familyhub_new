@@ -2,6 +2,7 @@ package com.familyhub.google.calendar
 
 import com.google.api.client.util.DateTime
 import com.google.api.services.calendar.model.EventDateTime
+import com.google.api.services.calendar.model.EventReminder
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.LocalDate
@@ -21,6 +22,8 @@ data class EventCommand(
     val allDayStart: LocalDate? = null,
     val allDayEnd: LocalDate? = null,
     val isAllDay: Boolean,
+    val reminderUseDefault: Boolean = true,
+    val reminderMinutes: Int? = null,
 )
 
 @Component
@@ -61,6 +64,10 @@ class EventMapper {
             allDayEnd = null
         }
 
+        val reminderUseDefault = google.reminders?.useDefault ?: true
+        val reminderMinutes =
+            google.reminders?.overrides?.firstOrNull { it.method == "popup" }?.minutes
+
         return Event(
             subscriptionId = subscription.id!!,
             googleEventId = google.id,
@@ -78,6 +85,8 @@ class EventMapper {
             etag = google.etag,
             googleUpdated = googleUpdated,
             syncStatus = "synced",
+            reminderUseDefault = reminderUseDefault,
+            reminderMinutes = reminderMinutes,
         )
     }
 
@@ -108,6 +117,17 @@ class EventMapper {
             googleEvent.start = EventDateTime().setDateTime(DateTime(cmd.start!!.toEpochMilli()))
             googleEvent.end = EventDateTime().setDateTime(DateTime(cmd.end!!.toEpochMilli()))
         }
+
+        googleEvent.reminders =
+            if (cmd.reminderUseDefault) {
+                GoogleEvent.Reminders().setUseDefault(true)
+            } else {
+                GoogleEvent.Reminders().setUseDefault(false).setOverrides(
+                    cmd.reminderMinutes?.let {
+                        listOf(EventReminder().setMethod("popup").setMinutes(it))
+                    } ?: emptyList(),
+                )
+            }
 
         return googleEvent
     }

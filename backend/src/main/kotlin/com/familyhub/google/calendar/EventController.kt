@@ -87,6 +87,8 @@ class EventController(
             allDayStart = allDayStart,
             allDayEnd = allDayEnd,
             isAllDay = isAllDay,
+            reminderUseDefault = reminderUseDefault ?: true,
+            reminderMinutes = reminderMinutes,
         )
 }
 
@@ -103,4 +105,6 @@ private fun EventView.toResponse() =
         allDayEnd = allDayEnd,
         memberId = memberId,
         calendarId = calendarId,
+        reminderUseDefault = reminderUseDefault,
+        reminderMinutes = reminderMinutes,
     )

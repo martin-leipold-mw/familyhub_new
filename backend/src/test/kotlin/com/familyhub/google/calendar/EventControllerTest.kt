@@ -58,6 +58,8 @@ class EventControllerTest {
         allDayEnd = allDayEnd,
         memberId = memberId,
         calendarId = "primary",
+        reminderUseDefault = true,
+        reminderMinutes = null,
     )
 
     // ─── GET /v1/events — with full ISO instant start/end ─────────────────────
