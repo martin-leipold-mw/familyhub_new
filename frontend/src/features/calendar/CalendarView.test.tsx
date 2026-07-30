@@ -125,5 +125,8 @@ describe('CalendarView', () => {
     renderWithProviders(<CalendarView />)
     await userEvent.click(screen.getByRole('button', { name: 'Agenda' }))
     expect(await screen.findByRole('button', { name: 'Agenda', pressed: true })).toBeInTheDocument()
+    expect(
+      await screen.findByText('Keine Termine in den nächsten 30 Tagen.'),
+    ).toBeInTheDocument()
   })
 })
