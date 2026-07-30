@@ -41,6 +41,10 @@ class Event(
     var allDayEnd: LocalDate? = null,
     @Column(name = "recurrence_id")
     var recurrenceId: String? = null,
+    @Column(name = "reminder_use_default", nullable = false)
+    var reminderUseDefault: Boolean = true,
+    @Column(name = "reminder_minutes")
+    var reminderMinutes: Int? = null,
     @Column
     var etag: String? = null,
     @Column(name = "google_updated")
