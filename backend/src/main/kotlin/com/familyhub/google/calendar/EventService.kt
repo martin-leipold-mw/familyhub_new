@@ -145,8 +145,19 @@ class EventService(
         googleEvent.id = resolveTargetGoogleId(local, scope)
         val updated = calendarClient.updateEvent(connection, local.googleCalendarId, googleEvent)
         val entity = mapper.toEntity(updated, subscription, local.ownerMemberId)
-        entity.id = local.id
-        return eventRepository.save(entity).toView()
+        return if (scope == "series") {
+            // `updated` is the Google MASTER event (googleEvent.id was the parent), not the
+            // instance the caller addressed. Persisting it over the instance row would rewrite
+            // that row's googleEventId/recurrenceId to the master's — a ghost that sync (which
+            // only ever sees expanded instance ids) could never reconcile. Drop the instance
+            // instead; the next sync re-expands the series into fresh instance rows.
+            eventRepository.delete(local)
+            entity.id = local.id
+            entity.toView()
+        } else {
+            entity.id = local.id
+            eventRepository.save(entity).toView()
+        }
     }
 
     fun delete(

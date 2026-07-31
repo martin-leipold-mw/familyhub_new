@@ -136,7 +136,7 @@ class EventServiceSeriesTest {
     // ─── update: series scope ─────────────────────────────────────────────────
 
     @Test
-    fun `update with series scope targets the parent recurring event`() {
+    fun `update with series scope targets the parent recurring event and deletes the local instance`() {
         val instanceId = seriesInstanceEvent.id!!
         val googleUpdated =
             GoogleEvent()
@@ -148,7 +148,7 @@ class EventServiceSeriesTest {
             subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connectionId, "primary@gmail.com")
         } returns primarySubscription
         every { calendarClient.updateEvent(connection, "primary@gmail.com", any()) } returns googleUpdated
-        every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = instanceId } }
+        every { eventRepository.delete(seriesInstanceEvent) } returns Unit
 
         val cmd =
             CreateEventCommand(
@@ -162,6 +162,7 @@ class EventServiceSeriesTest {
 
         val result = service.update(instanceId, cmd, scope = "series")
 
+        // The Google call targets the parent/master event, not the instance.
         assertThat(result.title).isEqualTo("Updated Series Title")
         verify(exactly = 1) {
             calendarClient.updateEvent(
@@ -170,6 +171,12 @@ class EventServiceSeriesTest {
                 match { it.id == "master1" },
             )
         }
+
+        // The local instance row is dropped, not rewritten with the master's identity — the
+        // next sync re-expands the series into fresh instance rows. Persisting the master over
+        // the instance would orphan/ghost that row instead.
+        verify(exactly = 1) { eventRepository.delete(seriesInstanceEvent) }
+        verify(exactly = 0) { eventRepository.save(any<Event>()) }
     }
 
     @Test
