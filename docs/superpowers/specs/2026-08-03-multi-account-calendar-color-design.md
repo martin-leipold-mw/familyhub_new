@@ -1,7 +1,7 @@
 # Mehrere Google-Konten & korrekte Kalenderfarben — Design
 
 **Datum:** 2026-08-03
-**Status:** Genehmigt (Design), bereit für Implementierungsplan
+**Status:** Umgesetzt (siehe docs/superpowers/plans/2026-08-03-multi-account-calendar-colors.md)
 **Betrifft:** `FA-KAL` (Kalender), Google-Integration (Sprint 3+)
 
 ## Problem
