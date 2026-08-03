@@ -55,11 +55,24 @@ describe('WeekGrid', () => {
     render(<WeekGrid anchor={anchor} events={[{ ...timed, start: null }]} calendarColors={calendarColors} now={anchor} onEventClick={vi.fn()} onSlotClick={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /Schule/ })).toBeNull()
   })
+
+  it('falls back to grey for an all-day chip whose calendar is unknown', () => {
+    render(<WeekGrid anchor={anchor} events={[{ ...allDay, calendarId: 'ghost' }]} calendarColors={calendarColors} now={anchor} onEventClick={vi.fn()} onSlotClick={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Urlaub Papa' })).toHaveStyle({ backgroundColor: '#888' })
+  })
 })
 
 describe('DayGrid', () => {
   it('renders a single day and its timed event', () => {
     render(<DayGrid anchor={new Date(2026, 6, 21, 12)} events={[timed]} calendarColors={calendarColors} now={new Date(2026, 6, 21, 12)} onEventClick={vi.fn()} onSlotClick={vi.fn()} />)
     expect(screen.getByRole('button', { name: /Schule/ })).toBeInTheDocument()
+  })
+
+  it('does not bold the weekday header when anchor is not today', () => {
+    render(<DayGrid anchor={new Date(2026, 6, 21, 12)} events={[]} calendarColors={calendarColors} now={new Date(2026, 6, 22, 12)} onEventClick={vi.fn()} onSlotClick={vi.fn()} />)
+    const header = screen.getByText(/Di 21/)
+    expect(header).toHaveClass('text-slate-300')
+    expect(header).not.toHaveClass('font-bold')
+    expect(header).not.toHaveClass('text-blue-400')
   })
 })
