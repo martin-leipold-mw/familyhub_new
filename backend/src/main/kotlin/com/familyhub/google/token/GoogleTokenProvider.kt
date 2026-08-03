@@ -48,6 +48,9 @@ class GoogleTokenProvider(
                 )
             connection.accessToken = encryption.encrypt(newTokens.accessToken)
             connection.tokenExpiresAt = Instant.now(clock).plusSeconds(newTokens.expiresInSeconds)
+            if (newTokens.refreshToken != null) {
+                connection.refreshToken = encryption.encrypt(newTokens.refreshToken)
+            }
             connection.status = "active"
             connections.save(connection)
             return newTokens.accessToken

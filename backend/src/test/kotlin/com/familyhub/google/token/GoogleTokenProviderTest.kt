@@ -226,4 +226,28 @@ class GoogleTokenProviderTest {
             )
         }
     }
+
+    // ─── refresh-token rotation: Google returns a new refresh token → persist it ─
+
+    @Test fun `persists rotated refresh token when refresh returns a new one`() {
+        val c = conn(now.minusSeconds(100))
+        every { credentials.entity(cred.id!!) } returns cred
+        every { flow.refresh(any(), any(), any()) } returns GoogleTokenSet("NEW", "ROTATED", 3600, null)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        provider.validAccessToken(c)
+        verify { connections.save(match { enc.decrypt(it.refreshToken) == "ROTATED" }) }
+    }
+
+    // ─── refresh-token rotation: Google returns null → keep the existing token ─
+
+    @Test fun `keeps existing refresh token when refresh returns null`() {
+        val c = conn(now.minusSeconds(100))
+        every { credentials.entity(cred.id!!) } returns cred
+        every { flow.refresh(any(), any(), any()) } returns GoogleTokenSet("NEW", null, 3600, null)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        provider.validAccessToken(c)
+        verify { connections.save(match { enc.decrypt(it.refreshToken) == "RT" }) }
+    }
 }
