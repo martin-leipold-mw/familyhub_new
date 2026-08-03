@@ -2,8 +2,11 @@ import {
   useListGoogleCalendars,
   useSaveSelectedCalendars,
   useSyncCalendars,
+  useListAllCalendars,
+  useUpdateCalendarFlags,
   getListGoogleCalendarsQueryKey,
   getListConnectionsQueryKey,
+  getListAllCalendarsQueryKey,
   authorizeGoogle,
   useGoogleCallback,
 } from '@/api/generated/endpoints/familyHubAPI'
@@ -36,6 +39,27 @@ export function useSyncCalendarsMutation() {
       onSuccess: () => {
         void queryClient.invalidateQueries({ queryKey: getListGoogleCalendarsQueryKey() })
         void queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() })
+      },
+    },
+  })
+}
+
+export function useAllCalendars() {
+  const query = useListAllCalendars()
+  return {
+    calendars: (query.data?.data ?? []) as CalendarResponse[],
+    isLoading: query.isLoading,
+    isError: query.isError,
+  }
+}
+
+export function useUpdateCalendarFlagsMutation() {
+  const queryClient = useQueryClient()
+  return useUpdateCalendarFlags({
+    mutation: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: getListGoogleCalendarsQueryKey() })
+        void queryClient.invalidateQueries({ queryKey: getListAllCalendarsQueryKey() })
       },
     },
   })
