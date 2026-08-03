@@ -17,6 +17,7 @@ class CalendarQueryServiceTest {
     private val connectionRepository = mockk<GoogleConnectionRepository>()
     private val subscriptionRepository = mockk<CalendarSubscriptionRepository>()
     private val calendarSyncService = mockk<CalendarSyncService>()
+    private val colorResolver = mockk<CalendarColorResolver>()
 
     private lateinit var service: CalendarQueryService
 
@@ -38,7 +39,8 @@ class CalendarQueryServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = CalendarQueryService(connectionRepository, subscriptionRepository, calendarSyncService)
+        service = CalendarQueryService(connectionRepository, subscriptionRepository, calendarSyncService, colorResolver)
+        every { colorResolver.colorFor(any()) } returns "hsl(140 60% 65%)"
     }
 
     // ─── listForMember: connection present ────────────────────────────────────
@@ -173,4 +175,58 @@ class CalendarQueryServiceTest {
 
         verify(exactly = 0) { calendarSyncService.syncConnection(any()) }
     }
+
+    // ─── listAll: aggregates across all active connections ────────────────────
+
+    @Test
+    fun `listAll aggregates calendars across all active connections with resolved color`() {
+        val conn1 = connectionWith(UUID.randomUUID())
+        val conn2 = connectionWith(UUID.randomUUID())
+        every { connectionRepository.findAllByStatus("active") } returns listOf(conn1, conn2)
+        every { subscriptionRepository.findAllByConnectionId(conn1.id!!) } returns
+            listOf(CalendarSubscription(connectionId = conn1.id!!, googleCalendarId = "a", summary = "A", isSelected = true))
+        every { subscriptionRepository.findAllByConnectionId(conn2.id!!) } returns
+            listOf(CalendarSubscription(connectionId = conn2.id!!, googleCalendarId = "b", summary = "B", isShared = true))
+
+        val result = service.listAll()
+
+        assertThat(result.map { it.id }).containsExactly("a", "b")
+        assertThat(result[0].ownerMemberId).isEqualTo(conn1.familyMemberId)
+        assertThat(result[0].color).isEqualTo("hsl(140 60% 65%)")
+    }
+
+    // ─── updateFlags: sets isShared and moves write target exclusively ────────
+
+    @Test
+    fun `updateFlags sets isShared and moves the write target exclusively`() {
+        val conn = connectionWith(UUID.randomUUID())
+        val old = CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "old", summary = "Old", isWriteTarget = true).also { it.id = UUID.randomUUID() }
+        val target = CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "new", summary = "New").also { it.id = UUID.randomUUID() }
+        every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "new") } returns target
+        every { subscriptionRepository.findAllByConnectionId(conn.id!!) } returns listOf(old, target)
+        every { subscriptionRepository.save(any()) } answers { firstArg() }
+
+        service.updateFlags(conn.familyMemberId, "new", isShared = true, isWriteTarget = true)
+
+        assertThat(target.isShared).isTrue()
+        assertThat(target.isWriteTarget).isTrue()
+        assertThat(old.isWriteTarget).isFalse()
+    }
+
+    @Test
+    fun `updateFlags throws when the calendar is unknown`() {
+        val conn = connectionWith(UUID.randomUUID())
+        every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "ghost") } returns null
+
+        assertThatThrownBy { service.updateFlags(conn.familyMemberId, "ghost", isShared = true, isWriteTarget = null) }
+            .isInstanceOf(ResourceNotFoundException::class.java)
+    }
+
+    private fun connectionWith(memberId: UUID) =
+        GoogleConnection(
+            familyMemberId = memberId, credentialsId = null, googleAccountId = "g-$memberId", email = "e",
+            accessToken = null, refreshToken = "r", tokenExpiresAt = null, status = "active",
+        ).also { it.id = UUID.randomUUID() }
 }
