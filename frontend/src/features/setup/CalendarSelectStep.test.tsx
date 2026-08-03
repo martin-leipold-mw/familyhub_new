@@ -165,4 +165,29 @@ describe('CalendarSelectStep', () => {
     expect(screen.getByText('Kalender m1')).toBeInTheDocument()
     expect(screen.getByText('Kalender m2')).toBeInTheDocument()
   })
+
+  it('saves each connection\'s selection then advances', async () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({
+      connections: [
+        { connectionId: 'c1', memberId: 'm1', email: 'a@x', name: 'Anna', status: 'active', scopes: [] },
+        { connectionId: 'c2', memberId: 'm2', email: 'b@x', name: 'Ben', status: 'active', scopes: [] },
+      ],
+      isLoading: false, isError: false,
+    } as never)
+    vi.mocked(useCalendarsForMember).mockImplementation((memberId: string) => ({
+      calendars: [{ id: `cal-${memberId}`, summary: `Kalender ${memberId}`, backgroundColor: null, isPrimary: true, isSelected: true, color: 'hsl(1 1% 1%)', isShared: false, isWriteTarget: true }],
+      isLoading: false, isError: false,
+    }) as never)
+    const mutateAsync = vi.fn().mockResolvedValue({})
+    vi.mocked(useSaveSelectedCalendarsMutation).mockReturnValue({ mutateAsync } as never)
+    const onNext = vi.fn()
+
+    renderWithProviders(<CalendarSelectStep onNext={onNext} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern & weiter' }))
+
+    await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1))
+    expect(mutateAsync).toHaveBeenCalledTimes(2)
+    expect(mutateAsync).toHaveBeenCalledWith({ data: { memberId: 'm1', calendarIds: ['cal-m1'] } })
+    expect(mutateAsync).toHaveBeenCalledWith({ data: { memberId: 'm2', calendarIds: ['cal-m2'] } })
+  })
 })
