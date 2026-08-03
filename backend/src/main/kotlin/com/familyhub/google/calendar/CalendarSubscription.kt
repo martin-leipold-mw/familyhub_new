@@ -26,6 +26,10 @@ class CalendarSubscription(
     var isPrimary: Boolean = false,
     @Column(name = "is_selected", nullable = false)
     var isSelected: Boolean = false,
+    @Column(name = "is_shared", nullable = false)
+    var isShared: Boolean = false,
+    @Column(name = "is_write_target", nullable = false)
+    var isWriteTarget: Boolean = false,
     @Column(name = "sync_token")
     var syncToken: String? = null,
 ) {
