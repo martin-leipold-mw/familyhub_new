@@ -68,6 +68,10 @@ class CalendarSyncService(
             return SyncResult(0, 0, 0)
         }
 
+        // Discover (and upsert) this account's calendars so newly-connected accounts
+        // sync even without a prior UI visit. refreshCalendars never flips isSelected.
+        refreshCalendars(connection)
+
         val connectionId = connection.id!!
         val subscriptions = subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId)
 

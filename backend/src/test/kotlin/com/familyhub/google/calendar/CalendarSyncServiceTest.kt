@@ -149,6 +149,7 @@ class CalendarSyncServiceTest {
 
     @Test
     fun `syncConnection returns zero result when no subscriptions are selected`() {
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns emptyList()
         every { connectionRepo.save(any<GoogleConnection>()) } answers { firstArg() }
 
@@ -201,6 +202,7 @@ class CalendarSyncServiceTest {
                 fullResyncRequired = false,
             )
 
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every { calendarClient.listEvents(activeConnection, "cal1@gmail.com", "existing-sync-token", null, null) } returns eventPage
         every { eventRepo.findByGoogleEventIdAndGoogleCalendarId("evt-new", "cal1@gmail.com") } returns null
@@ -268,6 +270,7 @@ class CalendarSyncServiceTest {
                 fullResyncRequired = false,
             )
 
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every { calendarClient.listEvents(activeConnection, "cal1@gmail.com", "sync-token", null, null) } returns eventPage
         every { eventRepo.findByGoogleEventIdAndGoogleCalendarId("evt-existing", "cal1@gmail.com") } returns existingEntity
@@ -323,6 +326,7 @@ class CalendarSyncServiceTest {
                 fullResyncRequired = false,
             )
 
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         // First call with stale token
         every {
@@ -374,6 +378,7 @@ class CalendarSyncServiceTest {
                 fullResyncRequired = false,
             )
 
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns listOf(subscription)
         every {
             calendarClient.listEvents(activeConnection, "cal1@gmail.com", null, null, null)
@@ -404,11 +409,32 @@ class CalendarSyncServiceTest {
             ).also { it.id = UUID.randomUUID() }
 
         every { connectionRepo.findAllByStatus("active") } returns listOf(conn1)
+        every { calendarClient.listCalendars(conn1) } returns emptyList()
         every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(conn1.id!!) } returns emptyList()
         every { connectionRepo.save(any<GoogleConnection>()) } answers { firstArg() }
 
         service.syncAll()
 
         verify(exactly = 1) { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(conn1.id!!) }
+    }
+
+    // ─── syncConnection: refreshCalendars discovery (scheduler background sync) ──
+
+    @Test
+    fun `syncConnection discovers calendars via refreshCalendars before syncing`() {
+        every { calendarClient.listCalendars(activeConnection) } returns emptyList()
+        every { subscriptionRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) } returns emptyList()
+        every { connectionRepo.save(activeConnection) } returns activeConnection
+
+        service.syncConnection(activeConnection)
+
+        verify(exactly = 1) { calendarClient.listCalendars(activeConnection) }
+    }
+
+    @Test
+    fun `syncConnection does not discover calendars for an inactive connection`() {
+        service.syncConnection(inactiveConnection)
+
+        verify(exactly = 0) { calendarClient.listCalendars(any()) }
     }
 }
