@@ -118,7 +118,9 @@ class EventService(
                 subscriptionRepository.findByConnectionIdAndGoogleCalendarId(connection.id!!, cmd.calendarId)
                     ?: throw ValidationException("Kalender nicht gefunden")
             } else {
-                subscriptionRepository.findAllByConnectionId(connection.id!!).firstOrNull { it.isPrimary }
+                val subs = subscriptionRepository.findAllByConnectionId(connection.id!!)
+                subs.firstOrNull { it.isWriteTarget }
+                    ?: subs.firstOrNull { it.isPrimary }
                     ?: throw ValidationException("Kein Zielkalender vorhanden")
             }
 

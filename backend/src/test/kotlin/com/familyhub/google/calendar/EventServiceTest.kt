@@ -370,6 +370,35 @@ class EventServiceTest {
             .hasMessage("Kein Zielkalender vorhanden")
     }
 
+    @Test
+    fun `create with null calendarId prefers the write-target over the primary`() {
+        val writeTarget =
+            CalendarSubscription(
+                connectionId = connectionId,
+                googleCalendarId = "writetarget@gmail.com",
+                summary = "Write Target",
+                isPrimary = false,
+                isSelected = true,
+                isWriteTarget = true,
+            ).also { it.id = UUID.randomUUID() }
+        val googleInserted = GoogleEvent().setId("google-evt-new").setSummary("Meeting")
+        every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
+        every { subscriptionRepository.findAllByConnectionId(connectionId) } returns listOf(primarySubscription, writeTarget)
+        every { calendarClient.insertEvent(connection, "writetarget@gmail.com", any()) } returns googleInserted
+        every { eventRepository.save(any<Event>()) } answers { firstArg<Event>().also { it.id = UUID.randomUUID() } }
+
+        val cmd =
+            CreateEventCommand(
+                memberId = memberId, calendarId = null, title = "Meeting",
+                start = startTime, end = endTime, isAllDay = false,
+            )
+
+        val result = service.create(cmd)
+
+        assertThat(result.calendarId).isEqualTo("writetarget@gmail.com")
+        verify(exactly = 1) { calendarClient.insertEvent(connection, "writetarget@gmail.com", any()) }
+    }
+
     // ─── create: timing validation (reject missing start/end → 400) ────────────
 
     @Test
