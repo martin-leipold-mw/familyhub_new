@@ -8,6 +8,7 @@ vi.mock('@/features/google/useGoogleConnections', () => ({
 vi.mock('@/features/google/useCalendars', () => ({
   useCalendarsForMember: vi.fn(),
   useSaveSelectedCalendarsMutation: vi.fn(),
+  useUpdateCalendarFlagsMutation: vi.fn(),
 }))
 
 let hasPinSession = false
@@ -16,8 +17,14 @@ vi.mock('@/features/pin/PinSessionContext', () => ({
 }))
 
 import { useGoogleConnections } from '@/features/google/useGoogleConnections'
-import { useCalendarsForMember, useSaveSelectedCalendarsMutation } from '@/features/google/useCalendars'
+import {
+  useCalendarsForMember,
+  useSaveSelectedCalendarsMutation,
+  useUpdateCalendarFlagsMutation,
+} from '@/features/google/useCalendars'
 import { CalendarManagement } from './CalendarManagement'
+
+const flagsMutate = vi.fn()
 
 const connection1 = {
   connectionId: 'conn-1',
@@ -35,6 +42,10 @@ const calendar1 = {
   backgroundColor: '#4285f4',
   isPrimary: true,
   isSelected: true,
+  color: 'hsl(140 60% 65%)',
+  isShared: false,
+  isWriteTarget: true,
+  ownerMemberId: 'm1',
 }
 
 const calendar2 = {
@@ -43,6 +54,10 @@ const calendar2 = {
   backgroundColor: null,
   isPrimary: false,
   isSelected: false,
+  color: 'hsl(45 90% 55%)',
+  isShared: false,
+  isWriteTarget: false,
+  ownerMemberId: 'm1',
 }
 
 describe('CalendarManagement', () => {
@@ -57,6 +72,12 @@ describe('CalendarManagement', () => {
     } as never)
 
     mutateAsync.mockResolvedValue(undefined)
+
+    vi.mocked(useUpdateCalendarFlagsMutation).mockReturnValue({
+      mutateAsync: flagsMutate,
+    } as never)
+
+    flagsMutate.mockResolvedValue(undefined)
   })
 
   it('shows loading state when connections are loading', () => {
@@ -151,9 +172,8 @@ describe('CalendarManagement', () => {
     expect(screen.getByText('Persönlicher Kalender')).toBeInTheDocument()
     expect(screen.getByText('Arbeit')).toBeInTheDocument()
 
-    const checkboxes = screen.getAllByRole('checkbox')
-    expect(checkboxes[0]).toBeChecked()
-    expect(checkboxes[1]).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: calendar1.summary })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: calendar2.summary })).not.toBeChecked()
   })
 
   it('toggles unchecked checkbox to checked on click', () => {
@@ -169,7 +189,7 @@ describe('CalendarManagement', () => {
       isError: false,
     })
     render(<CalendarManagement />)
-    const checkbox = screen.getByRole('checkbox')
+    const checkbox = screen.getByRole('checkbox', { name: calendar2.summary })
     expect(checkbox).not.toBeChecked()
     fireEvent.click(checkbox)
     expect(checkbox).toBeChecked()
@@ -188,7 +208,7 @@ describe('CalendarManagement', () => {
       isError: false,
     })
     render(<CalendarManagement />)
-    const checkbox = screen.getByRole('checkbox')
+    const checkbox = screen.getByRole('checkbox', { name: calendar1.summary })
     expect(checkbox).toBeChecked()
     fireEvent.click(checkbox)
     expect(checkbox).not.toBeChecked()
@@ -256,7 +276,7 @@ describe('CalendarManagement', () => {
     expect(screen.queryByText('Melde dich mit PIN an, um Kalender zu verwalten.')).not.toBeInTheDocument()
   })
 
-  it('shows color swatch with background color when backgroundColor is present', () => {
+  it('shows color swatch with resolved color', () => {
     vi.mocked(useGoogleConnections).mockReturnValue({
       connections: [connection1],
       isLoading: false,
@@ -270,22 +290,37 @@ describe('CalendarManagement', () => {
     render(<CalendarManagement />)
     const swatch = document.querySelector('[style*="background-color"]')
     expect(swatch).not.toBeNull()
-    expect(swatch).toHaveStyle({ backgroundColor: '#4285f4' })
+    expect(swatch).toHaveStyle({ backgroundColor: 'hsl(140 60% 65%)' })
   })
 
-  it('shows fallback color swatch when backgroundColor is null', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [connection1],
-      isLoading: false,
-      isError: false,
-    })
-    vi.mocked(useCalendarsForMember).mockReturnValue({
-      calendars: [calendar2],
-      isLoading: false,
-      isError: false,
-    })
+  it('toggling "Geteilt" calls updateCalendarFlags with isShared', async () => {
+    hasPinSession = true
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [connection1], isLoading: false, isError: false })
+    vi.mocked(useCalendarsForMember).mockReturnValue({ calendars: [calendar2], isLoading: false, isError: false })
     render(<CalendarManagement />)
-    const swatch = document.querySelector('.bg-slate-500')
-    expect(swatch).not.toBeNull()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Geteilt/Familie' }))
+    await waitFor(() =>
+      expect(flagsMutate).toHaveBeenCalledWith({ data: { memberId: 'm1', calendarId: 'cal2', isShared: true } }),
+    )
+  })
+
+  it('selecting the primary radio calls updateCalendarFlags with isWriteTarget', async () => {
+    hasPinSession = true
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [connection1], isLoading: false, isError: false })
+    vi.mocked(useCalendarsForMember).mockReturnValue({ calendars: [calendar2], isLoading: false, isError: false })
+    render(<CalendarManagement />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Primärkalender' }))
+    await waitFor(() =>
+      expect(flagsMutate).toHaveBeenCalledWith({ data: { memberId: 'm1', calendarId: 'cal2', isWriteTarget: true } }),
+    )
+  })
+
+  it('flag controls are disabled without a PIN session', () => {
+    hasPinSession = false
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [connection1], isLoading: false, isError: false })
+    vi.mocked(useCalendarsForMember).mockReturnValue({ calendars: [calendar2], isLoading: false, isError: false })
+    render(<CalendarManagement />)
+    expect(screen.getByRole('checkbox', { name: 'Geteilt/Familie' })).toBeDisabled()
+    expect(screen.getByRole('radio', { name: 'Primärkalender' })).toBeDisabled()
   })
 })

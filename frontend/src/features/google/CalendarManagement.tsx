@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react'
 import type { ConnectionResponse, CalendarResponse } from '@/api/generated/model'
 import { useGoogleConnections } from '@/features/google/useGoogleConnections'
-import { useCalendarsForMember, useSaveSelectedCalendarsMutation } from '@/features/google/useCalendars'
+import {
+  useCalendarsForMember,
+  useSaveSelectedCalendarsMutation,
+  useUpdateCalendarFlagsMutation,
+} from '@/features/google/useCalendars'
 import { usePinSession } from '@/features/pin/PinSessionContext'
 
 interface ConnectionCalendarsProps {
@@ -12,6 +16,15 @@ interface ConnectionCalendarsProps {
 function ConnectionCalendars({ connection, hasPinSession }: ConnectionCalendarsProps) {
   const { calendars, isLoading, isError } = useCalendarsForMember(connection.memberId)
   const saveMutation = useSaveSelectedCalendarsMutation()
+  const flagsMutation = useUpdateCalendarFlagsMutation()
+
+  async function setShared(calendarId: string, isShared: boolean) {
+    await flagsMutation.mutateAsync({ data: { memberId: connection.memberId, calendarId, isShared } })
+  }
+
+  async function setWriteTarget(calendarId: string) {
+    await flagsMutation.mutateAsync({ data: { memberId: connection.memberId, calendarId, isWriteTarget: true } })
+  }
 
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
     calendars.filter((c) => c.isSelected).map((c) => c.id)
@@ -51,10 +64,10 @@ function ConnectionCalendars({ connection, hasPinSession }: ConnectionCalendarsP
       {!isLoading && !isError && calendars.length > 0 && (
         <ul className="flex flex-col gap-2 mb-3">
           {calendars.map((calendar: CalendarResponse) => (
-            <li key={calendar.id} className="flex items-center gap-2">
+            <li key={calendar.id} className="flex flex-wrap items-center gap-3">
               <span
-                className={`w-4 h-4 rounded-sm flex-shrink-0 ${!calendar.backgroundColor ? 'bg-slate-500' : ''}`}
-                style={calendar.backgroundColor ? { backgroundColor: calendar.backgroundColor } : undefined}
+                className="w-4 h-4 rounded-sm flex-shrink-0"
+                style={{ backgroundColor: calendar.color }}
                 aria-hidden="true"
               />
               <label className="flex items-center gap-2 text-slate-200 cursor-pointer">
@@ -66,6 +79,29 @@ function ConnectionCalendars({ connection, hasPinSession }: ConnectionCalendarsP
                   className="w-5 h-5"
                 />
                 {calendar.summary}
+              </label>
+              <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  aria-label="Geteilt/Familie"
+                  checked={calendar.isShared}
+                  onChange={(e) => void setShared(calendar.id, e.target.checked)}
+                  disabled={!hasPinSession}
+                  className="w-5 h-5"
+                />
+                Geteilt
+              </label>
+              <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+                <input
+                  type="radio"
+                  aria-label="Primärkalender"
+                  name={`write-target-${connection.connectionId}`}
+                  checked={calendar.isWriteTarget}
+                  onChange={() => void setWriteTarget(calendar.id)}
+                  disabled={!hasPinSession}
+                  className="w-5 h-5"
+                />
+                Primär
               </label>
             </li>
           ))}
