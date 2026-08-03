@@ -8,7 +8,7 @@ import type { ConnectionResponse } from '@/api/generated/model'
 import { useQueryClient } from '@tanstack/react-query'
 
 export function useGoogleConnections() {
-  const query = useListConnections()
+  const query = useListConnections({ query: { refetchInterval: 60000 } })
   return {
     connections: (query.data?.data ?? []) as ConnectionResponse[],
     isLoading: query.isLoading,

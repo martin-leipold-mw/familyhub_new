@@ -109,6 +109,19 @@ describe('useGoogleConnections', () => {
     expect(result.current.connections).toEqual([])
     expect(result.current.isLoading).toBe(true)
   })
+
+  it('polls the connections list every 60 seconds', () => {
+    vi.mocked(useListConnections).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    } as ReturnType<typeof useListConnections>)
+
+    renderHook(() => useGoogleConnections(), { wrapper: makeWrapper() })
+    expect(vi.mocked(useListConnections)).toHaveBeenCalledWith({
+      query: { refetchInterval: 60000 },
+    })
+  })
 })
 
 // ── useDisconnectConnectionMutation ───────────────────────────────────────────
