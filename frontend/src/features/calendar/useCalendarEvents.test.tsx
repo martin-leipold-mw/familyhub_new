@@ -98,6 +98,15 @@ describe('toCalendarEvent', () => {
     expect(ev.location).toBe('Praxis Dr. Müller')
     expect(ev.description).toBe('Jährliche Kontrolle')
   })
+
+  it('maps calendarId from the response', () => {
+    const event = toCalendarEvent({
+      id: 'e1', title: 'T', memberId: 'm1', calendarId: 'cal-42',
+      isAllDay: false, start: null, end: null, allDayStart: null, allDayEnd: null,
+      reminderUseDefault: true, reminderMinutes: null, recurringEventId: null, recurrenceRule: null,
+    } as never)
+    expect(event.calendarId).toBe('cal-42')
+  })
 })
 
 describe('useCalendarEvents', () => {

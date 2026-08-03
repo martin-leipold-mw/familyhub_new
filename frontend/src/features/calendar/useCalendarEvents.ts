@@ -13,6 +13,7 @@ export interface CalendarEvent {
   id: string
   title: string
   memberId: string
+  calendarId: string
   isAllDay: boolean
   start: Date | null
   end: Date | null
@@ -30,6 +31,7 @@ export function toCalendarEvent(e: EventResponse): CalendarEvent {
     id: e.id,
     title: e.title,
     memberId: e.memberId,
+    calendarId: e.calendarId,
     isAllDay: e.isAllDay,
     start: e.start ? new Date(e.start) : null,
     end: e.end ? new Date(e.end) : null,
