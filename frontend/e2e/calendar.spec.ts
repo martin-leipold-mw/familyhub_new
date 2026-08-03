@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { startOfWeek, addDays, format as formatDate } from 'date-fns'
 
 type Event = {
   id: string
@@ -196,4 +197,73 @@ test('create a recurring weekly event, see the series badge, then delete the who
   // Gone from the view
   await expect(page.getByRole('button', { name: /Sport/ })).toHaveCount(0)
   await expect(page.locator('[aria-label="Serie"]')).toHaveCount(0)
+})
+
+test('events are colored per calendar across two accounts, shared calendar stands out', async ({ page }) => {
+  await page.route('**/api/v1/settings/setup-status', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ setupCompleted: true, currentStep: 6, hasFamilyMembers: true, hasPin: true }),
+    }),
+  )
+  await page.route('**/api/v1/members', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'm1', name: 'Anna', role: 'parent', color: 'green', isActive: true, createdAt: '', updatedAt: '' },
+        { id: 'm2', name: 'Ben', role: 'parent', color: 'blue', isActive: true, createdAt: '', updatedAt: '' },
+      ]),
+    }),
+  )
+  await page.route('**/api/v1/google/connections', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+  )
+
+  // Aggregate calendar colors: Anna's personal (green), Ben's personal (blue), a shared one (amber)
+  await page.route('**/api/v1/google/calendars/all', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: 'cal-anna', summary: 'Anna', isPrimary: true, isSelected: true, color: 'hsl(140 60% 65%)', isShared: false, isWriteTarget: true, ownerMemberId: 'm1' },
+        { id: 'cal-ben', summary: 'Ben', isPrimary: true, isSelected: true, color: 'hsl(210 80% 70%)', isShared: false, isWriteTarget: true, ownerMemberId: 'm2' },
+        { id: 'cal-shared', summary: 'Feiertage', isPrimary: false, isSelected: true, color: 'hsl(45 90% 55%)', isShared: true, isWriteTarget: false, ownerMemberId: 'm1' },
+      ]),
+    }),
+  )
+
+  // The app opens on the real current week (no clock freeze in this spec); pick the
+  // Wednesday of that week — same Monday-start week math the app uses (dates.ts:weekDays)
+  // — so the fixture events always land inside the visible grid regardless of run date.
+  const day = formatDate(addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 2), 'yyyy-MM-dd')
+  await page.route(/\/api\/v1\/events(\?.*)?$/, (route) => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        { id: '1', title: 'Anna Termin', memberId: 'm1', calendarId: 'cal-anna', isAllDay: false, start: `${day}T09:00:00Z`, end: `${day}T10:00:00Z` },
+        { id: '2', title: 'Ben Termin', memberId: 'm2', calendarId: 'cal-ben', isAllDay: false, start: `${day}T11:00:00Z`, end: `${day}T12:00:00Z` },
+        { id: '3', title: 'Feiertag', memberId: 'm1', calendarId: 'cal-shared', isAllDay: false, start: `${day}T13:00:00Z`, end: `${day}T14:00:00Z` },
+      ]),
+    })
+  })
+
+  await page.goto('/')
+
+  const anna = page.getByRole('button', { name: /Anna Termin/ })
+  const ben = page.getByRole('button', { name: /Ben Termin/ })
+  const shared = page.getByRole('button', { name: /Feiertag/ })
+
+  await expect(anna).toBeVisible()
+  await expect(ben).toBeVisible()
+  await expect(shared).toBeVisible()
+
+  const colorOf = (loc: typeof anna) => loc.evaluate((el) => getComputedStyle(el).backgroundColor)
+  const [cAnna, cBen, cShared] = await Promise.all([colorOf(anna), colorOf(ben), colorOf(shared)])
+
+  // three distinct colors; the shared one differs from both personal colors
+  expect(new Set([cAnna, cBen, cShared]).size).toBe(3)
 })
