@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMembers } from '@/features/members/useMembersQuery'
+import { useAllCalendars } from '@/features/google/useCalendars'
 import { CalendarHeader } from './CalendarHeader'
 import { WeekGrid } from './WeekGrid'
 import { DayGrid } from './DayGrid'
@@ -33,12 +34,15 @@ export function CalendarView() {
 
   const { members } = useMembers()
   const { events, isLoading, isError, refetch } = useCalendarEvents(anchor, view)
+  const { calendars } = useAllCalendars()
   const sync = useCalendarSync()
+
+  const calendarColors = new Map(calendars.map((c) => [c.id, c.color]))
 
   const gridProps = {
     anchor,
     events,
-    members,
+    calendarColors,
     now,
     onEventClick: (event: CalendarEvent) => setDialog({ mode: 'edit', event }),
     onSlotClick: (date: Date) => setDialog({ mode: 'create', date }),

@@ -10,6 +10,7 @@ const timedEvent: CalendarEvent = {
   id: 'e1',
   title: 'Schule',
   memberId: 'm1',
+  calendarId: 'cal-a',
   isAllDay: false,
   start: new Date(2026, 6, 21, 9, 0),
   end: new Date(2026, 6, 21, 10, 0),

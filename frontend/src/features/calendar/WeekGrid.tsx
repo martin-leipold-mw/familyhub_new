@@ -1,5 +1,3 @@
-import type { MemberResponse } from '@/api/generated/model'
-import { memberColorHex } from '@/features/members/colors'
 import { TimeGrid } from './TimeGrid'
 import { DayColumn, type DayColumnItem } from './DayColumn'
 import { AllDayRow, type AllDayChip } from './AllDayRow'
@@ -14,14 +12,10 @@ import type { CalendarEvent } from './useCalendarEvents'
 export interface CalendarGridProps {
   anchor: Date
   events: CalendarEvent[]
-  members: MemberResponse[]
+  calendarColors: Map<string, string>
   now: Date
   onEventClick: (e: CalendarEvent) => void
   onSlotClick: (date: Date) => void
-}
-
-export function buildColorMap(members: MemberResponse[]): Map<string, string> {
-  return new Map(members.map((m) => [m.id, memberColorHex(m.color)]))
 }
 
 export function timedForDay(
@@ -31,7 +25,7 @@ export function timedForDay(
 ): DayColumnItem[] {
   return events
     .filter((e) => !e.isAllDay && e.start && isSameDayAs(e.start, day))
-    .map((event) => ({ event, colorHex: colors.get(event.memberId) ?? '#888' }))
+    .map((event) => ({ event, colorHex: colors.get(event.calendarId) ?? '#888' }))
 }
 
 export function allDayChipsForDay(
@@ -45,7 +39,7 @@ export function allDayChipsForDay(
     .map((event) => ({
       id: event.id,
       title: event.title,
-      colorHex: colors.get(event.memberId) ?? '#888',
+      colorHex: colors.get(event.calendarId) ?? '#888',
       onClick: () => onEventClick(event),
     }))
 }
@@ -53,13 +47,13 @@ export function allDayChipsForDay(
 export function WeekGrid({
   anchor,
   events,
-  members,
+  calendarColors,
   now,
   onEventClick,
   onSlotClick,
 }: CalendarGridProps) {
   const days = weekDays(anchor)
-  const colors = buildColorMap(members)
+  const colors = calendarColors
 
   return (
     <div>

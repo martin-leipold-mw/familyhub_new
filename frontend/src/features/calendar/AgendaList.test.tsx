@@ -2,27 +2,17 @@ import { it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { AgendaList } from './AgendaList'
 import type { CalendarEvent } from './useCalendarEvents'
-import type { MemberResponse } from '@/api/generated/model'
 
 const now = new Date('2026-07-30T09:00:00')
 
-const members: MemberResponse[] = [
-  {
-    id: 'm1',
-    name: 'Anna',
-    role: 'parent',
-    color: 'blue',
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-]
+const calendarColors = new Map<string, string>([['cal-a', 'rgb(0, 0, 255)']])
 
 function timed(id: string, iso: string): CalendarEvent {
   return {
     id,
     title: `E-${id}`,
     memberId: 'm1',
+    calendarId: 'cal-a',
     isAllDay: false,
     start: new Date(iso),
     end: new Date(iso),
@@ -36,7 +26,7 @@ function timed(id: string, iso: string): CalendarEvent {
   }
 }
 
-const base = { anchor: now, members, now, onSlotClick: () => {} }
+const base = { anchor: now, calendarColors, now, onSlotClick: () => {} }
 
 it('groups events by day and skips empty days', () => {
   const events = [timed('a', '2026-07-30T10:00:00'), timed('b', '2026-08-01T08:00:00')]
@@ -64,6 +54,7 @@ it('shows an all-day event that spans into a day', () => {
     id: 'span',
     title: 'Urlaub',
     memberId: 'm1',
+    calendarId: 'cal-a',
     isAllDay: true,
     start: null,
     end: null,
@@ -85,6 +76,7 @@ it('sorts a day with all-day and timed events: all-day first, then by start time
     id: 'span',
     title: 'Urlaub',
     memberId: 'm1',
+    calendarId: 'cal-a',
     isAllDay: true,
     start: null,
     end: null,
@@ -118,11 +110,12 @@ it('does not show a series marker for a non-recurring event', () => {
   expect(screen.queryByLabelText('Serie')).toBeNull()
 })
 
-it('falls back to a default color when the member is unknown', () => {
+it('falls back to a default color when the calendar is unknown', () => {
   const event: CalendarEvent = {
     id: 'x',
     title: 'E-x',
-    memberId: 'unknown',
+    memberId: 'm1',
+    calendarId: 'unknown',
     isAllDay: false,
     start: new Date('2026-07-30T10:00:00'),
     end: null,

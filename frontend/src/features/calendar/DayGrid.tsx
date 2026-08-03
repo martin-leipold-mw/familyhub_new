@@ -3,7 +3,6 @@ import { DayColumn } from './DayColumn'
 import { AllDayRow } from './AllDayRow'
 import { weekdayHeader, isSameDayAs } from './dates'
 import {
-  buildColorMap,
   timedForDay,
   allDayChipsForDay,
   type CalendarGridProps,
@@ -12,12 +11,12 @@ import {
 export function DayGrid({
   anchor,
   events,
-  members,
+  calendarColors,
   now,
   onEventClick,
   onSlotClick,
 }: CalendarGridProps) {
-  const colors = buildColorMap(members)
+  const colors = calendarColors
 
   const timed = timedForDay(events, anchor, colors)
 

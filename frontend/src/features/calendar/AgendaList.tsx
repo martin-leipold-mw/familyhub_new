@@ -1,7 +1,6 @@
 import { addDays, format, isSameDay, startOfDay } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { allDaySpansDay, formatTime } from './dates'
-import { buildColorMap } from './WeekGrid'
 import type { CalendarGridProps } from './WeekGrid'
 import type { CalendarEvent } from './useCalendarEvents'
 
@@ -15,8 +14,8 @@ function eventsForDay(events: CalendarEvent[], day: Date): CalendarEvent[] {
     .sort((a, b) => (a.start?.getTime() ?? 0) - (b.start?.getTime() ?? 0))
 }
 
-export function AgendaList({ events, members, now, onEventClick }: CalendarGridProps) {
-  const colors = buildColorMap(members)
+export function AgendaList({ events, calendarColors, now, onEventClick }: CalendarGridProps) {
+  const colors = calendarColors
   const first = startOfDay(now)
   const days = Array.from({ length: 31 }, (_, i) => addDays(first, i))
   const grouped = days
@@ -40,7 +39,7 @@ export function AgendaList({ events, members, now, onEventClick }: CalendarGridP
           </h2>
           <ul className="flex flex-col gap-2">
             {dayEvents.map((e) => {
-              const color = colors.get(e.memberId) ?? '#888'
+              const color = colors.get(e.calendarId) ?? '#888'
               return (
                 <li key={e.id}>
                   <button

@@ -14,6 +14,14 @@ vi.mock('@/features/members/useMembersQuery', () => ({
   useMembers: () => ({ members, isLoading: false, isError: false }),
 }))
 
+vi.mock('@/features/google/useCalendars', () => ({
+  useAllCalendars: () => ({
+    calendars: [{ id: 'cal-a', color: 'rgb(0, 128, 0)' }],
+    isLoading: false,
+    isError: false,
+  }),
+}))
+
 const eventsRef = { current: { events: [] as CalendarEvent[], isLoading: false, isError: false, refetch: vi.fn() } }
 vi.mock('./useCalendarEvents', async () => {
   const actual = await vi.importActual<typeof import('./useCalendarEvents')>('./useCalendarEvents')
@@ -116,6 +124,7 @@ describe('CalendarView', () => {
       id: 'e1',
       title: 'Schule',
       memberId: 'm1',
+      calendarId: 'cal-a',
       isAllDay: false,
       start: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
       end: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0),
