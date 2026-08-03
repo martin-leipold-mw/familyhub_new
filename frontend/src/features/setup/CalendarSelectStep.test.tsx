@@ -146,4 +146,23 @@ describe('CalendarSelectStep', () => {
     expect(screen.getByText('Arbeit')).toBeInTheDocument()
     expect(screen.getByText('Familie')).toBeInTheDocument()
   })
+
+  it('renders a calendar block for every connection', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({
+      connections: [
+        { connectionId: 'c1', memberId: 'm1', email: 'a@x', name: 'Anna', status: 'active', scopes: [] },
+        { connectionId: 'c2', memberId: 'm2', email: 'b@x', name: 'Ben', status: 'active', scopes: [] },
+      ],
+      isLoading: false, isError: false,
+    } as never)
+    vi.mocked(useCalendarsForMember).mockImplementation((memberId: string) => ({
+      calendars: [{ id: `cal-${memberId}`, summary: `Kalender ${memberId}`, backgroundColor: null, isPrimary: true, isSelected: true, color: 'hsl(1 1% 1%)', isShared: false, isWriteTarget: true }],
+      isLoading: false, isError: false,
+    }) as never)
+    vi.mocked(useSaveSelectedCalendarsMutation).mockReturnValue({ mutateAsync: vi.fn().mockResolvedValue({}) } as never)
+
+    renderWithProviders(<CalendarSelectStep onNext={vi.fn()} />)
+    expect(screen.getByText('Kalender m1')).toBeInTheDocument()
+    expect(screen.getByText('Kalender m2')).toBeInTheDocument()
+  })
 })
