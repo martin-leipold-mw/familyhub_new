@@ -1,6 +1,7 @@
 package com.familyhub.google.calendar
 
 import com.familyhub.generated.api.GoogleCalendarsApi
+import com.familyhub.generated.model.CalendarFlagsRequest
 import com.familyhub.generated.model.CalendarResponse
 import com.familyhub.generated.model.SelectedCalendarsRequest
 import com.familyhub.generated.model.SyncResultResponse
@@ -18,9 +19,22 @@ class CalendarController(
     override fun listGoogleCalendars(memberId: UUID): ResponseEntity<List<CalendarResponse>> =
         ResponseEntity.ok(service.listForMember(memberId).map { it.toResponse() })
 
+    override fun listAllCalendars(): ResponseEntity<List<CalendarResponse>> = ResponseEntity.ok(service.listAll().map { it.toResponse() })
+
     @RequiresPinSession
     override fun saveSelectedCalendars(selectedCalendarsRequest: SelectedCalendarsRequest): ResponseEntity<Unit> {
         service.saveSelection(selectedCalendarsRequest.memberId, selectedCalendarsRequest.calendarIds)
+        return ResponseEntity.ok().build()
+    }
+
+    @RequiresPinSession
+    override fun updateCalendarFlags(calendarFlagsRequest: CalendarFlagsRequest): ResponseEntity<Unit> {
+        service.updateFlags(
+            memberId = calendarFlagsRequest.memberId,
+            calendarId = calendarFlagsRequest.calendarId,
+            isShared = calendarFlagsRequest.isShared,
+            isWriteTarget = calendarFlagsRequest.isWriteTarget,
+        )
         return ResponseEntity.ok().build()
     }
 
@@ -34,7 +48,11 @@ private fun CalendarView.toResponse() =
     CalendarResponse(
         id = id,
         summary = summary,
-        backgroundColor = backgroundColor,
         isPrimary = isPrimary,
         isSelected = isSelected,
+        color = color,
+        isShared = isShared,
+        isWriteTarget = isWriteTarget,
+        ownerMemberId = ownerMemberId,
+        backgroundColor = backgroundColor,
     )

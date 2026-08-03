@@ -42,6 +42,10 @@ class CalendarControllerTest {
                     backgroundColor = "#ff0000",
                     isPrimary = true,
                     isSelected = true,
+                    color = "hsl(140 60% 65%)",
+                    isShared = false,
+                    isWriteTarget = true,
+                    ownerMemberId = memberId,
                 ),
                 CalendarView(
                     id = "cal2@gmail.com",
@@ -49,6 +53,10 @@ class CalendarControllerTest {
                     backgroundColor = null,
                     isPrimary = false,
                     isSelected = false,
+                    color = "hsl(140 60% 65%)",
+                    isShared = false,
+                    isWriteTarget = true,
+                    ownerMemberId = memberId,
                 ),
             )
 
@@ -101,6 +109,42 @@ class CalendarControllerTest {
             jsonPath("$.created") { value(5) }
             jsonPath("$.updated") { value(2) }
             jsonPath("$.deleted") { value(1) }
+        }
+    }
+
+    // ─── GET /v1/google/calendars/all ─────────────────────────────────────────
+
+    @Test
+    fun `GET all calendars returns aggregated list with resolved color`() {
+        every { service.listAll() } returns
+            listOf(
+                CalendarView(
+                    id = "cal1@gmail.com", summary = "Family", backgroundColor = null,
+                    isPrimary = true, isSelected = true, color = "hsl(45 90% 55%)",
+                    isShared = true, isWriteTarget = false, ownerMemberId = memberId,
+                ),
+            )
+
+        mockMvc.get("/api/v1/google/calendars/all").andExpect {
+            status { isOk() }
+            jsonPath("$[0].id") { value("cal1@gmail.com") }
+            jsonPath("$[0].color") { value("hsl(45 90% 55%)") }
+            jsonPath("$[0].isShared") { value(true) }
+            jsonPath("$[0].ownerMemberId") { value(memberId.toString()) }
+        }
+    }
+
+    // ─── PUT /v1/google/calendars/flags ───────────────────────────────────────
+
+    @Test
+    fun `PUT flags returns 200`() {
+        justRun { service.updateFlags(memberId, "cal1@gmail.com", true, true) }
+
+        mockMvc.put("/api/v1/google/calendars/flags") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"memberId":"$memberId","calendarId":"cal1@gmail.com","isShared":true,"isWriteTarget":true}"""
+        }.andExpect {
+            status { isOk() }
         }
     }
 }

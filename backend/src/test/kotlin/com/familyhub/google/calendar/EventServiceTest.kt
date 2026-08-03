@@ -389,8 +389,12 @@ class EventServiceTest {
 
         val cmd =
             CreateEventCommand(
-                memberId = memberId, calendarId = null, title = "Meeting",
-                start = startTime, end = endTime, isAllDay = false,
+                memberId = memberId,
+                calendarId = null,
+                title = "Meeting",
+                start = startTime,
+                end = endTime,
+                isAllDay = false,
             )
 
         val result = service.create(cmd)

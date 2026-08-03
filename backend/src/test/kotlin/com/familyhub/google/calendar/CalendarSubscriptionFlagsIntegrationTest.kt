@@ -65,7 +65,9 @@ class CalendarSubscriptionFlagsIntegrationTest
         @Test
         fun `a second write target on the same connection is rejected`() {
             val conn = connection()
-            subscriptions.save(CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal-1", summary = "1", isWriteTarget = true))
+            subscriptions.save(
+                CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal-1", summary = "1", isWriteTarget = true),
+            )
             assertThatThrownBy {
                 subscriptions.saveAndFlush(
                     CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal-2", summary = "2", isWriteTarget = true),

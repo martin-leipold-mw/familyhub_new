@@ -10,12 +10,18 @@ package com.familyhub.google.calendar
 object SharedCalendarPalette {
     val COLORS =
         listOf(
-            "hsl(45 90% 55%)", // Bernstein
-            "hsl(0 0% 62%)", // Neutralgrau
-            "hsl(255 35% 58%)", // Indigo
-            "hsl(160 45% 45%)", // Smaragd
-            "hsl(15 68% 55%)", // Terrakotta
-            "hsl(205 25% 52%)", // Stahlblau
+            // Bernstein
+            "hsl(45 90% 55%)",
+            // Neutralgrau
+            "hsl(0 0% 62%)",
+            // Indigo
+            "hsl(255 35% 58%)",
+            // Smaragd
+            "hsl(160 45% 45%)",
+            // Terrakotta
+            "hsl(15 68% 55%)",
+            // Stahlblau
+            "hsl(205 25% 52%)",
         )
 
     fun colorFor(

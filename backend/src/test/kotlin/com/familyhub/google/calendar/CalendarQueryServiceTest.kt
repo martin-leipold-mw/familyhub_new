@@ -200,8 +200,12 @@ class CalendarQueryServiceTest {
     @Test
     fun `updateFlags sets isShared and moves the write target exclusively`() {
         val conn = connectionWith(UUID.randomUUID())
-        val old = CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "old", summary = "Old", isWriteTarget = true).also { it.id = UUID.randomUUID() }
-        val target = CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "new", summary = "New").also { it.id = UUID.randomUUID() }
+        val old =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "old", summary = "Old", isWriteTarget = true)
+                .also { it.id = UUID.randomUUID() }
+        val target =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "new", summary = "New")
+                .also { it.id = UUID.randomUUID() }
         every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
         every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "new") } returns target
         every { subscriptionRepository.findAllByConnectionId(conn.id!!) } returns listOf(old, target)
@@ -224,9 +228,77 @@ class CalendarQueryServiceTest {
             .isInstanceOf(ResourceNotFoundException::class.java)
     }
 
+    @Test
+    fun `updateFlags throws when no connection exists for the member`() {
+        val memberId = UUID.randomUUID()
+        every { connectionRepository.findByFamilyMemberId(memberId) } returns null
+
+        assertThatThrownBy { service.updateFlags(memberId, "cal", isShared = true, isWriteTarget = null) }
+            .isInstanceOf(ResourceNotFoundException::class.java)
+    }
+
+    @Test
+    fun `updateFlags with both flags null leaves isShared and isWriteTarget unchanged`() {
+        val conn = connectionWith(UUID.randomUUID())
+        val target =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal", summary = "Cal", isShared = true)
+                .also { it.id = UUID.randomUUID() }
+        every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "cal") } returns target
+        every { subscriptionRepository.save(any()) } answers { firstArg() }
+
+        service.updateFlags(conn.familyMemberId, "cal", isShared = null, isWriteTarget = null)
+
+        assertThat(target.isShared).isTrue()
+        assertThat(target.isWriteTarget).isFalse()
+    }
+
+    @Test
+    fun `updateFlags with isWriteTarget false clears the flag without touching other subscriptions`() {
+        val conn = connectionWith(UUID.randomUUID())
+        val target =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal", summary = "Cal", isWriteTarget = true)
+                .also { it.id = UUID.randomUUID() }
+        every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "cal") } returns target
+        every { subscriptionRepository.save(any()) } answers { firstArg() }
+
+        service.updateFlags(conn.familyMemberId, "cal", isShared = null, isWriteTarget = false)
+
+        assertThat(target.isWriteTarget).isFalse()
+        verify(exactly = 0) { subscriptionRepository.findAllByConnectionId(any()) }
+    }
+
+    @Test
+    fun `updateFlags marking the already-current write target excludes itself and skips non-write-targets`() {
+        val conn = connectionWith(UUID.randomUUID())
+        val target =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "cal", summary = "Cal", isWriteTarget = true)
+                .also { it.id = UUID.randomUUID() }
+        val other =
+            CalendarSubscription(connectionId = conn.id!!, googleCalendarId = "other", summary = "Other", isWriteTarget = false)
+                .also { it.id = UUID.randomUUID() }
+        every { connectionRepository.findByFamilyMemberId(conn.familyMemberId) } returns conn
+        every { subscriptionRepository.findByConnectionIdAndGoogleCalendarId(conn.id!!, "cal") } returns target
+        every { subscriptionRepository.findAllByConnectionId(conn.id!!) } returns listOf(target, other)
+        every { subscriptionRepository.save(any()) } answers { firstArg() }
+
+        service.updateFlags(conn.familyMemberId, "cal", isShared = null, isWriteTarget = true)
+
+        assertThat(target.isWriteTarget).isTrue()
+        assertThat(other.isWriteTarget).isFalse()
+        verify(exactly = 0) { subscriptionRepository.save(other) }
+    }
+
     private fun connectionWith(memberId: UUID) =
         GoogleConnection(
-            familyMemberId = memberId, credentialsId = null, googleAccountId = "g-$memberId", email = "e",
-            accessToken = null, refreshToken = "r", tokenExpiresAt = null, status = "active",
+            familyMemberId = memberId,
+            credentialsId = null,
+            googleAccountId = "g-$memberId",
+            email = "e",
+            accessToken = null,
+            refreshToken = "r",
+            tokenExpiresAt = null,
+            status = "active",
         ).also { it.id = UUID.randomUUID() }
 }
