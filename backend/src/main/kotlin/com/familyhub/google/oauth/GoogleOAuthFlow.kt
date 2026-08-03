@@ -53,7 +53,7 @@ class GoogleOAuthFlow(
             .queryParam("response_type", "code")
             .queryParam("scope", scopes.joinToString(" "))
             .queryParam("access_type", "offline")
-            .queryParam("prompt", "consent")
+            .queryParam("prompt", "select_account consent")
             .queryParam("code_challenge", codeChallenge)
             .queryParam("code_challenge_method", "S256")
             .queryParam("state", state)

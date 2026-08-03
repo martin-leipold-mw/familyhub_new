@@ -33,7 +33,7 @@ class GoogleOAuthFlowTest {
             "code_challenge=challengeXYZ",
             "code_challenge_method=S256",
             "access_type=offline",
-            "prompt=consent",
+            "prompt=select_account%20consent",
             "state=state123",
             "client_id=cid",
         )
