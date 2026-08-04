@@ -1,6 +1,32 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { useGoogleCallback } from '@/api/generated/endpoints/familyHubAPI'
+import { googleCallback } from '@/api/generated/endpoints/familyHubAPI'
+import type { OAuthCallbackResponse } from '@/api/generated/model'
+
+type Status =
+  | { phase: 'pending' }
+  | { phase: 'success'; data: OAuthCallbackResponse | undefined }
+  | { phase: 'error' }
+
+// A Google OAuth authorization code is single-use, so it must be exchanged
+// exactly once. React StrictMode mounts this component twice in dev; a
+// per-instance ref guard survives that remount but leaves the surviving mount's
+// React Query mutation observer idle forever (the first, throwaway mount fires
+// the request and its result dies with its detached observer → the UI stays
+// stuck on "Verbinde mit Google…"). Keying the in-flight exchange at module
+// scope fixes both halves: the code is exchanged once, and whichever mount
+// survives awaits the same promise and observes the real result.
+const exchanges = new Map<string, Promise<OAuthCallbackResponse>>()
+
+function exchangeCode(code: string, state: string): Promise<OAuthCallbackResponse> {
+  const key = `${code}::${state}`
+  let promise = exchanges.get(key)
+  if (!promise) {
+    promise = googleCallback({ code, state }).then((response) => response.data)
+    exchanges.set(key, promise)
+  }
+  return promise
+}
 
 export function OAuthCallback() {
   const [searchParams] = useSearchParams()
@@ -9,30 +35,32 @@ export function OAuthCallback() {
   const code = searchParams.get('code')
   const state = searchParams.get('state')
 
-  const mutation = useGoogleCallback()
-  const firedRef = useRef(false)
+  const [status, setStatus] = useState<Status>({ phase: 'pending' })
 
   useEffect(() => {
     if (error || !code || !state) return
-    // v8 ignore next — StrictMode double-fire guard; the ref is set to true on first call
-    if (firedRef.current) return
-    firedRef.current = true
-    // mutate (not mutateAsync) so a rejected mutation leaves no dangling promise;
-    // failure is surfaced via mutation.isError below.
-    mutation.mutate({ data: { code, state } })
-  // mutation is stable across renders; omitting it avoids StrictMode double-fire
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    let active = true
+    exchangeCode(code, state).then(
+      (data) => {
+        if (active) setStatus({ phase: 'success', data })
+      },
+      () => {
+        if (active) setStatus({ phase: 'error' })
+      },
+    )
+    return () => {
+      active = false
+    }
   }, [error, code, state])
 
   useEffect(() => {
-    if (!mutation.isSuccess) return
-    const response = mutation.data?.data
-    const target = response?.returnUrl || '/'
+    if (status.phase !== 'success') return
+    const target = status.data?.returnUrl || '/'
     const id = window.setTimeout(() => {
       void navigate(target)
     }, 1500)
     return () => window.clearTimeout(id)
-  }, [mutation.isSuccess, mutation.data, navigate])
+  }, [status, navigate])
 
   const containerClass =
     'flex flex-col items-center justify-center min-h-screen gap-6 bg-slate-900 text-white text-center px-4'
@@ -53,7 +81,7 @@ export function OAuthCallback() {
   }
 
   // Mutation error
-  if (mutation.isError) {
+  if (status.phase === 'error') {
     return (
       <div role="status" aria-live="polite" className={containerClass}>
         <p className="text-xl">Verbindung fehlgeschlagen.</p>
@@ -68,8 +96,8 @@ export function OAuthCallback() {
   }
 
   // Success
-  if (mutation.isSuccess) {
-    const memberName = mutation.data?.data?.memberName ?? ''
+  if (status.phase === 'success') {
+    const memberName = status.data?.memberName ?? ''
     return (
       <div role="status" aria-live="polite" className={containerClass}>
         <p className="text-xl font-bold">Erfolgreich verbunden!</p>
