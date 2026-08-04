@@ -12,8 +12,8 @@ vi.mock('@/features/settings/SettingsView', () => ({
 }))
 vi.mock('@/features/setup/SetupWizard', () => ({ SetupWizard: () => <div>SETUP</div> }))
 vi.mock('@/features/google/OAuthCallback', () => ({ OAuthCallback: () => <div>CALLBACK</div> }))
-vi.mock('@/features/google/ConnectionRevokedBanner', () => ({
-  ConnectionRevokedBanner: () => <div data-testid="revoked-banner" />,
+vi.mock('@/features/google/RevokedConnectionSnackbars', () => ({
+  RevokedConnectionSnackbars: () => <div data-testid="revoked-snackbars" />,
 }))
 
 // App renders its own BrowserRouter; import after mocks.
