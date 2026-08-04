@@ -35,3 +35,4 @@ Thumbs.db
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+.superpowers/
