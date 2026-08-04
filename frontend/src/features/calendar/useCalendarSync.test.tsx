@@ -6,9 +6,11 @@ import type { ReactNode } from 'react'
 
 const syncCalendars = vi.fn()
 const getListEventsQueryKey = vi.fn(() => ['/api/v1/events'])
+const getListConnectionsQueryKey = vi.fn(() => ['/api/v1/connections'])
 vi.mock('@/api/generated/endpoints/familyHubAPI', () => ({
   syncCalendars: (params: { memberId: string }) => syncCalendars(params),
   getListEventsQueryKey: () => getListEventsQueryKey(),
+  getListConnectionsQueryKey: () => getListConnectionsQueryKey(),
 }))
 
 const connectionsRef = { current: [] as Array<{ memberId: string; status: string }> }
@@ -30,6 +32,7 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => {
   syncCalendars.mockReset().mockResolvedValue({ status: 200, data: {} })
   getListEventsQueryKey.mockReset().mockReturnValue(['/api/v1/events'])
+  getListConnectionsQueryKey.mockReset().mockReturnValue(['/api/v1/connections'])
 })
 
 describe('useCalendarSync', () => {
@@ -101,5 +104,19 @@ describe('useCalendarSync', () => {
     expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm1' })
     expect(syncCalendars).toHaveBeenCalledWith({ memberId: 'm2' })
     await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+
+  it('invalidates the connections query after syncing so revoked status surfaces', async () => {
+    connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    function spyWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    }
+    const { result } = renderHook(() => useCalendarSync(), { wrapper: spyWrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/connections'] })
   })
 })

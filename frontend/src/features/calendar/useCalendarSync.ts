@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   syncCalendars,
   getListEventsQueryKey,
+  getListConnectionsQueryKey,
 } from '@/api/generated/endpoints/familyHubAPI'
 import { useGoogleConnections } from '@/features/google/useGoogleConnections'
 
@@ -28,6 +29,7 @@ export function useCalendarSync() {
       )
       if (results.some((r) => r.status === 'rejected')) setIsError(true)
       await queryClient.invalidateQueries({ queryKey: getListEventsQueryKey() })
+      await queryClient.invalidateQueries({ queryKey: getListConnectionsQueryKey() })
     } catch {
       setIsError(true)
     } finally {
