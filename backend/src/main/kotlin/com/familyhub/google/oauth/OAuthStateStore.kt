@@ -9,7 +9,12 @@ import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-data class OAuthStateEntry(val credentialsId: UUID?, val returnUrl: String, val verifier: String)
+data class OAuthStateEntry(
+    val credentialsId: UUID?,
+    val returnUrl: String,
+    val verifier: String,
+    val memberId: UUID? = null,
+)
 
 @Component
 class OAuthStateStore(private val clock: Clock) {
@@ -23,9 +28,10 @@ class OAuthStateStore(private val clock: Clock) {
         credentialsId: UUID?,
         returnUrl: String,
         verifier: String,
+        memberId: UUID? = null,
     ): String {
         val nonce = encoder.encodeToString(ByteArray(24).also { random.nextBytes(it) })
-        store[nonce] = Stored(OAuthStateEntry(credentialsId, returnUrl, verifier), clock.instant())
+        store[nonce] = Stored(OAuthStateEntry(credentialsId, returnUrl, verifier, memberId), clock.instant())
         return nonce
     }
 
