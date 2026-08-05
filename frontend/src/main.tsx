@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import { PinSessionProvider } from '@/features/pin/PinSessionContext'
+import { ThemeProvider } from '@/features/theme/ThemeProvider'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -17,9 +18,11 @@ if (!root) throw new Error('Root element not found')
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <PinSessionProvider>
-        <App />
-      </PinSessionProvider>
+      <ThemeProvider>
+        <PinSessionProvider>
+          <App />
+        </PinSessionProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

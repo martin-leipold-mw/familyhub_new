@@ -11,6 +11,7 @@ import { PinInputDialog } from '@/features/pin/PinInputDialog'
 import { ChangePinDialog } from './ChangePinDialog'
 import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
 import { CalendarManagement } from '@/features/google/CalendarManagement'
+import { ThemeToggle } from '@/features/theme/ThemeToggle'
 
 export function SettingsView() {
   const { members } = useMembers()
@@ -37,9 +38,12 @@ export function SettingsView() {
   return (
     <div className="min-h-screen bg-slate-900 p-6">
       <div className="max-w-4xl mx-auto flex flex-col gap-6">
-        <Link to="/" className="self-start text-blue-400 min-h-[44px] flex items-center">
-          ← Zum Kalender
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/" className="text-blue-400 min-h-[44px] flex items-center">
+            ← Zum Kalender
+          </Link>
+          <ThemeToggle />
+        </div>
         <h1 className="text-3xl font-bold text-white">Einstellungen</h1>
 
         <MemberGrid members={members} onSelect={hasPinSession ? setEditing : undefined} />
