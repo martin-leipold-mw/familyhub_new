@@ -12,7 +12,7 @@ const members: MemberResponse[] = [
 describe('MemberSelect', () => {
   it('outlines the selected member and not the others', () => {
     render(<MemberSelect members={members} value="m1" onChange={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Anna' })).toHaveClass('ring-accent')
+    expect(screen.getByRole('button', { name: 'Anna' })).toHaveClass('ring-accent', 'ring-offset-surface')
     expect(screen.getByRole('button', { name: 'Papa' })).not.toHaveClass('ring-accent')
   })
 

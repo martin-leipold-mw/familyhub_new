@@ -22,7 +22,7 @@ export function MemberSelect({
             aria-pressed={value === m.id}
             onClick={() => onChange(m.id)}
             className={`rounded-full px-4 py-2 min-h-[44px] text-slate-900 font-medium ${
-              value === m.id ? 'ring-4 ring-accent' : ''
+              value === m.id ? 'ring-4 ring-accent ring-offset-2 ring-offset-surface' : ''
             }`}
             style={{ backgroundColor: memberColorHex(m.color) }}
           >
