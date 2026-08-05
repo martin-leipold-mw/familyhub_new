@@ -52,4 +52,51 @@ describe('PinInputDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
     expect(onCancel).toHaveBeenCalled()
   })
+
+  it('accepts digits and Enter from the physical keyboard', () => {
+    const onSubmit = vi.fn()
+    render(<PinInputDialog title="PIN eingeben" onSubmit={onSubmit} onCancel={() => {}} />)
+    for (const d of '1234') fireEvent.keyDown(window, { key: d })
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(onSubmit).toHaveBeenCalledWith('1234')
+  })
+
+  it('Enter does nothing below 4 digits', () => {
+    const onSubmit = vi.fn()
+    render(<PinInputDialog title="PIN eingeben" onSubmit={onSubmit} onCancel={() => {}} />)
+    for (const d of '12') fireEvent.keyDown(window, { key: d })
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('Backspace deletes the last keyboard digit', () => {
+    const onSubmit = vi.fn()
+    render(<PinInputDialog title="PIN eingeben" onSubmit={onSubmit} onCancel={() => {}} />)
+    for (const d of '12345') fireEvent.keyDown(window, { key: d })
+    fireEvent.keyDown(window, { key: 'Backspace' })
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(onSubmit).toHaveBeenCalledWith('1234')
+  })
+
+  it('keyboard entry caps at 6 digits', () => {
+    const onSubmit = vi.fn()
+    render(<PinInputDialog title="PIN eingeben" onSubmit={onSubmit} onCancel={() => {}} />)
+    for (const d of '1234567') fireEvent.keyDown(window, { key: d })
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(onSubmit).toHaveBeenCalledWith('123456')
+  })
+
+  it('Escape triggers onCancel; unrelated keys are ignored', () => {
+    const onCancel = vi.fn()
+    const onSubmit = vi.fn()
+    render(<PinInputDialog title="PIN eingeben" onSubmit={onSubmit} onCancel={onCancel} />)
+    fireEvent.keyDown(window, { key: 'a' }) // ignored, no throw
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders a custom cancel label', () => {
+    render(<PinInputDialog title="PIN eingeben" cancelLabel="← Zum Kalender" onSubmit={() => {}} onCancel={() => {}} />)
+    expect(screen.getByRole('button', { name: '← Zum Kalender' })).toBeInTheDocument()
+  })
 })
