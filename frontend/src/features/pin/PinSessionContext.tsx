@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { setSessionToken, subscribeActivity } from '@/api/sessionTokenStore'
+import { setSessionToken, subscribeActivity, subscribeSessionExpired } from '@/api/sessionTokenStore'
 
 export const PIN_SESSION_STORAGE_KEY = 'familyhub.pinSession'
 export const PIN_SESSION_TIMEOUT_MS = 15 * 60 * 1000
@@ -40,6 +40,8 @@ export function PinSessionProvider({ children }: { children: ReactNode }) {
     sessionStorage.setItem(PIN_SESSION_STORAGE_KEY, newToken)
     setToken(newToken)
   }, [])
+
+  useEffect(() => subscribeSessionExpired(clearSession), [clearSession])
 
   useEffect(() => {
     if (!token) return

@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { fireEvent } from '@testing-library/react'
 import { PinSessionProvider, usePinSession, PIN_SESSION_TIMEOUT_MS } from './PinSessionContext'
-import { getSessionToken, notifyActivity, setSessionToken } from '@/api/sessionTokenStore'
+import { getSessionToken, notifyActivity, setSessionToken, notifySessionExpired } from '@/api/sessionTokenStore'
 
 function Probe() {
   const { sessionToken, hasPinSession, setSession, clearSession } = usePinSession()
@@ -66,5 +66,21 @@ describe('PinSessionContext', () => {
     sessionStorage.setItem('familyhub.pinSession', 'persisted')
     render(<PinSessionProvider><Probe /></PinSessionProvider>)
     expect(screen.getByTestId('token').textContent).toBe('persisted')
+  })
+
+  it('clears the session when a session-expired signal fires', () => {
+    render(<PinSessionProvider><Probe /></PinSessionProvider>)
+    fireEvent.click(screen.getByText('set'))
+    expect(screen.getByTestId('has').textContent).toBe('true')
+    act(() => { notifySessionExpired() })
+    expect(screen.getByTestId('has').textContent).toBe('false')
+    expect(getSessionToken()).toBeNull()
+  })
+
+  it('stops reacting to the signal after unmount', () => {
+    const { unmount } = render(<PinSessionProvider><Probe /></PinSessionProvider>)
+    unmount()
+    // No provider mounted → must not throw when the signal fires.
+    act(() => { notifySessionExpired() })
   })
 })
