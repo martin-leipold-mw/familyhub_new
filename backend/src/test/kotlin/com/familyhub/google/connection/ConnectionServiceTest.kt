@@ -124,11 +124,17 @@ class ConnectionServiceTest {
     fun `handleCallback with memberId replaces the members existing connection`() {
         val memberId = UUID.randomUUID()
         val existingMember = FamilyMember(name = "Anna", role = "parent", color = "blue").also { it.id = memberId }
-        val prior = GoogleConnection(
-            familyMemberId = memberId, credentialsId = credId, googleAccountId = "old-sub",
-            email = "old@gmail.com", accessToken = enc.encrypt("a"), refreshToken = enc.encrypt("r"),
-            tokenExpiresAt = Instant.now(), scopes = listOf("calendar"),
-        ).also { it.id = UUID.randomUUID() }
+        val prior =
+            GoogleConnection(
+                familyMemberId = memberId,
+                credentialsId = credId,
+                googleAccountId = "old-sub",
+                email = "old@gmail.com",
+                accessToken = enc.encrypt("a"),
+                refreshToken = enc.encrypt("r"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
         every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", memberId)
         every { credentials.entity(credId) } returns credEntity
         every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
@@ -150,11 +156,17 @@ class ConnectionServiceTest {
         val oldMemberId = UUID.randomUUID()
         val newMemberId = UUID.randomUUID()
         val newMember = FamilyMember(name = "Ben", role = "child", color = "pink").also { it.id = newMemberId }
-        val existingConn = GoogleConnection(
-            familyMemberId = oldMemberId, credentialsId = credId, googleAccountId = "sub-9",
-            email = "x@gmail.com", accessToken = enc.encrypt("a"), refreshToken = enc.encrypt("r"),
-            tokenExpiresAt = Instant.now(), scopes = listOf("calendar"),
-        ).also { it.id = UUID.randomUUID() }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = oldMemberId,
+                credentialsId = credId,
+                googleAccountId = "sub-9",
+                email = "x@gmail.com",
+                accessToken = enc.encrypt("a"),
+                refreshToken = enc.encrypt("r"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
         every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", newMemberId)
         every { credentials.entity(credId) } returns credEntity
         every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
@@ -168,7 +180,119 @@ class ConnectionServiceTest {
         val result = service.handleCallback("code", "state")
 
         assertThat(result.memberId).isEqualTo(newMemberId)
-        verify { connections.save(match<GoogleConnection> { it.familyMemberId == newMemberId } ) }
+        verify { connections.save(match<GoogleConnection> { it.familyMemberId == newMemberId }) }
+    }
+
+    @Test
+    fun `handleCallback re-auth with explicit memberId matching the current owner skips the rehang lookup`() {
+        val memberId = UUID.randomUUID()
+        val member = FamilyMember(name = "Same Member", role = "parent", color = "blue").also { it.id = memberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = memberId,
+                credentialsId = credId,
+                googleAccountId = "sub-9",
+                email = "x@gmail.com",
+                accessToken = enc.encrypt("a"),
+                refreshToken = enc.encrypt("r"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
+        // entry.memberId explicitly equals the account's current owner: entry.memberId != null is true,
+        // but entry.memberId != existing.familyMemberId is false, so the rehang lookup must be skipped.
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", memberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("sub-9", "x@gmail.com", "X", null)
+        every { connections.findByGoogleAccountId("sub-9") } returns existingConn
+        every { members.findById(memberId) } returns Optional.of(member)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        val result = service.handleCallback("code", "state")
+
+        assertThat(result.memberId).isEqualTo(memberId)
+        verify(exactly = 0) { connections.findByFamilyMemberId(any()) }
+        verify(exactly = 0) { connections.delete(any()) }
+    }
+
+    @Test
+    fun `handleCallback rehang deletes a conflicting connection already on the target member`() {
+        val oldMemberId = UUID.randomUUID()
+        val newMemberId = UUID.randomUUID()
+        val newMember = FamilyMember(name = "Ben", role = "child", color = "pink").also { it.id = newMemberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = oldMemberId,
+                credentialsId = credId,
+                googleAccountId = "sub-9",
+                email = "x@gmail.com",
+                accessToken = enc.encrypt("a"),
+                refreshToken = enc.encrypt("r"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
+        val conflictConn =
+            GoogleConnection(
+                familyMemberId = newMemberId,
+                credentialsId = credId,
+                googleAccountId = "sub-other",
+                email = "other@gmail.com",
+                accessToken = enc.encrypt("a2"),
+                refreshToken = enc.encrypt("r2"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", newMemberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("sub-9", "x@gmail.com", "X", null)
+        every { connections.findByGoogleAccountId("sub-9") } returns existingConn
+        every { connections.findByFamilyMemberId(newMemberId) } returns conflictConn
+        every { members.findById(newMemberId) } returns Optional.of(newMember)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        val result = service.handleCallback("code", "state")
+
+        assertThat(result.memberId).isEqualTo(newMemberId)
+        verify { connections.delete(conflictConn) }
+        verify { connections.save(match<GoogleConnection> { it.familyMemberId == newMemberId }) }
+    }
+
+    @Test
+    fun `handleCallback rehang does not delete when the conflicting lookup returns the same connection`() {
+        val oldMemberId = UUID.randomUUID()
+        val newMemberId = UUID.randomUUID()
+        val newMember = FamilyMember(name = "Ben", role = "child", color = "pink").also { it.id = newMemberId }
+        val existingConn =
+            GoogleConnection(
+                familyMemberId = oldMemberId,
+                credentialsId = credId,
+                googleAccountId = "sub-9",
+                email = "x@gmail.com",
+                accessToken = enc.encrypt("a"),
+                refreshToken = enc.encrypt("r"),
+                tokenExpiresAt = Instant.now(),
+                scopes = listOf("calendar"),
+            ).also { it.id = UUID.randomUUID() }
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", newMemberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("sub-9", "x@gmail.com", "X", null)
+        every { connections.findByGoogleAccountId("sub-9") } returns existingConn
+        // Lookup returns the same connection instance that is being rehung (same id) -- the delete
+        // guard must not fire for it, exercising the `it.id == existing.id` outcome.
+        every { connections.findByFamilyMemberId(newMemberId) } returns existingConn
+        every { members.findById(newMemberId) } returns Optional.of(newMember)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        val result = service.handleCallback("code", "state")
+
+        assertThat(result.memberId).isEqualTo(newMemberId)
+        verify(exactly = 0) { connections.delete(any()) }
+        verify { connections.save(match<GoogleConnection> { it.familyMemberId == newMemberId }) }
     }
 
     // ─── sanitizeReturnUrl (covered via startAuthorization indirectly, and here directly via handleCallback) ──
