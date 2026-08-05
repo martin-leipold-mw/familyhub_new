@@ -14,14 +14,6 @@ vi.mock('@/features/members/useMembersQuery', () => ({
   useMembers: () => ({ members, isLoading: false, isError: false }),
 }))
 
-vi.mock('@/features/google/useCalendars', () => ({
-  useAllCalendars: () => ({
-    calendars: [{ id: 'cal-a', color: 'rgb(0, 128, 0)' }],
-    isLoading: false,
-    isError: false,
-  }),
-}))
-
 const eventsRef = { current: { events: [] as CalendarEvent[], isLoading: false, isError: false, refetch: vi.fn() } }
 vi.mock('./useCalendarEvents', async () => {
   const actual = await vi.importActual<typeof import('./useCalendarEvents')>('./useCalendarEvents')

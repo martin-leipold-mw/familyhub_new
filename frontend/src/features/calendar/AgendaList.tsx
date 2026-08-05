@@ -14,8 +14,8 @@ function eventsForDay(events: CalendarEvent[], day: Date): CalendarEvent[] {
     .sort((a, b) => (a.start?.getTime() ?? 0) - (b.start?.getTime() ?? 0))
 }
 
-export function AgendaList({ events, calendarColors, now, onEventClick }: CalendarGridProps) {
-  const colors = calendarColors
+export function AgendaList({ events, memberColors, now, onEventClick }: CalendarGridProps) {
+  const colors = memberColors
   const first = startOfDay(now)
   const days = Array.from({ length: 31 }, (_, i) => addDays(first, i))
   const grouped = days
@@ -39,7 +39,7 @@ export function AgendaList({ events, calendarColors, now, onEventClick }: Calend
           </h2>
           <ul className="flex flex-col gap-2">
             {dayEvents.map((e) => {
-              const color = colors.get(e.calendarId) ?? '#888'
+              const color = colors.get(e.memberId) ?? '#888'
               return (
                 <li key={e.id}>
                   <button

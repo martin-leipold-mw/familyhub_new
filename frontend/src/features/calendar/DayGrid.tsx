@@ -11,12 +11,12 @@ import {
 export function DayGrid({
   anchor,
   events,
-  calendarColors,
+  memberColors,
   now,
   onEventClick,
   onSlotClick,
 }: CalendarGridProps) {
-  const colors = calendarColors
+  const colors = memberColors
 
   const timed = timedForDay(events, anchor, colors)
 

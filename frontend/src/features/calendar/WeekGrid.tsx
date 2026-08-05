@@ -12,7 +12,7 @@ import type { CalendarEvent } from './useCalendarEvents'
 export interface CalendarGridProps {
   anchor: Date
   events: CalendarEvent[]
-  calendarColors: Map<string, string>
+  memberColors: Map<string, string>
   now: Date
   onEventClick: (e: CalendarEvent) => void
   onSlotClick: (date: Date) => void
@@ -25,7 +25,7 @@ export function timedForDay(
 ): DayColumnItem[] {
   return events
     .filter((e) => !e.isAllDay && e.start && isSameDayAs(e.start, day))
-    .map((event) => ({ event, colorHex: colors.get(event.calendarId) ?? '#888' }))
+    .map((event) => ({ event, colorHex: colors.get(event.memberId) ?? '#888' }))
 }
 
 export function allDayChipsForDay(
@@ -39,7 +39,7 @@ export function allDayChipsForDay(
     .map((event) => ({
       id: event.id,
       title: event.title,
-      colorHex: colors.get(event.calendarId) ?? '#888',
+      colorHex: colors.get(event.memberId) ?? '#888',
       onClick: () => onEventClick(event),
     }))
 }
@@ -47,13 +47,13 @@ export function allDayChipsForDay(
 export function WeekGrid({
   anchor,
   events,
-  calendarColors,
+  memberColors,
   now,
   onEventClick,
   onSlotClick,
 }: CalendarGridProps) {
   const days = weekDays(anchor)
-  const colors = calendarColors
+  const colors = memberColors
 
   return (
     <div>

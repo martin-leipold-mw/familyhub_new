@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMembers } from '@/features/members/useMembersQuery'
-import { useAllCalendars } from '@/features/google/useCalendars'
+import { memberColorHex } from '@/features/members/colors'
 import { CalendarHeader } from './CalendarHeader'
+import { MemberLegend } from './MemberLegend'
 import { WeekGrid } from './WeekGrid'
 import { DayGrid } from './DayGrid'
 import { AgendaList } from './AgendaList'
@@ -34,15 +35,14 @@ export function CalendarView() {
 
   const { members } = useMembers()
   const { events, isLoading, isError, refetch } = useCalendarEvents(anchor, view)
-  const { calendars } = useAllCalendars()
   const sync = useCalendarSync()
 
-  const calendarColors = new Map(calendars.map((c) => [c.id, c.color]))
+  const memberColors = new Map(members.map((m) => [m.id, memberColorHex(m.color)]))
 
   const gridProps = {
     anchor,
     events,
-    calendarColors,
+    memberColors,
     now,
     onEventClick: (event: CalendarEvent) => setDialog({ mode: 'edit', event }),
     onSlotClick: (date: Date) => setDialog({ mode: 'create', date }),
@@ -61,6 +61,8 @@ export function CalendarView() {
         isSyncing={sync.isSyncing}
         onOpenSettings={() => navigate('/settings')}
       />
+
+      <MemberLegend members={members} />
 
       {(isError || sync.isError) && (
         <div className="mx-4 mb-2 flex items-center gap-3 rounded-xl bg-danger-weak p-3">

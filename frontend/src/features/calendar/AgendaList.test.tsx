@@ -5,7 +5,7 @@ import type { CalendarEvent } from './useCalendarEvents'
 
 const now = new Date('2026-07-30T09:00:00')
 
-const calendarColors = new Map<string, string>([['cal-a', 'rgb(0, 0, 255)']])
+const memberColors = new Map<string, string>([['m1', 'rgb(0, 0, 255)']])
 
 function timed(id: string, iso: string): CalendarEvent {
   return {
@@ -26,7 +26,7 @@ function timed(id: string, iso: string): CalendarEvent {
   }
 }
 
-const base = { anchor: now, calendarColors, now, onSlotClick: () => {} }
+const base = { anchor: now, memberColors, now, onSlotClick: () => {} }
 
 it('groups events by day and skips empty days', () => {
   const events = [timed('a', '2026-07-30T10:00:00'), timed('b', '2026-08-01T08:00:00')]
@@ -110,12 +110,12 @@ it('does not show a series marker for a non-recurring event', () => {
   expect(screen.queryByLabelText('Serie')).toBeNull()
 })
 
-it('falls back to a default color when the calendar is unknown', () => {
+it('falls back to a default color when the member is unknown', () => {
   const event: CalendarEvent = {
     id: 'x',
     title: 'E-x',
-    memberId: 'm1',
-    calendarId: 'unknown',
+    memberId: 'unknown',
+    calendarId: 'cal-a',
     isAllDay: false,
     start: new Date('2026-07-30T10:00:00'),
     end: null,
