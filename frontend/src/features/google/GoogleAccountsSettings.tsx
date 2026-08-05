@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Trash2, RefreshCw } from 'lucide-react'
 import { SectionCard } from '@/features/settings/SectionCard'
 import { useGoogleConnections, useDisconnectConnectionMutation } from '@/features/google/useGoogleConnections'
 import { useStartGoogleAuth } from '@/features/google/useCalendars'
+import { MemberPickerDialog } from '@/features/google/MemberPickerDialog'
 import { useMembers } from '@/features/members/useMembersQuery'
 import { MEMBER_COLORS, type MemberColor } from '@/features/members/colors'
 
@@ -10,15 +12,16 @@ export function GoogleAccountsSettings() {
   const { members } = useMembers()
   const disconnectMutation = useDisconnectConnectionMutation()
   const startAuth = useStartGoogleAuth()
+  const [picking, setPicking] = useState(false)
 
-  async function handleConnect() {
+  async function handleConnect(memberId: string) {
     // Return to the settings page after the OAuth round-trip, not the calendar start page.
-    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings' })
+    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings', memberId })
     window.location.href = authUrl
   }
 
-  async function handleReconnect() {
-    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings' })
+  async function handleReconnect(memberId: string) {
+    const authUrl = await startAuth.mutateAsync({ returnUrl: '/settings', memberId })
     window.location.href = authUrl
   }
 
@@ -43,7 +46,7 @@ export function GoogleAccountsSettings() {
   }
 
   return (
-    <SectionCard title="Google-Konten" action={{ label: 'Google-Konto verbinden', onClick: handleConnect }}>
+    <SectionCard title="Google-Konten" action={{ label: 'Google-Konto verbinden', onClick: () => setPicking(true) }}>
       {connections.length === 0 ? (
         <p className="text-muted">Noch kein Google-Konto verbunden.</p>
       ) : (
@@ -76,7 +79,7 @@ export function GoogleAccountsSettings() {
                       <span className="text-danger text-sm">Verbindung abgelaufen</span>
                       <button
                         type="button"
-                        onClick={handleReconnect}
+                        onClick={() => handleReconnect(connection.memberId)}
                         className="inline-flex items-center gap-1 rounded-xl bg-warn-weak text-warn px-3 min-h-[44px]"
                       >
                         <RefreshCw aria-hidden className="w-4 h-4" /> Neu verbinden
@@ -98,6 +101,16 @@ export function GoogleAccountsSettings() {
             )
           })}
         </ul>
+      )}
+      {picking && (
+        <MemberPickerDialog
+          members={members}
+          onSelect={(id) => {
+            setPicking(false)
+            void handleConnect(id)
+          }}
+          onCancel={() => setPicking(false)}
+        />
       )}
     </SectionCard>
   )

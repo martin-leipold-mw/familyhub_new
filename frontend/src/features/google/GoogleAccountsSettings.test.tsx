@@ -75,19 +75,29 @@ describe('GoogleAccountsSettings', () => {
     await waitFor(() => expect(disconnect).toHaveBeenCalledWith({ id: 'conn-1' }))
   })
 
-  it('+ action starts the connect redirect', async () => {
+  it('+ action opens the member picker, and choosing a member starts the connect', async () => {
     vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
     fireEvent.click(screen.getByRole('button', { name: 'Google-Konto verbinden' }))
+    expect(screen.getByRole('dialog', { name: 'Mitglied auswählen' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /Anna/ }))
     await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
-    expect(startAuth).toHaveBeenCalledWith({ returnUrl: '/settings' })
+    expect(startAuth).toHaveBeenCalledWith({ returnUrl: '/settings', memberId: 'mem-1' })
   })
 
-  it('reconnect redirects to the auth url', async () => {
+  it('reconnect passes the connection member id', async () => {
     vi.mocked(useGoogleConnections).mockReturnValue({ connections: [revoked], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
     fireEvent.click(screen.getByRole('button', { name: 'Neu verbinden' }))
-    await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
+    await waitFor(() => expect(startAuth).toHaveBeenCalledWith({ returnUrl: '/settings', memberId: 'mem-2' }))
+  })
+
+  it('cancels the member picker', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: false, isError: false } as never)
+    render(<GoogleAccountsSettings />)
+    fireEvent.click(screen.getByRole('button', { name: 'Google-Konto verbinden' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+    expect(screen.queryByRole('dialog', { name: 'Mitglied auswählen' })).not.toBeInTheDocument()
   })
 
   it('falls back to MEMBER_COLORS.blue when the linked member has an invalid color', () => {
