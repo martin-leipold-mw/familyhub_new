@@ -1,8 +1,12 @@
 package com.familyhub.google.connection
 
 import com.familyhub.google.credentials.CredentialsService
+import com.familyhub.google.credentials.GoogleCredentials
 import com.familyhub.google.crypto.EncryptionService
 import com.familyhub.google.oauth.GoogleOAuthFlow
+import com.familyhub.google.oauth.GoogleTokenSet
+import com.familyhub.google.oauth.GoogleUserInfo
+import com.familyhub.google.oauth.OAuthStateEntry
 import com.familyhub.google.oauth.OAuthStateStore
 import com.familyhub.google.oauth.PkceGenerator
 import com.familyhub.google.token.GoogleTokenProvider
@@ -89,67 +93,89 @@ class ConnectionService(
 
         val existing = connections.findByGoogleAccountId(userInfo.sub)
         val refresh = tokens.refreshToken
-        val member: FamilyMember
-        val isNew: Boolean
-        if (existing == null) {
-            if (refresh == null) {
-                throw ValidationException(
-                    "Google hat kein Refresh-Token geliefert. Bitte den Zugriff in den " +
-                        "Google-Kontoeinstellungen entfernen und erneut verbinden.",
-                )
-            }
-            val chosenMemberId = entry.memberId
-            if (chosenMemberId != null) {
-                member =
-                    members.findById(chosenMemberId).orElseThrow {
-                        ResourceNotFoundException("Mitglied nicht gefunden")
-                    }
-                // 1 member ↔ 1 Google account: replace any prior connection on this member.
-                connections.findByFamilyMemberId(chosenMemberId)?.let { connections.delete(it) }
-                isNew = false
+        val (member, isNew) =
+            if (existing == null) {
+                linkNewGoogleAccount(entry, cred, userInfo, tokens, refresh)
             } else {
-                member =
-                    members.save(
-                        FamilyMember(
-                            name = userInfo.name ?: userInfo.email, role = "parent",
-                            color = palette[(members.count() % palette.size).toInt()],
-                        ),
-                    )
-                isNew = true
+                relinkExistingConnection(existing, entry, cred, tokens, refresh) to false
             }
-            connections.save(
-                GoogleConnection(
-                    familyMemberId = member.id!!, credentialsId = cred.id, googleAccountId = userInfo.sub,
-                    email = userInfo.email, accessToken = encryption.encrypt(tokens.accessToken),
-                    refreshToken = encryption.encrypt(refresh),
-                    tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds),
-                    scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
-                ),
-            )
-        } else {
-            // Known Google account: update tokens, and rehang to the chosen member if one was picked.
-            val targetMemberId = entry.memberId ?: existing.familyMemberId
-            if (entry.memberId != null && entry.memberId != existing.familyMemberId) {
-                connections.findByFamilyMemberId(entry.memberId)?.let {
-                    if (it.id != existing.id) connections.delete(it)
-                }
-            }
-            member =
-                members.findById(targetMemberId).orElseThrow {
-                    ResourceNotFoundException("Mitglied nicht gefunden")
-                }
-            existing.familyMemberId = targetMemberId
-            existing.accessToken = encryption.encrypt(tokens.accessToken)
-            existing.tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds)
-            existing.status = "active"
-            existing.credentialsId = cred.id
-            if (refresh != null) existing.refreshToken = encryption.encrypt(refresh)
-            tokens.scope?.let { existing.scopes = it.split(" ") }
-            connections.save(existing)
-            isNew = false
-        }
         settings.setGoogleConnected(true)
         return CallbackResult(member.id!!, member.name, isNew, entry.returnUrl)
+    }
+
+    private fun linkNewGoogleAccount(
+        entry: OAuthStateEntry,
+        cred: GoogleCredentials,
+        userInfo: GoogleUserInfo,
+        tokens: GoogleTokenSet,
+        refresh: String?,
+    ): Pair<FamilyMember, Boolean> {
+        if (refresh == null) {
+            throw ValidationException(
+                "Google hat kein Refresh-Token geliefert. Bitte den Zugriff in den " +
+                    "Google-Kontoeinstellungen entfernen und erneut verbinden.",
+            )
+        }
+        val chosenMemberId = entry.memberId
+        val member: FamilyMember
+        val isNew: Boolean
+        if (chosenMemberId != null) {
+            member =
+                members.findById(chosenMemberId).orElseThrow {
+                    ResourceNotFoundException("Mitglied nicht gefunden")
+                }
+            // 1 member ↔ 1 Google account: replace any prior connection on this member.
+            connections.findByFamilyMemberId(chosenMemberId)?.let { connections.delete(it) }
+            isNew = false
+        } else {
+            member =
+                members.save(
+                    FamilyMember(
+                        name = userInfo.name ?: userInfo.email, role = "parent",
+                        color = palette[(members.count() % palette.size).toInt()],
+                    ),
+                )
+            isNew = true
+        }
+        connections.save(
+            GoogleConnection(
+                familyMemberId = member.id!!, credentialsId = cred.id, googleAccountId = userInfo.sub,
+                email = userInfo.email, accessToken = encryption.encrypt(tokens.accessToken),
+                refreshToken = encryption.encrypt(refresh),
+                tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds),
+                scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
+            ),
+        )
+        return member to isNew
+    }
+
+    // Known Google account: update tokens, and rehang to the chosen member if one was picked.
+    private fun relinkExistingConnection(
+        existing: GoogleConnection,
+        entry: OAuthStateEntry,
+        cred: GoogleCredentials,
+        tokens: GoogleTokenSet,
+        refresh: String?,
+    ): FamilyMember {
+        val targetMemberId = entry.memberId ?: existing.familyMemberId
+        if (entry.memberId != null && entry.memberId != existing.familyMemberId) {
+            connections.findByFamilyMemberId(entry.memberId)?.let {
+                if (it.id != existing.id) connections.delete(it)
+            }
+        }
+        val member =
+            members.findById(targetMemberId).orElseThrow {
+                ResourceNotFoundException("Mitglied nicht gefunden")
+            }
+        existing.familyMemberId = targetMemberId
+        existing.accessToken = encryption.encrypt(tokens.accessToken)
+        existing.tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds)
+        existing.status = "active"
+        existing.credentialsId = cred.id
+        if (refresh != null) existing.refreshToken = encryption.encrypt(refresh)
+        tokens.scope?.let { existing.scopes = it.split(" ") }
+        connections.save(existing)
+        return member
     }
 
     fun listConnections(): List<ConnectionView> =
