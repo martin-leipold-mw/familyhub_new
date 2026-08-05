@@ -52,7 +52,7 @@ class ConnectionServiceTest {
         every { credentials.entity(credId) } returns credEntity
         every { pkce.generateVerifier() } returns "verifier"
         every { pkce.challengeFor("verifier") } returns "challenge"
-        every { stateStore.create(credId, "/setup", "verifier") } returns "state-nonce"
+        every { stateStore.create(credId, "/setup", "verifier", null) } returns "state-nonce"
         every { flow.buildAuthorizationUrl("cid", credEntity.redirectUri, "state-nonce", "challenge") } returns "https://accounts.google.com/auth"
 
         val url = service.startAuthorization(credId, "/setup")
@@ -67,7 +67,7 @@ class ConnectionServiceTest {
         every { credentials.primaryOrNull() } returns credEntity
         every { pkce.generateVerifier() } returns "verifier"
         every { pkce.challengeFor("verifier") } returns "challenge"
-        every { stateStore.create(credId, "/home", "verifier") } returns "state-nonce"
+        every { stateStore.create(credId, "/home", "verifier", null) } returns "state-nonce"
         every { flow.buildAuthorizationUrl("cid", credEntity.redirectUri, "state-nonce", "challenge") } returns "https://accounts.google.com/auth2"
 
         val url = service.startAuthorization(null, "/home")
@@ -84,6 +84,93 @@ class ConnectionServiceTest {
             .isInstanceOf(ResourceNotFoundException::class.java)
     }
 
+    @Test
+    fun `startAuthorization forwards memberId into the state`() {
+        val memberId = UUID.randomUUID()
+        every { credentials.entity(credId) } returns credEntity
+        every { pkce.generateVerifier() } returns "verifier"
+        every { pkce.challengeFor("verifier") } returns "challenge"
+        every { stateStore.create(credId, "/settings", "verifier", memberId) } returns "nonce"
+        every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "https://g"
+
+        service.startAuthorization(credId, "/settings", memberId)
+
+        verify { stateStore.create(credId, "/settings", "verifier", memberId) }
+    }
+
+    @Test
+    fun `handleCallback with memberId links a new connection to the existing member`() {
+        val memberId = UUID.randomUUID()
+        val existingMember = FamilyMember(name = "Anna", role = "parent", color = "blue").also { it.id = memberId }
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", memberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("sub-1", "anna@gmail.com", "Anna Google", null)
+        every { connections.findByGoogleAccountId("sub-1") } returns null
+        every { connections.findByFamilyMemberId(memberId) } returns null
+        every { members.findById(memberId) } returns Optional.of(existingMember)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        val result = service.handleCallback("code", "state")
+
+        assertThat(result.memberId).isEqualTo(memberId)
+        assertThat(result.isNewMember).isFalse()
+        verify(exactly = 0) { members.save(any()) }
+        verify { connections.save(match<GoogleConnection> { it.familyMemberId == memberId && it.googleAccountId == "sub-1" }) }
+    }
+
+    @Test
+    fun `handleCallback with memberId replaces the members existing connection`() {
+        val memberId = UUID.randomUUID()
+        val existingMember = FamilyMember(name = "Anna", role = "parent", color = "blue").also { it.id = memberId }
+        val prior = GoogleConnection(
+            familyMemberId = memberId, credentialsId = credId, googleAccountId = "old-sub",
+            email = "old@gmail.com", accessToken = enc.encrypt("a"), refreshToken = enc.encrypt("r"),
+            tokenExpiresAt = Instant.now(), scopes = listOf("calendar"),
+        ).also { it.id = UUID.randomUUID() }
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", memberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("new-sub", "new@gmail.com", "Anna", null)
+        every { connections.findByGoogleAccountId("new-sub") } returns null
+        every { connections.findByFamilyMemberId(memberId) } returns prior
+        every { members.findById(memberId) } returns Optional.of(existingMember)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        service.handleCallback("code", "state")
+
+        verify { connections.delete(prior) }
+        verify { connections.save(match<GoogleConnection> { it.googleAccountId == "new-sub" }) }
+    }
+
+    @Test
+    fun `handleCallback rehangs a known Google account to the chosen member`() {
+        val oldMemberId = UUID.randomUUID()
+        val newMemberId = UUID.randomUUID()
+        val newMember = FamilyMember(name = "Ben", role = "child", color = "pink").also { it.id = newMemberId }
+        val existingConn = GoogleConnection(
+            familyMemberId = oldMemberId, credentialsId = credId, googleAccountId = "sub-9",
+            email = "x@gmail.com", accessToken = enc.encrypt("a"), refreshToken = enc.encrypt("r"),
+            tokenExpiresAt = Instant.now(), scopes = listOf("calendar"),
+        ).also { it.id = UUID.randomUUID() }
+        every { stateStore.consume("state") } returns OAuthStateEntry(credId, "/settings", "verifier", newMemberId)
+        every { credentials.entity(credId) } returns credEntity
+        every { flow.exchangeCode(any(), any(), any(), any(), any()) } returns
+            GoogleTokenSet("access", "refresh", 3600, "calendar")
+        every { flow.fetchUserInfo("access") } returns GoogleUserInfo("sub-9", "x@gmail.com", "X", null)
+        every { connections.findByGoogleAccountId("sub-9") } returns existingConn
+        every { connections.findByFamilyMemberId(newMemberId) } returns null
+        every { members.findById(newMemberId) } returns Optional.of(newMember)
+        every { connections.save(any<GoogleConnection>()) } answers { firstArg() }
+
+        val result = service.handleCallback("code", "state")
+
+        assertThat(result.memberId).isEqualTo(newMemberId)
+        verify { connections.save(match<GoogleConnection> { it.familyMemberId == newMemberId } ) }
+    }
+
     // ─── sanitizeReturnUrl (covered via startAuthorization indirectly, and here directly via handleCallback) ──
 
     @Test
@@ -96,7 +183,7 @@ class ConnectionServiceTest {
         every { pkce.challengeFor("v") } returns "c"
         // empty url should sanitize to "/"
         val storeSlot = slot<String>()
-        every { stateStore.create(any(), capture(storeSlot), any()) } returns "nonce"
+        every { stateStore.create(any(), capture(storeSlot), any(), any()) } returns "nonce"
         every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "url"
 
         service.startAuthorization(null, "")
@@ -109,7 +196,7 @@ class ConnectionServiceTest {
         every { pkce.generateVerifier() } returns "v"
         every { pkce.challengeFor("v") } returns "c"
         val storeSlot = slot<String>()
-        every { stateStore.create(any(), capture(storeSlot), any()) } returns "nonce"
+        every { stateStore.create(any(), capture(storeSlot), any(), any()) } returns "nonce"
         every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "url"
 
         service.startAuthorization(null, "noSlash")
@@ -122,7 +209,7 @@ class ConnectionServiceTest {
         every { pkce.generateVerifier() } returns "v"
         every { pkce.challengeFor("v") } returns "c"
         val storeSlot = slot<String>()
-        every { stateStore.create(any(), capture(storeSlot), any()) } returns "nonce"
+        every { stateStore.create(any(), capture(storeSlot), any(), any()) } returns "nonce"
         every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "url"
 
         service.startAuthorization(null, "//evil.com")
@@ -135,7 +222,7 @@ class ConnectionServiceTest {
         every { pkce.generateVerifier() } returns "v"
         every { pkce.challengeFor("v") } returns "c"
         val storeSlot = slot<String>()
-        every { stateStore.create(any(), capture(storeSlot), any()) } returns "nonce"
+        every { stateStore.create(any(), capture(storeSlot), any(), any()) } returns "nonce"
         every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "url"
 
         service.startAuthorization(null, "/foo://bar")
@@ -148,7 +235,7 @@ class ConnectionServiceTest {
         every { pkce.generateVerifier() } returns "v"
         every { pkce.challengeFor("v") } returns "c"
         val storeSlot = slot<String>()
-        every { stateStore.create(any(), capture(storeSlot), any()) } returns "nonce"
+        every { stateStore.create(any(), capture(storeSlot), any(), any()) } returns "nonce"
         every { flow.buildAuthorizationUrl(any(), any(), any(), any()) } returns "url"
 
         service.startAuthorization(null, "/setup")

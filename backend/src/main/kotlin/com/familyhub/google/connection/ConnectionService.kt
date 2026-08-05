@@ -45,6 +45,7 @@ class ConnectionService(
     fun startAuthorization(
         credentialsId: UUID?,
         returnUrl: String,
+        memberId: UUID? = null,
     ): String {
         val cred =
             if (credentialsId != null) {
@@ -56,7 +57,7 @@ class ConnectionService(
         val clientId = encryption.decrypt(cred.clientId)
         val verifier = pkce.generateVerifier()
         val safeReturn = sanitizeReturnUrl(returnUrl)
-        val state = stateStore.create(cred.id, safeReturn, verifier)
+        val state = stateStore.create(cred.id, safeReturn, verifier, memberId)
         return flow.buildAuthorizationUrl(clientId, cred.redirectUri, state, pkce.challengeFor(verifier))
     }
 
@@ -97,13 +98,25 @@ class ConnectionService(
                         "Google-Kontoeinstellungen entfernen und erneut verbinden.",
                 )
             }
-            member =
-                members.save(
-                    FamilyMember(
-                        name = userInfo.name ?: userInfo.email, role = "parent",
-                        color = palette[(members.count() % palette.size).toInt()],
-                    ),
-                )
+            val chosenMemberId = entry.memberId
+            if (chosenMemberId != null) {
+                member =
+                    members.findById(chosenMemberId).orElseThrow {
+                        ResourceNotFoundException("Mitglied nicht gefunden")
+                    }
+                // 1 member ↔ 1 Google account: replace any prior connection on this member.
+                connections.findByFamilyMemberId(chosenMemberId)?.let { connections.delete(it) }
+                isNew = false
+            } else {
+                member =
+                    members.save(
+                        FamilyMember(
+                            name = userInfo.name ?: userInfo.email, role = "parent",
+                            color = palette[(members.count() % palette.size).toInt()],
+                        ),
+                    )
+                isNew = true
+            }
             connections.save(
                 GoogleConnection(
                     familyMemberId = member.id!!, credentialsId = cred.id, googleAccountId = userInfo.sub,
@@ -113,12 +126,19 @@ class ConnectionService(
                     scopes = if (tokens.scope != null) tokens.scope.split(" ") else emptyList(), status = "active",
                 ),
             )
-            isNew = true
         } else {
+            // Known Google account: update tokens, and rehang to the chosen member if one was picked.
+            val targetMemberId = entry.memberId ?: existing.familyMemberId
+            if (entry.memberId != null && entry.memberId != existing.familyMemberId) {
+                connections.findByFamilyMemberId(entry.memberId)?.let {
+                    if (it.id != existing.id) connections.delete(it)
+                }
+            }
             member =
-                members.findById(existing.familyMemberId).orElseThrow {
+                members.findById(targetMemberId).orElseThrow {
                     ResourceNotFoundException("Mitglied nicht gefunden")
                 }
+            existing.familyMemberId = targetMemberId
             existing.accessToken = encryption.encrypt(tokens.accessToken)
             existing.tokenExpiresAt = Instant.now().plusSeconds(tokens.expiresInSeconds)
             existing.status = "active"
