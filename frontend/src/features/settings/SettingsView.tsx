@@ -1,20 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { MemberResponse } from '@/api/generated/model'
-import { MemberGrid } from '@/features/members/MemberGrid'
-import { AddMemberDialog } from '@/features/members/AddMemberDialog'
-import { EditMemberDialog } from '@/features/members/EditMemberDialog'
-import { useMembers } from '@/features/members/useMembersQuery'
-import { ChangePinDialog } from './ChangePinDialog'
-import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
-import { CalendarManagement } from '@/features/google/CalendarManagement'
 import { PinGate } from '@/features/pin/PinGate'
 import { ThemeToggle } from '@/features/theme/ThemeToggle'
+import { MemberSection } from './MemberSection'
+import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
+import { CalendarSection } from '@/features/google/CalendarSection'
+import { ChangePinDialog } from './ChangePinDialog'
 
 export function SettingsView() {
-  const { members } = useMembers()
-  const [adding, setAdding] = useState(false)
-  const [editing, setEditing] = useState<MemberResponse | null>(null)
   const [changingPin, setChangingPin] = useState(false)
 
   return (
@@ -27,32 +20,20 @@ export function SettingsView() {
           </div>
           <h1 className="text-3xl font-bold text-primary">Einstellungen</h1>
 
-          <MemberGrid members={members} onSelect={setEditing} />
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="rounded-xl bg-surface-2 px-5 py-3 min-h-[44px] text-primary"
-            >
-              Mitglied hinzufügen
-            </button>
-            <button
-              type="button"
-              onClick={() => setChangingPin(true)}
-              className="rounded-xl bg-surface-2 px-5 py-3 min-h-[44px] text-primary"
-            >
-              PIN ändern
-            </button>
-          </div>
-
+          <MemberSection />
           <GoogleAccountsSettings />
-          <CalendarManagement />
+          <CalendarSection />
+
+          <button
+            type="button"
+            onClick={() => setChangingPin(true)}
+            className="self-start text-muted min-h-[44px] flex items-center"
+          >
+            PIN ändern
+          </button>
         </div>
       </div>
 
-      {adding && <AddMemberDialog onClose={() => setAdding(false)} />}
-      {editing && <EditMemberDialog member={editing} onClose={() => setEditing(null)} />}
       {changingPin && <ChangePinDialog onClose={() => setChangingPin(false)} />}
     </PinGate>
   )
