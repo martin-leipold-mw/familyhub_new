@@ -28,3 +28,16 @@ export function subscribeActivity(listener: () => void): () => void {
     activityListeners.delete(listener)
   }
 }
+
+const sessionExpiredListeners = new Set<() => void>()
+
+export function notifySessionExpired(): void {
+  sessionExpiredListeners.forEach((listener) => listener())
+}
+
+export function subscribeSessionExpired(listener: () => void): () => void {
+  sessionExpiredListeners.add(listener)
+  return () => {
+    sessionExpiredListeners.delete(listener)
+  }
+}
