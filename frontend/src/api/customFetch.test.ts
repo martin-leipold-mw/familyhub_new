@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 import { customFetch } from './customFetch'
-import { setSessionToken, subscribeActivity } from './sessionTokenStore'
+import { setSessionToken, subscribeActivity, subscribeSessionExpired } from './sessionTokenStore'
 
 function mockFetch(status = 200, body: unknown = { ok: true }, jsonRejects = false) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -94,5 +94,17 @@ describe('customFetch', () => {
   it('throws HTTP <status> when error body has no message field', async () => {
     mockFetch(404, { code: 'NOT_FOUND' })
     await expect(customFetch('/api/v1/members/999')).rejects.toThrow('HTTP 404')
+  })
+
+  it('fires the session-expired signal on 401 and preserves the status', async () => {
+    mockFetch(401, { message: 'PIN-Sitzung erforderlich' })
+    const listener = vi.fn()
+    const unsub = subscribeSessionExpired(listener)
+    await expect(customFetch('/api/v1/members')).rejects.toMatchObject({
+      message: 'PIN-Sitzung erforderlich',
+      status: 401,
+    })
+    expect(listener).toHaveBeenCalledTimes(1)
+    unsub()
   })
 })

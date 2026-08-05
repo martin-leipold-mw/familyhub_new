@@ -1,4 +1,13 @@
-import { getSessionToken, notifyActivity } from './sessionTokenStore'
+import { getSessionToken, notifyActivity, notifySessionExpired } from './sessionTokenStore'
+
+export class ApiError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+  }
+}
 
 export async function customFetch<T>(
   url: string,
@@ -18,7 +27,8 @@ export async function customFetch<T>(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: response.statusText }))
-    throw new Error(error.message ?? `HTTP ${response.status}`)
+    if (response.status === 401) notifySessionExpired()
+    throw new ApiError(error.message ?? `HTTP ${response.status}`, response.status)
   }
 
   if (response.status === 204) return { data: undefined, status: 204, headers: response.headers } as T
