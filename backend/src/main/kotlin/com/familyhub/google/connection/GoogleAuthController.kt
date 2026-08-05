@@ -19,7 +19,10 @@ class GoogleAuthController(
     override fun authorizeGoogle(
         credentialsId: UUID?,
         returnUrl: String?,
+        @Suppress("UNUSED_PARAMETER") memberId: UUID?,
     ): ResponseEntity<AuthUrlResponse> =
+        // Temporary shim: matches the regenerated 3-param GoogleAuthApi interface so the backend
+        // compiles through Phase D tasks D2/D3. Task D4 wires memberId into startAuthorization.
         ResponseEntity.ok(AuthUrlResponse(authUrl = service.startAuthorization(credentialsId, returnUrl ?: "/")))
 
     override fun googleCallback(oauthCallbackRequest: OAuthCallbackRequest): ResponseEntity<OAuthCallbackResponse> {
