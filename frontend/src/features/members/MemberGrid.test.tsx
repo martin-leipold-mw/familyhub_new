@@ -63,4 +63,13 @@ describe('MemberGrid', () => {
     // Should not error when clicking without onSelect callback
     fireEvent.click(screen.getByRole('button', { name: 'Anna' }))
   })
+
+  it('marks linked members with a verknüpft badge', () => {
+    const members = [
+      { id: '1', name: 'Anna', role: 'parent', color: 'blue', isActive: true, createdAt: 'x', updatedAt: 'x' },
+      { id: '2', name: 'Ben', role: 'child', color: 'pink', isActive: true, createdAt: 'x', updatedAt: 'x' },
+    ]
+    render(<MemberGrid members={members as never} linkedMemberIds={['1']} />)
+    expect(screen.getAllByLabelText('Mit Google verknüpft')).toHaveLength(1)
+  })
 })
