@@ -405,6 +405,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Authorization URL to redirect the user to
