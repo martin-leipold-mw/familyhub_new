@@ -13,7 +13,7 @@ export interface CalendarHeaderProps {
   onOpenSettings: () => void
 }
 
-const BTN = 'rounded-xl bg-slate-700 px-4 py-3 min-h-[44px] min-w-[44px] text-white'
+const BTN = 'rounded-xl bg-surface-2 px-4 py-3 min-h-[44px] min-w-[44px] text-primary'
 
 export function CalendarHeader({
   label,
@@ -28,7 +28,7 @@ export function CalendarHeader({
 }: CalendarHeaderProps) {
   return (
     <header className="flex flex-wrap items-center gap-3 p-4">
-      <h1 className="text-2xl font-bold text-white mr-auto">{label}</h1>
+      <h1 className="text-2xl font-bold text-primary mr-auto">{label}</h1>
 
       <div className="flex overflow-hidden rounded-xl">
         {(['day', 'week', 'agenda'] as CalendarViewMode[]).map((v) => (
@@ -37,7 +37,7 @@ export function CalendarHeader({
             type="button"
             aria-pressed={view === v}
             onClick={() => onViewChange(v)}
-            className={`px-4 py-3 min-h-[44px] text-white ${view === v ? 'bg-blue-500' : 'bg-slate-700'}`}
+            className={`px-4 py-3 min-h-[44px] ${view === v ? 'bg-accent text-white' : 'bg-surface-2 text-primary'}`}
           >
             {v === 'day' ? 'Tag' : v === 'week' ? 'Woche' : 'Agenda'}
           </button>

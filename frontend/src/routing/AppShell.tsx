@@ -11,7 +11,7 @@ import { RevokedConnectionSnackbars } from '@/features/google/RevokedConnectionS
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SnackbarProvider>
-      <div className="min-h-screen bg-slate-900">{children}</div>
+      <div className="min-h-screen bg-bg">{children}</div>
       <RevokedConnectionSnackbars />
     </SnackbarProvider>
   )

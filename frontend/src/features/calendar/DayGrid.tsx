@@ -28,7 +28,7 @@ export function DayGrid({
         <div className="w-12 shrink-0" />
         <div
           className={`flex-1 py-1 text-center text-sm ${
-            isSameDayAs(anchor, now) ? 'font-bold text-blue-400' : 'text-slate-300'
+            isSameDayAs(anchor, now) ? 'font-bold text-accent' : 'text-muted'
           }`}
         >
           {weekdayHeader(anchor)}

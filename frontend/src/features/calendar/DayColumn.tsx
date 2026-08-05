@@ -34,7 +34,7 @@ export function DayColumn({
 
   return (
     <div
-      className={`relative flex-1 border-l border-slate-700 ${isToday ? 'bg-blue-500/10' : ''}`}
+      className={`relative flex-1 border-l border-subtle ${isToday ? 'bg-accent-weak' : ''}`}
     >
       {/* clickable empty hour slots */}
       {HOURS.slice(0, -1).map((h, i) => (

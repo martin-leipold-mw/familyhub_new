@@ -71,8 +71,8 @@ describe('DayGrid', () => {
   it('does not bold the weekday header when anchor is not today', () => {
     render(<DayGrid anchor={new Date(2026, 6, 21, 12)} events={[]} calendarColors={calendarColors} now={new Date(2026, 6, 22, 12)} onEventClick={vi.fn()} onSlotClick={vi.fn()} />)
     const header = screen.getByText(/Di 21/)
-    expect(header).toHaveClass('text-slate-300')
+    expect(header).toHaveClass('text-muted')
     expect(header).not.toHaveClass('font-bold')
-    expect(header).not.toHaveClass('text-blue-400')
+    expect(header).not.toHaveClass('text-accent')
   })
 })

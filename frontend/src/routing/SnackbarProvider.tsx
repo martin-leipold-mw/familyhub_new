@@ -38,14 +38,14 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
           <div
             key={snackbar.id}
             role="alert"
-            className="pointer-events-auto flex w-full max-w-xl items-center gap-3 rounded-xl bg-slate-800 px-4 py-3 text-lg text-white shadow-lg"
+            className="pointer-events-auto flex w-full max-w-xl items-center gap-3 rounded-xl bg-surface px-4 py-3 text-lg text-primary shadow-lg"
           >
             <span className="flex-1">{snackbar.message}</span>
             {snackbar.action && (
               <button
                 type="button"
                 onClick={snackbar.action.onClick}
-                className="min-h-[44px] rounded-xl bg-amber-500 px-4 py-2 font-semibold text-slate-900"
+                className="min-h-[44px] rounded-xl bg-warn-weak px-4 py-2 font-semibold text-warn"
               >
                 {snackbar.action.label}
               </button>
@@ -54,7 +54,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
               type="button"
               aria-label="Schließen"
               onClick={() => dismiss(snackbar.id)}
-              className="min-h-[44px] min-w-[44px] rounded-xl px-3 py-2 text-2xl text-slate-300"
+              className="min-h-[44px] min-w-[44px] rounded-xl px-3 py-2 text-2xl text-muted"
             >
               ×
             </button>

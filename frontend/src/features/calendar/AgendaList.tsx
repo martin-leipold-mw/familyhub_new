@@ -23,7 +23,7 @@ export function AgendaList({ events, calendarColors, now, onEventClick }: Calend
     .filter((g) => g.dayEvents.length > 0)
 
   if (grouped.length === 0) {
-    return <p className="px-4 py-8 text-slate-400">Keine Termine in den nächsten 30 Tagen.</p>
+    return <p className="px-4 py-8 text-muted">Keine Termine in den nächsten 30 Tagen.</p>
   }
 
   return (
@@ -32,7 +32,7 @@ export function AgendaList({ events, calendarColors, now, onEventClick }: Calend
         <section key={day.toISOString()}>
           <h2
             className={`px-2 py-2 text-lg font-bold ${
-              isSameDay(day, now) ? 'text-blue-400' : 'text-slate-300'
+              isSameDay(day, now) ? 'text-accent' : 'text-muted'
             }`}
           >
             {format(day, 'EEEE, d. MMMM', { locale: de })}
@@ -45,13 +45,13 @@ export function AgendaList({ events, calendarColors, now, onEventClick }: Calend
                   <button
                     type="button"
                     onClick={() => onEventClick(e)}
-                    className="flex w-full items-center gap-3 rounded-xl bg-slate-800 px-3 py-3 min-h-[44px] text-left"
+                    className="flex w-full items-center gap-3 rounded-xl bg-surface px-3 py-3 min-h-[44px] text-left"
                   >
                     <span className="h-8 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-                    <span className="w-28 shrink-0 text-slate-300">
+                    <span className="w-28 shrink-0 text-muted">
                       {e.isAllDay ? 'Ganztägig' : formatTime(e.start as Date)}
                     </span>
-                    <span className="truncate font-medium text-white">
+                    <span className="truncate font-medium text-primary">
                       {e.recurringEventId != null && (
                         <span aria-label="Serie" className="mr-1">
                           🔁

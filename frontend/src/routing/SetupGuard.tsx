@@ -5,8 +5,8 @@ import { useGetSetupStatus } from '@/api/generated/endpoints/familyHubAPI'
 function FullScreen({ children, tone }: { children: ReactNode; tone: 'info' | 'error' }) {
   return (
     <div
-      className={`flex items-center justify-center min-h-screen bg-slate-900 ${
-        tone === 'error' ? 'text-red-400' : 'text-white'
+      className={`flex items-center justify-center min-h-screen bg-bg ${
+        tone === 'error' ? 'text-danger' : 'text-primary'
       }`}
     >
       <p className="text-xl">{children}</p>

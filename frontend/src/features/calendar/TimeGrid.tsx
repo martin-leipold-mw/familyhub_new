@@ -8,7 +8,7 @@ export function TimeGrid({ children }: { children: ReactNode }) {
         {HOURS.map((h) => (
           <div
             key={h}
-            className="relative text-right text-xs text-slate-400 pr-1"
+            className="relative text-right text-xs text-muted pr-1"
             style={{ height: HOUR_PX }}
           >
             <span className="absolute -top-2 right-1">{String(h).padStart(2, '0')}</span>
@@ -20,7 +20,7 @@ export function TimeGrid({ children }: { children: ReactNode }) {
           {HOURS.map((h, i) => (
             <div
               key={h}
-              className="absolute left-0 right-0 border-t border-slate-700"
+              className="absolute left-0 right-0 border-t border-subtle"
               style={{ top: i * HOUR_PX }}
             />
           ))}

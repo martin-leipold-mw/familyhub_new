@@ -12,13 +12,13 @@ const members: MemberResponse[] = [
 describe('MemberSelect', () => {
   it('outlines the selected member and not the others', () => {
     render(<MemberSelect members={members} value="m1" onChange={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Anna' })).toHaveStyle({ outline: '3px solid white' })
-    expect(screen.getByRole('button', { name: 'Papa' })).toHaveStyle({ outline: 'none' })
+    expect(screen.getByRole('button', { name: 'Anna' })).toHaveClass('ring-accent')
+    expect(screen.getByRole('button', { name: 'Papa' })).not.toHaveClass('ring-accent')
   })
 
   it('marks no member as outlined when nothing is selected', () => {
     render(<MemberSelect members={members} value={null} onChange={vi.fn()} />)
-    expect(screen.getByRole('button', { name: 'Anna' })).toHaveStyle({ outline: 'none' })
+    expect(screen.getByRole('button', { name: 'Anna' })).not.toHaveClass('ring-accent')
   })
 
   it('fires onChange with the clicked member id', async () => {

@@ -132,10 +132,10 @@ export function EventDialog({
       aria-label={editing ? 'Termin bearbeiten' : 'Termin anlegen'}
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4"
     >
-      <form onSubmit={submit} className="my-8 w-full max-w-lg rounded-2xl bg-slate-800 p-6 flex flex-col gap-4">
-        <h2 className="text-xl font-bold text-white">{editing ? 'Termin bearbeiten' : 'Termin anlegen'}</h2>
+      <form onSubmit={submit} className="my-8 w-full max-w-lg rounded-2xl bg-surface p-6 flex flex-col gap-4">
+        <h2 className="text-xl font-bold text-primary">{editing ? 'Termin bearbeiten' : 'Termin anlegen'}</h2>
 
-        <label className="flex flex-col gap-1 text-white">
+        <label className="flex flex-col gap-1 text-primary">
           Titel
           <input
             aria-label="Titel"
@@ -147,12 +147,12 @@ export function EventDialog({
 
         <MemberSelect members={members} value={memberId} onChange={setMemberId} />
 
-        <label className="flex items-center gap-2 text-white min-h-[44px]">
+        <label className="flex items-center gap-2 text-primary min-h-[44px]">
           <input type="checkbox" checked={isAllDay} onChange={(e) => setIsAllDay(e.target.checked)} />
           Ganztägig
         </label>
 
-        <label className="flex flex-col gap-1 text-white">
+        <label className="flex flex-col gap-1 text-primary">
           Datum
           <input
             type="date"
@@ -165,7 +165,7 @@ export function EventDialog({
 
         {!isAllDay && (
           <div className="flex gap-4">
-            <label className="flex flex-1 flex-col gap-1 text-white">
+            <label className="flex flex-1 flex-col gap-1 text-primary">
               Von
               <input
                 type="time"
@@ -175,7 +175,7 @@ export function EventDialog({
                 onChange={(e) => setStartTime(e.target.value)}
               />
             </label>
-            <label className="flex flex-1 flex-col gap-1 text-white">
+            <label className="flex flex-1 flex-col gap-1 text-primary">
               Bis
               <input
                 type="time"
@@ -188,7 +188,7 @@ export function EventDialog({
           </div>
         )}
 
-        <label className="flex flex-col gap-1 text-white">
+        <label className="flex flex-col gap-1 text-primary">
           Ort (optional)
           <input
             aria-label="Ort (optional)"
@@ -198,7 +198,7 @@ export function EventDialog({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-white">
+        <label className="flex flex-col gap-1 text-primary">
           Beschreibung (optional)
           <textarea
             aria-label="Beschreibung (optional)"
@@ -208,7 +208,7 @@ export function EventDialog({
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-white">
+        <label className="flex flex-col gap-1 text-primary">
           Erinnerung
           <select
             aria-label="Erinnerung"
@@ -233,7 +233,7 @@ export function EventDialog({
         )}
 
         {editing && isRecurringInstance && (
-          <fieldset className="flex flex-col gap-2 text-white">
+          <fieldset className="flex flex-col gap-2 text-primary">
             <legend>Serie</legend>
             <label className="flex items-center gap-2 min-h-[44px]">
               <input
@@ -264,14 +264,14 @@ export function EventDialog({
           </fieldset>
         )}
 
-        {error && <p className="text-red-400 text-sm">{error}</p>}
+        {error && <p className="text-danger text-sm">{error}</p>}
 
         <div className="flex flex-wrap gap-3 justify-end">
           {editing && !confirmDelete && (
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="mr-auto rounded-xl bg-red-700 px-4 py-3 min-h-[44px] text-white"
+              className="mr-auto rounded-xl bg-danger px-4 py-3 min-h-[44px] text-white"
             >
               Löschen
             </button>
@@ -280,7 +280,7 @@ export function EventDialog({
             <button
               type="button"
               onClick={doDelete}
-              className="mr-auto rounded-xl bg-red-600 px-4 py-3 min-h-[44px] text-white"
+              className="mr-auto rounded-xl bg-danger px-4 py-3 min-h-[44px] text-white"
             >
               Wirklich löschen
             </button>
@@ -288,14 +288,14 @@ export function EventDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-slate-600 px-4 py-3 min-h-[44px] text-white"
+            className="rounded-xl bg-surface-2 px-4 py-3 min-h-[44px] text-primary"
           >
             Abbrechen
           </button>
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-xl bg-blue-500 px-4 py-3 min-h-[44px] text-white disabled:opacity-50"
+            className="rounded-xl bg-accent px-4 py-3 min-h-[44px] text-white disabled:opacity-50"
           >
             Speichern
           </button>

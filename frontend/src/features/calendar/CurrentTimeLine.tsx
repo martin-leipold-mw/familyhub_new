@@ -6,7 +6,7 @@ export function CurrentTimeLine({ now }: { now: Date }) {
   return (
     <div
       data-testid="current-time-line"
-      className="pointer-events-none absolute left-0 right-0 z-10 h-0.5 bg-red-500"
+      className="pointer-events-none absolute left-0 right-0 z-10 h-0.5 bg-danger"
       style={{ top }}
     />
   )

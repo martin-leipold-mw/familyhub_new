@@ -7,8 +7,8 @@ export interface AllDayChip {
 
 export function AllDayRow({ columns }: { columns: AllDayChip[][] }) {
   return (
-    <div className="flex border-b border-slate-700">
-      <div className="w-12 shrink-0 py-1 text-right text-xs text-slate-400 pr-1">Ganztag</div>
+    <div className="flex border-b border-subtle">
+      <div className="w-12 shrink-0 py-1 text-right text-xs text-muted pr-1">Ganztag</div>
       <div className="flex flex-1">
         {columns.map((chips, i) => (
           <div key={i} className="flex flex-1 flex-col gap-1 p-1">

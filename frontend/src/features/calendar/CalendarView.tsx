@@ -49,7 +49,7 @@ export function CalendarView() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-bg">
       <CalendarHeader
         label={periodLabel(anchor)}
         view={view}
@@ -63,19 +63,19 @@ export function CalendarView() {
       />
 
       {(isError || sync.isError) && (
-        <div className="mx-4 mb-2 flex items-center gap-3 rounded-xl bg-red-900/60 p-3">
-          <span className="text-red-200">Fehler beim Laden der Termine</span>
+        <div className="mx-4 mb-2 flex items-center gap-3 rounded-xl bg-danger-weak p-3">
+          <span className="text-danger">Fehler beim Laden der Termine</span>
           <button
             type="button"
             onClick={() => refetch()}
-            className="rounded-lg bg-red-700 px-3 py-2 min-h-[44px] text-white"
+            className="rounded-lg bg-danger px-3 py-2 min-h-[44px] text-white"
           >
             Erneut versuchen
           </button>
         </div>
       )}
 
-      {isLoading && <p className="px-4 py-2 text-slate-400">Termine werden geladen …</p>}
+      {isLoading && <p className="px-4 py-2 text-muted">Termine werden geladen …</p>}
 
       <div className="overflow-y-auto px-2 pb-4">
         {view === 'week' && <WeekGrid {...gridProps} />}

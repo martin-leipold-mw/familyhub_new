@@ -49,7 +49,7 @@ export function RecurrenceFields({
   }
 
   return (
-    <div className="flex flex-col gap-3 text-white">
+    <div className="flex flex-col gap-3 text-primary">
       <label className="flex flex-col gap-1">
         Wiederholung
         <select
@@ -91,10 +91,9 @@ export function RecurrenceFields({
                     aria-label={WEEKDAY_LABELS[day]}
                     aria-pressed={state.weekdays.includes(day)}
                     onClick={() => toggleWeekday(day)}
-                    className="rounded-full px-3 py-2 min-h-[44px] min-w-[44px] font-medium"
-                    style={{
-                      backgroundColor: state.weekdays.includes(day) ? '#3b82f6' : '#475569',
-                    }}
+                    className={`rounded-full px-3 py-2 min-h-[44px] min-w-[44px] font-medium ${
+                      state.weekdays.includes(day) ? 'bg-accent text-white' : 'bg-surface-2 text-primary'
+                    }`}
                   >
                     {WEEKDAY_LABELS[day]}
                   </button>

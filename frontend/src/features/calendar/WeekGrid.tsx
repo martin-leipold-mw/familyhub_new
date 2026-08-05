@@ -63,7 +63,7 @@ export function WeekGrid({
           <div
             key={day.toISOString()}
             className={`flex-1 py-1 text-center text-sm ${
-              isSameDayAs(day, now) ? 'font-bold text-blue-400' : 'text-slate-300'
+              isSameDayAs(day, now) ? 'font-bold text-accent' : 'text-muted'
             }`}
           >
             {weekdayHeader(day)}
