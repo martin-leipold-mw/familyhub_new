@@ -5,230 +5,88 @@ vi.mock('@/features/google/useGoogleConnections', () => ({
   useGoogleConnections: vi.fn(),
   useDisconnectConnectionMutation: vi.fn(),
 }))
-
-vi.mock('@/features/google/useCalendars', () => ({
-  useStartGoogleAuth: vi.fn(),
-}))
-
-let hasPinSession = false
-vi.mock('@/features/pin/PinSessionContext', () => ({
-  usePinSession: () => ({ hasPinSession, setSession: vi.fn(), sessionToken: null, clearSession: vi.fn() }),
-}))
+vi.mock('@/features/google/useCalendars', () => ({ useStartGoogleAuth: vi.fn() }))
+vi.mock('@/features/members/useMembersQuery', () => ({ useMembers: vi.fn() }))
 
 import { useGoogleConnections, useDisconnectConnectionMutation } from '@/features/google/useGoogleConnections'
 import { useStartGoogleAuth } from '@/features/google/useCalendars'
+import { useMembers } from '@/features/members/useMembersQuery'
 import { GoogleAccountsSettings } from './GoogleAccountsSettings'
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/auth?state=x'
-
-const activeConnection = {
-  connectionId: 'conn-1',
-  memberId: 'mem-1',
-  email: 'anna@gmail.com',
-  name: 'Anna',
-  status: 'ACTIVE',
-  lastSyncedAt: '2024-01-15T10:00:00Z',
-  scopes: ['calendar'],
-}
-
-const revokedConnection = {
-  connectionId: 'conn-2',
-  memberId: 'mem-2',
-  email: 'bob@gmail.com',
-  name: 'Bob',
-  status: 'REVOKED',
-  lastSyncedAt: null,
-  scopes: [],
-}
+// `member` has an avatarUrl so the active row exercises the <img> branch; the
+// revoked row's memberId (mem-2) has no matching member, exercising the <span>
+// initial-letter branch. Together they cover both sides of `member?.avatarUrl`.
+const member = { id: 'mem-1', name: 'Anna', role: 'parent', color: 'blue', avatarUrl: 'http://x/a.png', isActive: true, createdAt: 'x', updatedAt: 'x' }
+const active = { connectionId: 'conn-1', memberId: 'mem-1', email: 'anna@gmail.com', name: 'Anna', status: 'ACTIVE', lastSyncedAt: null, scopes: [] }
+const revoked = { connectionId: 'conn-2', memberId: 'mem-2', email: 'bob@gmail.com', name: 'Bob', status: 'REVOKED', lastSyncedAt: null, scopes: [] }
 
 describe('GoogleAccountsSettings', () => {
-  const disconnectMutateAsync = vi.fn()
-  const startAuthMutateAsync = vi.fn()
+  const disconnect = vi.fn()
+  const startAuth = vi.fn()
 
   beforeEach(() => {
-    hasPinSession = false
     vi.clearAllMocks()
-
-    vi.mocked(useDisconnectConnectionMutation).mockReturnValue({
-      mutateAsync: disconnectMutateAsync,
-    } as never)
-
-    vi.mocked(useStartGoogleAuth).mockReturnValue({
-      mutateAsync: startAuthMutateAsync,
-    } as never)
-
-    startAuthMutateAsync.mockResolvedValue(AUTH_URL)
-    disconnectMutateAsync.mockResolvedValue(undefined)
-
-    Object.defineProperty(window, 'location', {
-      value: { href: '' },
-      writable: true,
-    })
+    vi.mocked(useMembers).mockReturnValue({ members: [member], isLoading: false, isError: false } as never)
+    vi.mocked(useDisconnectConnectionMutation).mockReturnValue({ mutateAsync: disconnect } as never)
+    vi.mocked(useStartGoogleAuth).mockReturnValue({ mutateAsync: startAuth } as never)
+    startAuth.mockResolvedValue(AUTH_URL)
+    disconnect.mockResolvedValue(undefined)
+    Object.defineProperty(window, 'location', { value: { href: '' }, writable: true })
   })
 
-  it('shows loading state when isLoading is true', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: true,
-      isError: false,
-    })
+  it('shows loading', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: true, isError: false } as never)
     render(<GoogleAccountsSettings />)
     expect(screen.getByText('Wird geladen…')).toBeInTheDocument()
   })
 
-  it('shows error state when isError is true', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: false,
-      isError: true,
-    })
+  it('shows error', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: false, isError: true } as never)
     render(<GoogleAccountsSettings />)
     expect(screen.getByText('Fehler beim Laden der Konten.')).toBeInTheDocument()
   })
 
-  it('shows empty state message when there are no connections', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: false,
-      isError: false,
-    })
+  it('shows empty state', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
     expect(screen.getByText('Noch kein Google-Konto verbunden.')).toBeInTheDocument()
   })
 
-  it('shows connect button disabled when no PIN session (empty state)', () => {
-    hasPinSession = false
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: false,
-      isError: false,
-    })
+  it('shows an active connection with Verbunden and a trash button', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [active], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
-    const btn = screen.getByRole('button', { name: 'Weiteres Konto verbinden' })
-    expect(btn).toBeDisabled()
-    expect(btn).toHaveAttribute('aria-disabled', 'true')
-  })
-
-  it('shows connect button enabled when hasPinSession (empty state)', () => {
-    hasPinSession = true
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    const btn = screen.getByRole('button', { name: 'Weiteres Konto verbinden' })
-    expect(btn).not.toBeDisabled()
-    expect(btn).toHaveAttribute('aria-disabled', 'false')
-  })
-
-  it('shows "Verbunden" in green for active connection', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [activeConnection],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    expect(screen.getByText('Verbunden')).toBeInTheDocument()
-    expect(screen.getByText('Verbunden')).toHaveClass('text-green-400')
+    expect(screen.getByText('Verbunden')).toHaveClass('text-accent')
     expect(screen.getByText('Anna (anna@gmail.com)')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Anna trennen' })).toBeInTheDocument()
   })
 
-  it('shows lastSyncedAt when present on active connection', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [activeConnection],
-      isLoading: false,
-      isError: false,
-    })
+  it('shows a revoked connection with a reconnect button', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [revoked], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
-    expect(screen.getByText(`Zuletzt synchronisiert: ${activeConnection.lastSyncedAt}`)).toBeInTheDocument()
-  })
-
-  it('does not show sync date when lastSyncedAt is absent', () => {
-    const connectionNoSync = { ...activeConnection, lastSyncedAt: null }
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [connectionNoSync],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    expect(screen.queryByText(/Zuletzt synchronisiert/)).not.toBeInTheDocument()
-  })
-
-  it('shows revoked warning text and "Neu verbinden" button for revoked connection', () => {
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [revokedConnection],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    expect(screen.getByText('Verbindung abgelaufen — bitte neu verbinden')).toBeInTheDocument()
+    expect(screen.getByText('Verbindung abgelaufen')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Neu verbinden' })).toBeInTheDocument()
   })
 
-  it('disables buttons and shows hint when hasPinSession is false', () => {
-    hasPinSession = false
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [activeConnection],
-      isLoading: false,
-      isError: false,
-    })
+  it('trash button triggers disconnect', async () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [active], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
-    expect(screen.getByRole('button', { name: 'Trennen' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Weiteres Konto verbinden' })).toBeDisabled()
-    expect(screen.getByText('Melde dich mit PIN an, um Kalender zu verwalten.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Anna trennen' }))
+    await waitFor(() => expect(disconnect).toHaveBeenCalledWith({ id: 'conn-1' }))
   })
 
-  it('enables buttons and hides hint when hasPinSession is true', () => {
-    hasPinSession = true
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [activeConnection],
-      isLoading: false,
-      isError: false,
-    })
+  it('+ action starts the connect redirect', async () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
-    expect(screen.getByRole('button', { name: 'Trennen' })).not.toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Weiteres Konto verbinden' })).not.toBeDisabled()
-    expect(screen.queryByText('Melde dich mit PIN an, um Kalender zu verwalten.')).not.toBeInTheDocument()
-  })
-
-  it('calls disconnectMutation.mutateAsync with the connection id', async () => {
-    hasPinSession = true
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [activeConnection],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    fireEvent.click(screen.getByRole('button', { name: 'Trennen' }))
-    await waitFor(() =>
-      expect(disconnectMutateAsync).toHaveBeenCalledWith({ id: activeConnection.connectionId })
-    )
-  })
-
-  it('clicking "Weiteres Konto verbinden" sets window.location.href to authUrl', async () => {
-    hasPinSession = true
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [],
-      isLoading: false,
-      isError: false,
-    })
-    render(<GoogleAccountsSettings />)
-    fireEvent.click(screen.getByRole('button', { name: 'Weiteres Konto verbinden' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Google-Konto verbinden' }))
     await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
-    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/settings' })
+    expect(startAuth).toHaveBeenCalledWith({ returnUrl: '/settings' })
   })
 
-  it('clicking "Neu verbinden" on revoked connection redirects to authUrl', async () => {
-    hasPinSession = true
-    vi.mocked(useGoogleConnections).mockReturnValue({
-      connections: [revokedConnection],
-      isLoading: false,
-      isError: false,
-    })
+  it('reconnect redirects to the auth url', async () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({ connections: [revoked], isLoading: false, isError: false } as never)
     render(<GoogleAccountsSettings />)
     fireEvent.click(screen.getByRole('button', { name: 'Neu verbinden' }))
     await waitFor(() => expect(window.location.href).toBe(AUTH_URL))
-    expect(startAuthMutateAsync).toHaveBeenCalledWith({ returnUrl: '/settings' })
   })
 })

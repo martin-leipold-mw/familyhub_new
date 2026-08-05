@@ -1,12 +1,15 @@
+import { Trash2, RefreshCw } from 'lucide-react'
+import { SectionCard } from '@/features/settings/SectionCard'
 import { useGoogleConnections, useDisconnectConnectionMutation } from '@/features/google/useGoogleConnections'
 import { useStartGoogleAuth } from '@/features/google/useCalendars'
-import { usePinSession } from '@/features/pin/PinSessionContext'
+import { useMembers } from '@/features/members/useMembersQuery'
+import { MEMBER_COLORS, type MemberColor } from '@/features/members/colors'
 
 export function GoogleAccountsSettings() {
   const { connections, isLoading, isError } = useGoogleConnections()
+  const { members } = useMembers()
   const disconnectMutation = useDisconnectConnectionMutation()
   const startAuth = useStartGoogleAuth()
-  const { hasPinSession } = usePinSession()
 
   async function handleConnect() {
     // Return to the settings page after the OAuth round-trip, not the calendar start page.
@@ -25,92 +28,77 @@ export function GoogleAccountsSettings() {
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800 rounded-xl p-4">
-        <h2 className="text-xl font-semibold text-white mb-4">Google-Konten</h2>
-        <p className="text-slate-400">Wird geladen…</p>
-      </div>
+      <SectionCard title="Google-Konten">
+        <p className="text-muted">Wird geladen…</p>
+      </SectionCard>
     )
   }
 
   if (isError) {
     return (
-      <div className="bg-slate-800 rounded-xl p-4">
-        <h2 className="text-xl font-semibold text-white mb-4">Google-Konten</h2>
-        <p className="text-red-400">Fehler beim Laden der Konten.</p>
-      </div>
+      <SectionCard title="Google-Konten">
+        <p className="text-danger">Fehler beim Laden der Konten.</p>
+      </SectionCard>
     )
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl p-4">
-      <h2 className="text-xl font-semibold text-white mb-4">Google-Konten</h2>
-
+    <SectionCard title="Google-Konten" action={{ label: 'Google-Konto verbinden', onClick: handleConnect }}>
       {connections.length === 0 ? (
-        <p className="text-slate-400 mb-4">Noch kein Google-Konto verbunden.</p>
+        <p className="text-muted">Noch kein Google-Konto verbunden.</p>
       ) : (
-        <ul className="flex flex-col gap-4 mb-4">
+        <ul className="flex flex-col gap-3">
           {connections.map((connection) => {
             const isRevoked = connection.status.toLowerCase() === 'revoked'
+            const member = members.find((m) => m.id === connection.memberId)
+            const ring = member
+              ? MEMBER_COLORS[member.color as MemberColor] ?? MEMBER_COLORS.blue
+              : MEMBER_COLORS.blue
+            const initial = (member?.name ?? connection.name).charAt(0).toUpperCase()
             return (
-              <li key={connection.connectionId} className="flex flex-col gap-2">
-                <span className="text-white font-medium">
-                  {connection.name} ({connection.email})
+              <li key={connection.connectionId} className="flex items-center gap-3">
+                <span
+                  className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-surface-2 flex-shrink-0"
+                  style={{ boxShadow: `0 0 0 3px ${ring}` }}
+                >
+                  {member?.avatarUrl ? (
+                    <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-primary">{initial}</span>
+                  )}
                 </span>
-                {isRevoked ? (
-                  <>
-                    <span className="text-red-400 text-sm">
-                      Verbindung abgelaufen — bitte neu verbinden
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleReconnect}
-                      disabled={!hasPinSession}
-                      aria-disabled={!hasPinSession}
-                      className="self-start rounded-xl bg-yellow-600 px-4 py-2 min-h-[44px] text-white disabled:opacity-50"
-                    >
-                      Neu verbinden
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-green-400 text-sm">Verbunden</span>
-                    {connection.lastSyncedAt && (
-                      <span className="text-slate-400 text-sm">
-                        Zuletzt synchronisiert: {connection.lastSyncedAt}
-                      </span>
-                    )}
-                  </>
-                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-primary font-medium truncate">
+                    {connection.name} ({connection.email})
+                  </p>
+                  {isRevoked ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-danger text-sm">Verbindung abgelaufen</span>
+                      <button
+                        type="button"
+                        onClick={handleReconnect}
+                        className="inline-flex items-center gap-1 rounded-xl bg-warn-weak text-warn px-3 min-h-[44px]"
+                      >
+                        <RefreshCw aria-hidden className="w-4 h-4" /> Neu verbinden
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-accent text-sm">Verbunden</span>
+                  )}
+                </div>
                 <button
                   type="button"
+                  aria-label={`${connection.name} trennen`}
                   onClick={() => handleDisconnect(connection.connectionId)}
-                  disabled={!hasPinSession}
-                  aria-disabled={!hasPinSession}
-                  className="self-start rounded-xl bg-red-700 px-4 py-2 min-h-[44px] text-white disabled:opacity-50"
+                  className="flex items-center justify-center rounded-xl text-danger min-h-[44px] min-w-[44px] flex-shrink-0"
                 >
-                  Trennen
+                  <Trash2 aria-hidden />
                 </button>
               </li>
             )
           })}
         </ul>
       )}
-
-      {!hasPinSession && (
-        <p className="text-slate-400 text-sm mb-4">
-          Melde dich mit PIN an, um Kalender zu verwalten.
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={handleConnect}
-        disabled={!hasPinSession}
-        aria-disabled={!hasPinSession}
-        className="rounded-xl bg-blue-500 px-5 py-3 min-h-[44px] text-white disabled:opacity-50"
-      >
-        Weiteres Konto verbinden
-      </button>
-    </div>
+    </SectionCard>
   )
 }
