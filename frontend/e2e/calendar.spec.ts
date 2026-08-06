@@ -199,7 +199,7 @@ test('create a recurring weekly event, see the series badge, then delete the who
   await expect(page.locator('[aria-label="Serie"]')).toHaveCount(0)
 })
 
-test('events are colored per calendar across two accounts, shared calendar stands out', async ({ page }) => {
+test('events are colored per assigned member across two accounts (FA-KAL-06), not by calendar color', async ({ page }) => {
   await page.route('**/api/v1/settings/setup-status', (route) =>
     route.fulfill({
       status: 200,
@@ -221,7 +221,8 @@ test('events are colored per calendar across two accounts, shared calendar stand
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
   )
 
-  // Aggregate calendar colors: Anna's personal (green), Ben's personal (blue), a shared one (amber)
+  // Aggregate calendars carry distinct `color` fields (green/blue/amber) — these are
+  // deliberate distractors: per FA-KAL-06 the UI must ignore them and color by member.
   await page.route('**/api/v1/google/calendars/all', (route) =>
     route.fulfill({
       status: 200,
@@ -264,6 +265,10 @@ test('events are colored per calendar across two accounts, shared calendar stand
   const colorOf = (loc: typeof anna) => loc.evaluate((el) => getComputedStyle(el).backgroundColor)
   const [cAnna, cBen, cShared] = await Promise.all([colorOf(anna), colorOf(ben), colorOf(shared)])
 
-  // three distinct colors; the shared one differs from both personal colors
-  expect(new Set([cAnna, cBen, cShared]).size).toBe(3)
+  // FA-KAL-06: events are colored by the assigned family member, NOT by the calendar's
+  // own color. Anna (m1) and Ben (m2) are different members → two distinct colors.
+  expect(new Set([cAnna, cBen]).size).toBe(2)
+  // The shared "Feiertag" event is assigned to m1 (Anna), so it takes Anna's member
+  // color — it must NOT pick up the calendar's amber `color` field.
+  expect(cShared).toBe(cAnna)
 })
