@@ -304,7 +304,10 @@ Kein neuer Mechanismus — alles auf Bestehendem:
 - `TaskServiceTest` — Zielliste, Fehler bei Google → kein lokaler Schreibvorgang.
 - `TaskControllerTest`, `TaskListControllerTest` — inkl. PIN-Schutz auf `selected`.
 - `TaskSyncSchedulerTest` — Reentrancy-Guard.
-- `MigrationSmokeTest` um V11 erweitert; ArchUnit-Test um das neue Package.
+- `MigrationSmokeTest` um V11 erweitert. Der ArchUnit-Test braucht **keine** Erweiterung — seine
+  Regeln greifen über Namenskonventionen (`*Controller`, `*Service`, `*Repository`) und erfassen das
+  neue Package automatisch. Er muss unverändert grün bleiben; schlägt er an, liegt eine
+  Schichtverletzung im neuen Code vor.
 
 **Frontend — die 100-%-Branch-Schwelle ist die härteste Nebenbedingung** (`branches: 100`,
 Rest 90; `src/api/generated/` ist ausgenommen). Deshalb hier festgeschrieben statt erst beim
