@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-Active codebase under construction. Implemented through **Sprint 3** (Google OAuth + Calendar read/write): backend (`backend/`), frontend (`frontend/`), OpenAPI contract (`api/openapi.yml`), and CI (`.github/workflows/ci.yml`) all exist. The original requirements spec (Lastenheft) now lives in `docs/concept/` — it is the source of truth for *what* to build; this file plus the code are the source of truth for *how* it is built.
+Active codebase under construction. Implemented through **Sprint 4** (calendar view, week + day) plus a settings overhaul (theme system, full-page PIN gate, section layout, member↔Google link): backend (`backend/`), frontend (`frontend/`), OpenAPI contract (`api/openapi.yml`), and CI (`.github/workflows/ci.yml`) all exist. **Sprint 5 (Tasks + Google Tasks sync) is next.** The original requirements spec (Lastenheft) now lives in `docs/concept/` — it is the source of truth for *what* to build; this file plus the code are the source of truth for *how* it is built.
 
 ## Build, test & lint commands
 
@@ -47,8 +47,8 @@ Redis: explicitly **not** used — drop it from the stack.
 ## Code layout
 
 - Backend is **package-by-feature** under `com.familyhub` (`members`, `settings`, `pin`, `google/{oauth,calendar,token,crypto,connection,sync,credentials}`, `shared/{security,health,exceptions}`). An ArchUnit test in `architecture/` enforces module boundaries.
-- Flyway migrations live in `backend/src/main/resources/db/migration/` (`V1__…` → `V8__…`). Never edit an applied migration — add a new `V{n}__…` file.
-- Frontend is feature-sliced under `frontend/src/` (`features/`, `api/`, `routing/`).
+- Flyway migrations live in `backend/src/main/resources/db/migration/` (`V1__…` → `V10__…`). Never edit an applied migration — add a new `V{n}__…` file.
+- Frontend is feature-sliced under `frontend/src/` (`features/{calendar,google,members,pin,settings,setup,theme}`, `api/`, `routing/`).
 
 ## Key architectural decisions (from concept docs)
 
@@ -83,9 +83,9 @@ Requirements are tagged with IDs like `FA-KAL-01` (functional) or `TA-BUILD-01` 
 
 1. ✅ Project scaffold, CI, DB schema, API skeleton, security model
 2. ✅ Family members, settings, PIN protection, setup wizard
-3. ✅ Google OAuth + Calendar read/write ← *current*
-4. Calendar view (week + day)
-5. Tasks + Google Tasks sync
+3. ✅ Google OAuth + Calendar read/write
+4. ✅ Calendar view (week + day) — incl. agenda list, reminders, recurring events, member colours
+5. Tasks + Google Tasks sync ← *current*
 6. Household chores: templates, rotation, completion
 7. Gamification: points, streaks, badges, leaderboard
 8. Synology Photos + slideshow (with thumbnail-sized images, never originals)

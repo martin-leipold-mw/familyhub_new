@@ -36,3 +36,6 @@ Thumbs.db
 frontend/playwright-report/
 frontend/test-results/
 .superpowers/
+
+# Scratch / debugging artefacts (HAR captures etc.)
+tmp/
