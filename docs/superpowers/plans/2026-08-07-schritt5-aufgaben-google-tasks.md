@@ -1366,7 +1366,7 @@ git commit -m "feat(tasks): sync Google task lists without deleting on partial p
 - Consumes: `GoogleConnectionRepository.findAllByStatus("active")`, `TaskSyncService.syncConnection`.
 - Produces: `TaskSyncScheduler.runScheduledSync()`, `internal val running: AtomicBoolean`.
 
-- [ ] **Step 1: Failing Test schreiben**
+- [x] **Step 1: Failing Test schreiben**
 
 `TaskSyncSchedulerTest.kt` — 1:1 nach dem Muster von `CalendarSyncSchedulerTest.kt`:
 
@@ -1386,12 +1386,12 @@ fun `releases the guard after an exception`()
 // Repository wirft → running muss danach false sein
 ```
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.sync.TaskSyncSchedulerTest"`
 Expected: FAIL — `TaskSyncScheduler` existiert nicht.
 
-- [ ] **Step 3: Scheduler implementieren**
+- [x] **Step 3: Scheduler implementieren**
 
 ```kotlin
 package com.familyhub.google.sync
@@ -1455,12 +1455,12 @@ class TaskSyncScheduler(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.sync.TaskSyncSchedulerTest"`
 Expected: PASS (4 Tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/sync/TaskSyncScheduler.kt \

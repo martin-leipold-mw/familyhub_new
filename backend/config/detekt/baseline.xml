@@ -41,6 +41,7 @@
     <ID>TooGenericExceptionCaught:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:GoogleTasksClient.kt$GoogleTasksClient$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:TaskSyncScheduler.kt$TaskSyncScheduler$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:TaskSyncService.kt$TaskSyncService$ex: Exception</ID>
     <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: NoResourceFoundException</ID>
     <ID>UnusedPrivateMember:CredentialsControllerTest.kt$CredentialsControllerTest$private fun response(id: UUID = testId)</ID>

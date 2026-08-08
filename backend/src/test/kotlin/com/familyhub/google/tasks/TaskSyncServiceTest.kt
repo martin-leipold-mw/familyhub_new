@@ -445,4 +445,34 @@ class TaskSyncServiceTest {
 
         verify(exactly = 1) { taskListRepo.findAllByConnectionIdAndIsSelectedTrue(connectionId) }
     }
+
+    @Test
+    fun `syncAll continues with the next connection when one fails`() {
+        val secondConnectionId = UUID.randomUUID()
+        val secondMemberId = UUID.randomUUID()
+        val secondConnection =
+            GoogleConnection(
+                familyMemberId = secondMemberId,
+                credentialsId = null,
+                googleAccountId = "g999",
+                email = "second@example.com",
+                accessToken = "enc_token",
+                refreshToken = "enc_refresh",
+                tokenExpiresAt = null,
+                scopes = listOf(TASKS_SCOPE),
+                status = "active",
+                lastSyncedAt = null,
+            ).also { it.id = secondConnectionId }
+
+        every { connectionRepo.findAllByStatus("active") } returns listOf(connection, secondConnection)
+        every { tasksClient.listTaskLists(connection) } throws RuntimeException("boom")
+        every { tasksClient.listTaskLists(secondConnection) } returns emptyList()
+        every { taskListRepo.findAllByConnectionId(secondConnectionId) } returns emptyList()
+        every { taskListRepo.findAllByConnectionIdAndIsSelectedTrue(secondConnectionId) } returns emptyList()
+        every { connectionRepo.save(any()) } answers { firstArg() }
+
+        service.syncAll()
+
+        verify(exactly = 1) { taskListRepo.findAllByConnectionIdAndIsSelectedTrue(secondConnectionId) }
+    }
 }

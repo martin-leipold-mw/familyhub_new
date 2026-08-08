@@ -141,7 +141,17 @@ class TaskSyncService(
 
     fun syncAll() {
         for (connection in connectionRepo.findAllByStatus("active")) {
-            syncConnection(connection)
+            try {
+                syncConnection(connection)
+            } catch (ex: Exception) {
+                log.error(
+                    "Aufgaben-Sync für Verbindung {} (Mitglied {}) fehlgeschlagen: {}",
+                    connection.id,
+                    connection.familyMemberId,
+                    ex.message,
+                    ex,
+                )
+            }
         }
     }
 }
