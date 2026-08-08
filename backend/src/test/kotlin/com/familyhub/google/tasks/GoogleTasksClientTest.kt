@@ -196,9 +196,15 @@ class GoogleTasksClientTest {
         assertThat(result.status).isEqualTo("completed")
         // Entscheidend: Titel bleibt erhalten — genau das konnte das Altsystem mit PUT nicht.
         assertThat(result.title).isEqualTo("Milch")
+        // Beweist echtes Partial-Update: der gesendete Request-Body enthält NUR das geänderte
+        // Feld (status), nicht den kompletten Task (insbesondere kein title-Feld). Andernfalls
+        // würde die obige Assertion auf result.title auch bei einem versehentlichen Full-Replace
+        // (wie beim Altsystem mit PUT) grün bleiben, weil sie nur die kanonisierte Antwort prüft.
         wm.verify(
             postRequestedFor(urlPathEqualTo("/tasks/v1/lists/list1/tasks/t1"))
-                .withHeader("X-HTTP-Method-Override", equalTo("PATCH")),
+                .withHeader("X-HTTP-Method-Override", equalTo("PATCH"))
+                .withRequestBody(matchingJsonPath("$.status", equalTo("completed")))
+                .withRequestBody(matchingJsonPath("$.title", absent())),
         )
     }
 
