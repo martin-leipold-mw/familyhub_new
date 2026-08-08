@@ -835,7 +835,7 @@ git commit -m "feat(google): request the Tasks scope during authorization"
   - `TaskMapper.toGoogleTask(title: String?, notes: String?, dueDate: LocalDate?, status: String?): GoogleTask` — setzt nur die nicht-null-Felder (Teiländerung für `patch`)
   - `TaskMapper.isDeleted(google: GoogleTask): Boolean`
 
-- [ ] **Step 1: Failing Test schreiben**
+- [x] **Step 1: Failing Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/google/tasks/TaskMapperTest.kt` — reiner Unit-Test, kein Spring, kein Docker:
 
@@ -974,12 +974,12 @@ class TaskMapperTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskMapperTest"`
 Expected: FAIL — `TaskMapper` existiert nicht.
 
-- [ ] **Step 3: Mapper implementieren**
+- [x] **Step 3: Mapper implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -1056,12 +1056,12 @@ class TaskMapper {
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskMapperTest"`
 Expected: PASS (10 Tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/tasks/TaskMapper.kt \
