@@ -28,6 +28,10 @@ tags:
     description: Google Calendar list, selection and manual sync
   - name: Events
     description: Calendar event CRUD
+  - name: GoogleTaskLists
+    description: Google Tasks list, selection and manual sync
+  - name: Tasks
+    description: Task CRUD, synced with Google Tasks
 
 paths:
   /health:
@@ -733,6 +737,149 @@ paths:
               schema:
                 $ref: "#/components/schemas/EventResponse"
 
+  /v1/google/task-lists:
+    get:
+      operationId: listTaskLists
+      summary: List Google task lists, optionally filtered by family member
+      tags: [GoogleTaskLists]
+      security: []
+      parameters:
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of task lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskListResponse"
+
+  /v1/google/task-lists/selected:
+    put:
+      operationId: saveSelectedTaskLists
+      summary: Save which task lists are selected for sync (PIN-protected)
+      tags: [GoogleTaskLists]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelectedTaskListsRequest"
+      responses:
+        "200":
+          description: Selection saved
+
+  /v1/google/task-lists/sync:
+    post:
+      operationId: syncTaskLists
+      summary: Manually trigger a task sync for a family member
+      tags: [GoogleTaskLists]
+      security: []
+      parameters:
+        - name: memberId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResultResponse"
+
+  /v1/tasks:
+    get:
+      operationId: listTasks
+      summary: List tasks; completed tasks are limited to the last 30 days
+      tags: [Tasks]
+      security: []
+      parameters:
+        - name: memberId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskResponse"
+    post:
+      operationId: createTask
+      summary: Create a task and push it to Google Tasks
+      tags: [Tasks]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+
+  /v1/tasks/{id}:
+    patch:
+      operationId: updateTask
+      summary: Partially update a task and push the change to Google Tasks
+      tags: [Tasks]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+      responses:
+        "200":
+          description: Task updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResponse"
+    delete:
+      operationId: deleteTask
+      summary: Delete a task at Google and locally
+      tags: [Tasks]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Task deleted
+
 components:
   schemas:
     HealthResponse:
@@ -1023,6 +1170,111 @@ components:
         ownerMemberId:
           type: string
           format: uuid
+
+    TaskListResponse:
+      type: object
+      required: [id, title, isSelected, isWriteTarget, memberId]
+      properties:
+        id:
+          type: string
+          description: Google task list id
+        title:
+          type: string
+        isSelected:
+          type: boolean
+        isWriteTarget:
+          type: boolean
+        memberId:
+          type: string
+          format: uuid
+
+    SelectedTaskListsRequest:
+      type: object
+      required: [memberId, taskListIds]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        taskListIds:
+          type: array
+          items:
+            type: string
+        writeTargetId:
+          type: string
+          nullable: true
+          description: Which of the selected lists new tasks are created in
+
+    TaskResponse:
+      type: object
+      required: [id, memberId, title, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum: [pending, completed]
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+        completedAt:
+          type: string
+          nullable: true
+          description: ISO-8601 timestamp
+
+    CreateTaskRequest:
+      type: object
+      required: [memberId, title]
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        priority:
+          type: string
+          nullable: true
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [pending, completed]
 
     SelectedCalendarsRequest:
       type: object

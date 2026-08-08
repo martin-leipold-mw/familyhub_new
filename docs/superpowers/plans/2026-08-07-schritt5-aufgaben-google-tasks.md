@@ -1483,7 +1483,7 @@ git commit -m "feat(tasks): add scheduled task sync with reentrancy guard"
 - Produces (Backend, generiert): Interfaces `GoogleTaskListsApi` (Tag `GoogleTaskLists`) und `TasksApi` (Tag `Tasks`); Modelle `TaskListResponse`, `SelectedTaskListsRequest`, `TaskResponse`, `CreateTaskRequest`, `UpdateTaskRequest`.
 - Produces (Frontend, generiert): `useListTaskLists`, `useSaveSelectedTaskLists`, `useSyncTaskLists`, `useListTasks`, `useCreateTask`, `useUpdateTask`, `useDeleteTask`, dazu `getListTaskListsQueryKey`, `getListTasksQueryKey`.
 
-- [ ] **Step 1: Pfade ergänzen**
+- [x] **Step 1: Pfade ergänzen**
 
 An `api/openapi.yml` unter den bestehenden Pfaden anfügen. `security: []` ist auf allen Pfaden gesetzt (der PIN-Schutz sitzt als `@RequiresPinSession` im Controller, nicht im Vertrag) — genau wie bei den Kalender-Pfaden.
 
@@ -1632,7 +1632,7 @@ An `api/openapi.yml` unter den bestehenden Pfaden anfügen. `security: []` ist a
           description: Task deleted
 ```
 
-- [ ] **Step 2: Schemata ergänzen**
+- [x] **Step 2: Schemata ergänzen**
 
 Unter `components.schemas`:
 
@@ -1745,7 +1745,7 @@ Unter `components.schemas`:
 
 `ConnectionResponse` bleibt **unverändert** — es trägt bereits `scopes: string[]`, aus dem das Frontend den fehlenden Tasks-Scope ableitet.
 
-- [ ] **Step 3: Codegen laufen lassen**
+- [x] **Step 3: Codegen laufen lassen**
 
 ```bash
 cd backend && ./gradlew openApiGenerate
@@ -1753,7 +1753,7 @@ cd ../frontend && npm run generate:api
 ```
 Expected: Beide Läufe grün; die oben genannten Interfaces und Hooks existieren.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Generierter Code ist gitignored — **nur** die Spec committen.
 
