@@ -1363,8 +1363,11 @@ git commit -m "feat(tasks): sync Google task lists without deleting on partial p
 - Test: `backend/src/test/kotlin/com/familyhub/google/sync/TaskSyncSchedulerTest.kt`
 
 **Interfaces:**
-- Consumes: `GoogleConnectionRepository.findAllByStatus("active")`, `TaskSyncService.syncConnection`.
+- Consumes: `TaskSyncService.syncAll()`.
 - Produces: `TaskSyncScheduler.runScheduledSync()`, `internal val running: AtomicBoolean`.
+
+> Ruling (applied during implementation): the scheduler calls `TaskSyncService.syncAll()` instead of
+> iterating connections itself; the per-connection loop and its error handling live in `syncAll()`.
 
 - [x] **Step 1: Failing Test schreiben**
 

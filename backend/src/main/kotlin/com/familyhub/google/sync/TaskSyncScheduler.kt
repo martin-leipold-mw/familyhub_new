@@ -33,8 +33,6 @@ class TaskSyncScheduler(
         try {
             log.info("Starte geplanten Aufgaben-Sync")
             taskSyncService.syncAll()
-        } catch (ex: Exception) {
-            log.error("Geplanter Aufgaben-Sync fehlgeschlagen: {}", ex.message, ex)
         } finally {
             running.set(false)
         }

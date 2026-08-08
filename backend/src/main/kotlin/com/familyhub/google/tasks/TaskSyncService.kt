@@ -142,7 +142,15 @@ class TaskSyncService(
     fun syncAll() {
         for (connection in connectionRepo.findAllByStatus("active")) {
             try {
-                syncConnection(connection)
+                val result = syncConnection(connection)
+                log.info(
+                    "Aufgaben synchronisiert für Verbindung {} (Mitglied {}): created={}, updated={}, deleted={}",
+                    connection.id,
+                    connection.familyMemberId,
+                    result.created,
+                    result.updated,
+                    result.deleted,
+                )
             } catch (ex: Exception) {
                 log.error(
                     "Aufgaben-Sync für Verbindung {} (Mitglied {}) fehlgeschlagen: {}",

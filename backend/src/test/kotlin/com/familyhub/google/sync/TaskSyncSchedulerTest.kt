@@ -1,12 +1,14 @@
 package com.familyhub.google.sync
 
 import com.familyhub.google.tasks.TaskSyncService
+import io.mockk.Runs
+import io.mockk.andThenJust
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -39,11 +41,17 @@ class TaskSyncSchedulerTest {
     }
 
     @Test
-    fun `releases the guard after an exception`() {
-        every { taskSyncService.syncAll() } throws RuntimeException("boom")
+    fun `releases the guard after an exception so the next run can proceed`() {
+        // syncAll() throws only once — the exception must surface uncaught (parity with
+        // CalendarSyncScheduler, which also has no outer catch), and the guard must still be
+        // released so a subsequent scheduled run is not permanently blocked.
+        every { taskSyncService.syncAll() } throws RuntimeException("boom") andThenJust Runs
+
+        assertThatThrownBy { scheduler.runScheduledSync() }
+            .isInstanceOf(RuntimeException::class.java)
 
         scheduler.runScheduledSync()
 
-        assertThat(scheduler.running.get()).isFalse()
+        verify(exactly = 2) { taskSyncService.syncAll() }
     }
 }
