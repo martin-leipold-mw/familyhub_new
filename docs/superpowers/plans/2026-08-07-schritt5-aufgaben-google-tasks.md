@@ -375,7 +375,7 @@ git commit -m "feat(tasks): add task_lists and tasks schema with entities"
   - `GoogleTasksClient.patchTask(connection, taskListId, taskId, task: GoogleTask): GoogleTask`
   - `GoogleTasksClient.deleteTask(connection, taskListId, taskId)`
 
-- [ ] **Step 1: Abhängigkeit ergänzen**
+- [x] **Step 1: Abhängigkeit ergänzen**
 
 In `backend/build.gradle.kts` direkt unter `google-api-services-calendar`:
 
@@ -388,7 +388,7 @@ Die `v1-rev…`-Version ist zum Planungszeitpunkt nicht verifizierbar (Maven Cen
 Run: `./gradlew dependencies --configuration runtimeClasspath | grep tasks`
 Expected: Die Abhängigkeit wird aufgelöst.
 
-- [ ] **Step 2: Failing Test schreiben**
+- [x] **Step 2: Failing Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/google/tasks/GoogleTasksClientTest.kt`. Aufbau exakt wie `GoogleCalendarClientTest.kt` (WireMock mit `dynamicPort()`, gemockter `GoogleTokenProvider`, `baseUrl` mit abschließendem `/`).
 
@@ -602,12 +602,12 @@ class GoogleTasksClientTest {
 }
 ```
 
-- [ ] **Step 3: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 3: Test laufen lassen — muss fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.GoogleTasksClientTest"`
 Expected: FAIL — `GoogleTasksClient` existiert nicht (Compile-Fehler).
 
-- [ ] **Step 4: Client implementieren**
+- [x] **Step 4: Client implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -730,14 +730,14 @@ class GoogleTasksClient(
 }
 ```
 
-- [ ] **Step 5: Test laufen lassen — muss grün sein**
+- [x] **Step 5: Test laufen lassen — muss grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.GoogleTasksClientTest"`
 Expected: PASS (9 Tests)
 
 Falls `patch` in WireMock nicht greift: die Tasks-SDK sendet `PATCH` als echtes HTTP-PATCH; `com.github.tomakehurst.wiremock.client.WireMock.patch` ist der passende Matcher.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/build.gradle.kts \

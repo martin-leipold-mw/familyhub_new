@@ -39,6 +39,7 @@
     <ID>ThrowsCount:StartupValidator.kt$StartupValidator$@PostConstruct fun validate()</ID>
     <ID>TooGenericExceptionCaught:CalendarSyncScheduler.kt$CalendarSyncScheduler$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:GoogleTasksClient.kt$GoogleTasksClient$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>
     <ID>UnusedParameter:GlobalExceptionHandler.kt$GlobalExceptionHandler$ex: NoResourceFoundException</ID>
     <ID>UnusedPrivateMember:CredentialsControllerTest.kt$CredentialsControllerTest$private fun response(id: UUID = testId)</ID>
@@ -48,6 +49,7 @@
     <ID>WildcardImport:GoogleCalendarClientTest.kt$import com.github.tomakehurst.wiremock.client.WireMock.*</ID>
     <ID>WildcardImport:GoogleOAuthFlowTest.kt$import com.github.tomakehurst.wiremock.client.WireMock.*</ID>
     <ID>WildcardImport:GoogleOAuthFlowTest.kt$import org.junit.jupiter.api.*</ID>
+    <ID>WildcardImport:GoogleTasksClientTest.kt$import com.github.tomakehurst.wiremock.client.WireMock.*</ID>
     <ID>WildcardImport:GoogleTokenProviderTest.kt$import io.mockk.*</ID>
     <ID>WildcardImport:GoogleTokenProviderTest.kt$import java.time.*</ID>
     <ID>WildcardImport:GoogleTokenProviderTest.kt$import org.assertj.core.api.Assertions.*</ID>
