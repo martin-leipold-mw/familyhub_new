@@ -1086,7 +1086,7 @@ git commit -m "feat(tasks): map Google tasks to entities preserving local priori
   - `TaskSyncService.syncConnection(connection): TaskSyncResult`
   - `TaskSyncService.syncAll(): Unit`
 
-- [ ] **Step 1: Failing Test schreiben**
+- [x] **Step 1: Failing Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/google/tasks/TaskSyncServiceTest.kt` — reiner MockK-Test, kein Docker. Orientiere dich an `CalendarSyncServiceTest.kt`.
 
@@ -1183,12 +1183,12 @@ fun `syncConnection deletes nothing when pagination was incomplete`() {
 
 Die Helfer `task(googleTaskId = …)`, `connectionId`, `listId` und `connection` legst du wie in `CalendarSyncServiceTest.kt` als Felder der Testklasse an.
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskSyncServiceTest"`
 Expected: FAIL — `TaskSyncService` existiert nicht.
 
-- [ ] **Step 3: Service implementieren**
+- [x] **Step 3: Service implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -1340,12 +1340,12 @@ class TaskSyncService(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskSyncServiceTest"`
 Expected: PASS (14 Tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/tasks/TaskSyncService.kt \
