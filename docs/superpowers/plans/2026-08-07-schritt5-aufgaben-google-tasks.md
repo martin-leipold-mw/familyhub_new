@@ -758,7 +758,7 @@ git commit -m "feat(tasks): add paginating Google Tasks client using PATCH"
 **Interfaces:**
 - Produces: `const val TASKS_SCOPE = "https://www.googleapis.com/auth/tasks"` als **Top-Level-Konstante im Package `com.familyhub.google.oauth`**. `TaskSyncService` (Task 5) importiert sie; das Frontend hat ihren Wert in `tasksScope.ts` (Task 15) gespiegelt.
 
-- [ ] **Step 1: Failing Test schreiben**
+- [x] **Step 1: Failing Test schreiben**
 
 In `GoogleOAuthFlowTest.kt` ergänzen:
 
@@ -772,12 +772,12 @@ fun `authorization url requests the tasks scope`() {
 
 Die exakte Kodierung hängt davon ab, wie `UriComponentsBuilder` den Scope-Parameter schreibt. Schau dir die bestehenden Scope-Assertions in dieser Testklasse an und übernimm deren Schreibweise — nutze dieselbe Form für `auth/tasks`.
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.oauth.GoogleOAuthFlowTest"`
 Expected: FAIL — der Scope fehlt in der URL.
 
-- [ ] **Step 3: Scope ergänzen**
+- [x] **Step 3: Scope ergänzen**
 
 In `GoogleOAuthFlow.kt`, oberhalb der Klasse:
 
@@ -797,17 +797,17 @@ und die Scope-Liste erweitern:
         )
 ```
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.oauth.GoogleOAuthFlowTest"`
 Expected: PASS
 
-- [ ] **Step 5: Phase A abschließen**
+- [x] **Step 5: Phase A abschließen**
 
 Run: `./gradlew check`
 Expected: PASS (ktlint, detekt, alle Tests, JaCoCo)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/oauth/GoogleOAuthFlow.kt \

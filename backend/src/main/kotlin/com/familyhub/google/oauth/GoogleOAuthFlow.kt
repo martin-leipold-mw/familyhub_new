@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
 
+const val TASKS_SCOPE = "https://www.googleapis.com/auth/tasks"
+
 data class GoogleTokenSet(val accessToken: String, val refreshToken: String?, val expiresInSeconds: Long, val scope: String?)
 
 data class GoogleUserInfo(val sub: String, val email: String, val name: String?, val picture: String?)
@@ -37,6 +39,7 @@ class GoogleOAuthFlow(
     private val scopes =
         listOf(
             "https://www.googleapis.com/auth/calendar",
+            TASKS_SCOPE,
             "https://www.googleapis.com/auth/userinfo.profile",
             "https://www.googleapis.com/auth/userinfo.email",
         )

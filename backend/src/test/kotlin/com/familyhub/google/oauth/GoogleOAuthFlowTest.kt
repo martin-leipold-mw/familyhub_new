@@ -189,6 +189,11 @@ class GoogleOAuthFlowTest {
         assertThat(u.picture).isNull()
     }
 
+    @Test fun `authorization url requests the tasks scope`() {
+        val url = flow.buildAuthorizationUrl("client-id", "http://localhost/cb", "state", "challenge")
+        assertThat(url).contains("https://www.googleapis.com/auth/tasks")
+    }
+
     @Test fun `probe maps 400 invalid_client body to CLIENT_INVALID`() {
         // Exercises the missed branch: ex.details?.error == "invalid_client" → true → CLIENT_INVALID
         // (distinct from the 401-status path which short-circuits at ex.statusCode == 401)
