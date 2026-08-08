@@ -35,6 +35,10 @@ class TaskMapperTest {
         assertThat(entity.status).isEqualTo("pending")
         assertThat(entity.completedAt).isNull()
         assertThat(entity.etag).isEqualTo("\"etag1\"")
+        // Eigener Assert für googleUpdated: der Wert unterscheidet sich bewusst von due/completed,
+        // damit ein Verdrahtungsfehler (z. B. parseInstant(google.completed) statt
+        // parseInstant(google.updated)) den Test tatsächlich zum Scheitern bringt.
+        assertThat(entity.googleUpdated).isEqualTo(Instant.parse("2026-08-07T10:00:00Z"))
     }
 
     @Test
