@@ -96,7 +96,7 @@
 - Consumes: `google_connections(id)` aus V5.
 - Produces: Entities `TaskList(connectionId, googleTaskListId, title, isSelected, isWriteTarget)` und `Task(taskListId, googleTaskId, ownerMemberId, title, notes, dueDate, status, priority, completedAt, etag, googleUpdated)`, beide mit `var id: UUID?`. Repositories `TaskListRepository` und `TaskRepository` mit den unten definierten Findern. Alle späteren Backend-Tasks bauen darauf auf.
 
-- [ ] **Step 1: Migration schreiben**
+- [x] **Step 1: Migration schreiben**
 
 `backend/src/main/resources/db/migration/V11__task_lists_and_tasks.sql`:
 
@@ -144,7 +144,7 @@ CREATE INDEX idx_tasks_status   ON tasks (status);
 
 `due_date` ist bewusst `DATE`: Google Tasks kennt keine Uhrzeit, der Zeitanteil in `due` ist laut Google-Doku bedeutungslos. Es gibt bewusst **kein** `sync_status` (könnte nur je `'synced'` sein), **kein** `position` (Googles manuelle Reihenfolge wird nicht benutzt) und **kein** denormalisiertes `google_task_list_id`.
 
-- [ ] **Step 2: Entities und Repositories schreiben**
+- [x] **Step 2: Entities und Repositories schreiben**
 
 `TaskList.kt` — exakt dem Muster von `CalendarSubscription.kt` folgen (`@PrePersist`/`@PreUpdate`, `var id: UUID?` im Body):
 
@@ -307,7 +307,7 @@ interface TaskRepository : JpaRepository<Task, UUID> {
 }
 ```
 
-- [ ] **Step 3: Persistenztest schreiben**
+- [x] **Step 3: Persistenztest schreiben**
 
 `backend/src/test/kotlin/com/familyhub/google/tasks/TaskPersistenceTest.kt`. Orientiere dich an `CalendarSubscriptionFlagsIntegrationTest.kt` für Testcontainers-Setup und das Anlegen einer `GoogleConnection` samt `FamilyMember`.
 
@@ -330,21 +330,21 @@ fun `deletes tasks when their task list is deleted`()
 // Liste + Task anlegen, Liste löschen, taskRepository.findAllByTaskListId(...) ist leer (FK CASCADE)
 ```
 
-- [ ] **Step 4: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 4: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskPersistenceTest"`
 Expected: FAIL — die Klassen existieren noch nicht bzw. die Migration ist noch nicht angewandt, falls du Step 3 vor Step 1/2 machst. Wenn du der Reihenfolge oben folgst, schreibe den Test zuerst und beobachte den Compile-Fehler.
 
-- [ ] **Step 5: `MigrationSmokeTest` um V11 erweitern**
+- [x] **Step 5: `MigrationSmokeTest` um V11 erweitern**
 
 `backend/src/test/kotlin/com/familyhub/google/MigrationSmokeTest.kt` — den bestehenden Test um Assertions ergänzen, dass die Tabellen `task_lists` und `tasks` nach der Migration existieren. Folge dem dort bereits verwendeten Stil.
 
-- [ ] **Step 6: Tests laufen lassen — müssen grün sein**
+- [x] **Step 6: Tests laufen lassen — müssen grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskPersistenceTest" --tests "com.familyhub.google.MigrationSmokeTest"`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V11__task_lists_and_tasks.sql \

@@ -22,6 +22,10 @@
     <ID>ProtectedMemberInFinalClass:GoogleCredentials.kt$GoogleCredentials$@PrePersist protected fun onCreate()</ID>
     <ID>ProtectedMemberInFinalClass:GoogleCredentials.kt$GoogleCredentials$@PreUpdate protected fun onUpdate()</ID>
     <ID>ProtectedMemberInFinalClass:Setting.kt$Setting$@PrePersist @PreUpdate protected fun onWrite()</ID>
+    <ID>ProtectedMemberInFinalClass:Task.kt$Task$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:Task.kt$Task$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:TaskList.kt$TaskList$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:TaskList.kt$TaskList$@PreUpdate protected fun onUpdate()</ID>
     <ID>ReturnCount:PinSessionInterceptor.kt$PinSessionInterceptor$override fun preHandle( request: HttpServletRequest, response: HttpServletResponse, handler: Any, ): Boolean</ID>
     <ID>SpreadOperator:Application.kt$(*args)</ID>
     <ID>SwallowedException:EventController.kt$EventController$e: DateTimeException</ID>

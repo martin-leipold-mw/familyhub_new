@@ -25,6 +25,8 @@ class MigrationSmokeTest
                 "google_connections",
                 "calendar_subscriptions",
                 "events",
+                "task_lists",
+                "tasks",
             )
             val interval =
                 jdbc.queryForObject(
