@@ -2530,7 +2530,7 @@ git commit -m "feat(tasks): add pure due-date, sort and progress helpers"
   - `useCreateTaskMutation()`, `useUpdateTaskMutation()`, `useDeleteTaskMutation()` — je mit Invalidierung von `getListTasksQueryKey()`
   - `useTaskSync(): { sync: () => Promise<void>; isSyncing: boolean; isError: boolean }`
 
-- [ ] **Step 1: `useTasks.ts` schreiben**
+- [x] **Step 1: `useTasks.ts` schreiben**
 
 Muster exakt aus `frontend/src/features/google/useCalendars.ts` übernehmen:
 
@@ -2582,7 +2582,7 @@ export function useDeleteTaskMutation() {
 }
 ```
 
-- [ ] **Step 2: Failing Test für `useTaskSync` schreiben**
+- [x] **Step 2: Failing Test für `useTaskSync` schreiben**
 
 `useTaskSync.test.tsx` — Muster aus einem bestehenden Hook-Test übernehmen; `syncTaskLists` und `useGoogleConnections` mocken. Fälle:
 
@@ -2595,21 +2595,21 @@ it('sets isError when the whole call throws')
 it('resets isSyncing when finished')
 ```
 
-- [ ] **Step 3: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 3: Test laufen lassen — muss fehlschlagen**
 
 Run: `npm run test:run -- src/features/tasks/useTaskSync.test.tsx`
 Expected: FAIL — Modul existiert nicht.
 
-- [ ] **Step 4: `useTaskSync.ts` implementieren**
+- [x] **Step 4: `useTaskSync.ts` implementieren**
 
 Struktur 1:1 aus `frontend/src/features/calendar/useCalendarSync.ts` übernehmen; statt `syncCalendars` wird `syncTaskLists` aufgerufen und statt `getListEventsQueryKey()` wird `getListTasksQueryKey()` invalidiert.
 
-- [ ] **Step 5: Test laufen lassen — muss grün sein**
+- [x] **Step 5: Test laufen lassen — muss grün sein**
 
 Run: `npm run test:run -- src/features/tasks/useTaskSync.test.tsx`
 Expected: PASS (6 Tests)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/features/tasks/useTasks.ts \
