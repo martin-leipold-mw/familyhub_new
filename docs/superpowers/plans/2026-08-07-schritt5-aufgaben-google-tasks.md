@@ -2002,7 +2002,7 @@ git commit -m "feat(tasks): expose task list selection and manual sync"
   - `TaskService.delete(id): Unit`
   - `const val COMPLETED_RETENTION_DAYS = 30L`
 
-- [ ] **Step 1: Failing Tests schreiben**
+- [x] **Step 1: Failing Tests schreiben**
 
 `TaskServiceTest.kt` (MockK):
 
@@ -2086,12 +2086,12 @@ fun `DELETE tasks returns 204`()
 fun `GET tasks passes the memberId filter through`()
 ```
 
-- [ ] **Step 2: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 2: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskServiceTest" --tests "com.familyhub.google.tasks.TaskControllerTest"`
 Expected: FAIL — Klassen existieren nicht.
 
-- [ ] **Step 3: Service implementieren**
+- [x] **Step 3: Service implementieren**
 
 Kernpunkte, die der Test oben festnagelt:
 
@@ -2232,7 +2232,7 @@ class TaskService(
 
 **Hinweis zu `completedAt`:** Google liefert den Zeitstempel beim Abhaken selbst zurück, `applyGoogleFields` übernimmt ihn. Beim Zurücksetzen auf `pending` liefert Google `completed = null`, wodurch das Feld geleert wird — der Test `update to pending clears completedAt` prüft genau das.
 
-- [ ] **Step 4: Controller implementieren**
+- [x] **Step 4: Controller implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -2308,17 +2308,17 @@ private fun TaskView.toResponse() =
 
 **Enums aus dem Codegen:** `kotlin-spring` erzeugt für `enum:`-Felder verschachtelte Enum-Klassen (`TaskResponse.Status`, `TaskResponse.Priority`) mit `.value` und `forValue(...)`. Prüfe nach `./gradlew openApiGenerate` die tatsächlich erzeugten Namen und passe die Konvertierung an — der Rest des Controllers bleibt davon unberührt.
 
-- [ ] **Step 5: Tests laufen lassen — müssen grün sein**
+- [x] **Step 5: Tests laufen lassen — müssen grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskServiceTest" --tests "com.familyhub.google.tasks.TaskControllerTest"`
 Expected: PASS (21 Tests)
 
-- [ ] **Step 6: Phase B abschließen**
+- [x] **Step 6: Phase B abschließen**
 
 Run: `./gradlew check`
 Expected: PASS. Der ArchUnit-Test muss ohne Anpassung grün sein — falls nicht, liegt eine Schichtverletzung vor (Controller greift auf ein Repository zu o. ä.); dann den Zugriff über den Service führen, **nicht** die Regel aufweichen.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/tasks/TaskService.kt \
