@@ -1287,6 +1287,7 @@ components:
           enum: [pending, completed]
         clearFields:
           type: array
+          uniqueItems: true
           description: >-
             Fields to explicitly clear (set to null). A field listed here is cleared
             regardless of its own property's value in this request. `priority` is

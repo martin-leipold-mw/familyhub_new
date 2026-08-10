@@ -95,10 +95,9 @@ describe('TaskDialog (create)', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('does not submit an empty title', async () => {
+  it('does not submit an empty title', () => {
     renderWithProviders(<TaskDialog task={null} memberId={memberId} onClose={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'Hinzufügen' })).toBeDisabled()
-    expect(createMock).not.toHaveBeenCalled()
   })
 
   it('calls onClose when cancel is pressed', async () => {
@@ -137,6 +136,12 @@ describe('TaskDialog (edit)', () => {
     expect(screen.getByLabelText('Notizen (optional)')).toHaveValue('Vorderer Garten zuerst')
   })
 
+  it('prefills Keine as the selected priority when editing a task that never had one', () => {
+    renderWithProviders(<TaskDialog task={bareTask} memberId={memberId} onClose={vi.fn()} />)
+    expect(screen.getByRole('button', { name: 'Keine' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Mittel' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
   it('shows the delete button when editing', () => {
     renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={vi.fn()} />)
     expect(screen.getByRole('button', { name: 'Löschen' })).toBeInTheDocument()
@@ -159,7 +164,7 @@ describe('TaskDialog (edit)', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('updates a task that never had optional fields without adding clearFields', async () => {
+  it('updates a task without a priority when editing one that never had it', async () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog task={bareTask} memberId={memberId} onClose={onClose} />)
     await userEvent.clear(screen.getByLabelText('Aufgabe'))
@@ -169,9 +174,9 @@ describe('TaskDialog (edit)', () => {
     const arg = updateMock.mock.calls[0][0].data
     expect(arg.notes).toBeUndefined()
     expect(arg.dueDate).toBeUndefined()
-    // priority defaults to 'medium' in the dialog even for a task that never had one —
-    // that default (not the clearing fix) is what sends a real value here.
-    expect(arg.priority).toBe('medium')
+    // The "Mittel" default only applies when creating — editing a priority-less task and
+    // saving without touching priority must not silently acquire a value.
+    expect(arg.priority).toBeUndefined()
     expect(arg.clearFields).toBeUndefined()
     expect(onClose).toHaveBeenCalled()
   })
@@ -201,10 +206,10 @@ describe('TaskDialog (edit)', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('clears priority when the active priority button is pressed again while editing', async () => {
+  it('clears priority by selecting Keine while editing a task that had one', async () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={onClose} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Hoch' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Keine' }))
     expect(screen.getByRole('button', { name: 'Hoch' })).toHaveAttribute('aria-pressed', 'false')
     await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
     await waitFor(() => expect(updateMock).toHaveBeenCalledOnce())
@@ -214,12 +219,44 @@ describe('TaskDialog (edit)', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('deletes a task', async () => {
+  it('pressing the already-selected priority button again does not clear it', async () => {
+    const onClose = vi.fn()
+    renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={onClose} />)
+    // Repressing "Hoch" (already active) must be a no-op now — clearing only happens via "Keine".
+    await userEvent.click(screen.getByRole('button', { name: 'Hoch' }))
+    expect(screen.getByRole('button', { name: 'Hoch' })).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() => expect(updateMock).toHaveBeenCalledOnce())
+    const arg = updateMock.mock.calls[0][0].data
+    expect(arg.priority).toBe('high')
+    expect(arg.clearFields).toBeUndefined()
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('does not delete on the first Löschen tap', async () => {
+    renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    expect(screen.getByRole('button', { name: 'Wirklich löschen' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Löschen' })).not.toBeInTheDocument()
+    expect(deleteMock).not.toHaveBeenCalled()
+  })
+
+  it('deletes a task after the second confirmation tap', async () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={onClose} />)
     await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Wirklich löschen' }))
     await waitFor(() => expect(deleteMock).toHaveBeenCalledWith({ id: 't1' }))
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('resets the delete confirmation when cancel is pressed', async () => {
+    renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    expect(screen.getByRole('button', { name: 'Wirklich löschen' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Abbrechen' }))
+    expect(screen.getByRole('button', { name: 'Löschen' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Wirklich löschen' })).not.toBeInTheDocument()
   })
 
   it('shows an error message when deleting fails', async () => {
@@ -227,6 +264,7 @@ describe('TaskDialog (edit)', () => {
     const onClose = vi.fn()
     renderWithProviders(<TaskDialog task={fullTask} memberId={memberId} onClose={onClose} />)
     await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Wirklich löschen' }))
     expect(await screen.findByText('Speichern fehlgeschlagen.')).toBeInTheDocument()
     expect(onClose).not.toHaveBeenCalled()
   })

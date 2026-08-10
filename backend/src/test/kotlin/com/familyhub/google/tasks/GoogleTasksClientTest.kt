@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import com.google.api.client.http.javanet.NetHttpTransport
+import com.google.api.client.util.Data
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -205,6 +206,28 @@ class GoogleTasksClientTest {
                 .withHeader("X-HTTP-Method-Override", equalTo("PATCH"))
                 .withRequestBody(matchingJsonPath("$.status", equalTo("completed")))
                 .withRequestBody(matchingJsonPath("$.title", absent())),
+        )
+    }
+
+    @Test
+    fun `patchTask serialises Data NULL_STRING as an explicit JSON null`() {
+        // TaskMapper.toGoogleTask uses Data.NULL_STRING to clear notes/dueDate via PATCH — this
+        // is the wire-level proof that the sentinel actually produces a literal JSON `null` in
+        // the request body (not just an object whose getter happens to return the sentinel, see
+        // TaskMapperTest — a plain Kotlin `null` on the same field is instead dropped entirely).
+        wm.stubFor(
+            post(urlPathEqualTo("/tasks/v1/lists/list1/tasks/t1"))
+                .withHeader("X-HTTP-Method-Override", equalTo("PATCH"))
+                .willReturn(okJson("""{"id": "t1", "title": "Milch", "status": "needsAction"}""")),
+        )
+
+        val patch = GoogleTask().also { it.notes = Data.NULL_STRING }
+        client.patchTask(connection, "list1", "t1", patch)
+
+        wm.verify(
+            postRequestedFor(urlPathEqualTo("/tasks/v1/lists/list1/tasks/t1"))
+                .withHeader("X-HTTP-Method-Override", equalTo("PATCH"))
+                .withRequestBody(equalToJson("""{"notes":null}""", true, true)),
         )
     }
 

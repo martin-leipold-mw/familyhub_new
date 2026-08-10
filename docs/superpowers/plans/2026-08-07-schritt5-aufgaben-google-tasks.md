@@ -2831,6 +2831,19 @@ Voreinstellung der Priorität beim Anlegen: `Mittel`.
 > (notes/dueDate erreichen Google via `Data.NULL_STRING`, priority bleibt lokal), und
 > `TaskDialog` befüllt `clearFields`, wenn ein zuvor gesetztes Feld geleert wird. Siehe
 > Task-13-Report für Details (Contract/Backend/Frontend, TDD-Nachweise, Testergebnisse).
+>
+> **Nachtrag (Review, zwei weitere menschliche Entscheidungen):** Die Review deckte auf, dass
+> der ursprüngliche Dialog die Voreinstellung `Mittel` auch beim *Bearbeiten* einer prioritätslosen
+> Aufgabe anwandte (ein reiner Titel-Edit hätte still `Mittel` gesetzt) — der Prosatext des Briefs
+> ("Voreinstellung … beim Anlegen") ist hier maßgeblich, nicht der unbedingte Code-Schnipsel; das
+> ist jetzt auf das Anlegen beschränkt. Außerdem wurde die einzige Löschmöglichkeit für `priority`
+> (erneutes Antippen des aktiven Buttons) durch einen menschlich verordneten vierten, sichtbaren
+> Button `Keine` ersetzt — die Doppel-Tap-Geste hatte kein Vorbild im Code (`MemberSelect` wurde
+> fälschlich als Präzedenzfall zitiert; korrigiert im Task-13-Report). Zusätzlich wurde das
+> einstufige Löschen auf den zweistufigen `Löschen` → `Wirklich löschen`-Bestätigungsablauf aus
+> `EventDialog.tsx` zurückgeführt (auch hier ist der Brief-Prosatext "damit beide Dialoge … sich
+> gleich verhalten" maßgeblich, nicht der eigene vereinfachte Code-Schnipsel des Tasks). Siehe
+> Task-13-Report, Abschnitt "Fix-Report", für TDD-Nachweise und Testergebnisse.
 
 - [x] **Step 1: Failing Test schreiben**
 

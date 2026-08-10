@@ -2,14 +2,17 @@ import { useState } from 'react'
 import type { TaskResponse } from '@/api/generated/model'
 import { useCreateTaskMutation, useUpdateTaskMutation, useDeleteTaskMutation } from './useTasks'
 
-const PRIORITIES = [
+type Priority = 'low' | 'medium' | 'high'
+type ClearField = 'notes' | 'dueDate' | 'priority'
+
+// "Keine" is a real, selectable fourth option (not a repress-to-deselect gesture) — it clears
+// the priority. value: null is what "no priority" means throughout this component.
+const PRIORITY_OPTIONS: { value: Priority | null; label: string }[] = [
   { value: 'low', label: 'Niedrig' },
   { value: 'medium', label: 'Mittel' },
   { value: 'high', label: 'Hoch' },
-] as const
-
-type Priority = (typeof PRIORITIES)[number]['value']
-type ClearField = 'notes' | 'dueDate' | 'priority'
+  { value: null, label: 'Keine' },
+]
 
 type TaskDialogProps = {
   task: TaskResponse | null
@@ -22,17 +25,24 @@ export function TaskDialog({ task, memberId, onClose }: TaskDialogProps) {
 
   const [title, setTitle] = useState(task?.title ?? '')
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '')
-  const [priority, setPriority] = useState<Priority | null>(task?.priority ?? 'medium')
+  // "Mittel" ist nur die Voreinstellung beim Anlegen — beim Bearbeiten wird immer der
+  // tatsächliche Wert der Aufgabe übernommen (auch wenn der null ist), sonst würde ein reiner
+  // Titel-Edit einer prioritätslosen Aufgabe stillschweigend "Mittel" zuweisen.
+  const [priority, setPriority] = useState<Priority | null>(task === null ? 'medium' : task.priority ?? null)
   const [notes, setNotes] = useState(task?.notes ?? '')
   const [failed, setFailed] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const createMutation = useCreateTaskMutation()
   const updateMutation = useUpdateTaskMutation()
   const deleteMutation = useDeleteTaskMutation()
   const isSaving = createMutation.isPending || updateMutation.isPending
 
-  function togglePriority(value: Priority) {
-    setPriority((current) => (current === value ? null : value))
+  function handleCancel() {
+    // Verhindert, dass ein scharf gestellter Löschen-Bestätigungszustand überlebt, falls diese
+    // Dialog-Instanz (statt neu gemountet zu werden) für eine andere Aufgabe wiederverwendet wird.
+    setConfirmDelete(false)
+    onClose()
   }
 
   async function handleSubmit() {
@@ -56,10 +66,11 @@ export function TaskDialog({ task, memberId, onClose }: TaskDialogProps) {
         })
       } else {
         // clearFields ist der einzige Weg, ein Google-gepflegtes Feld per PATCH wirklich zu
-        // löschen — ein weggelassener/undefined-Wert bedeutet sonst immer "unverändert"
-        // (siehe TaskMapper.toGoogleTask im Backend). Ein Feld landet nur dann in clearFields,
-        // wenn die Aufgabe vorher tatsächlich einen Wert hatte und dieser jetzt geleert wurde;
-        // war das Feld nie gesetzt, gibt es nichts zu löschen und Google wird nicht bemüht.
+        // löschen — ein weggelassener/undefined-Wert bedeutet sonst immer "unverändert" (siehe
+        // TaskMapper.toGoogleTask im Backend). Ein Feld landet nur dann in clearFields, wenn die
+        // Aufgabe vorher tatsächlich einen Wert hatte und dieser jetzt geleert wurde; war das
+        // Feld nie gesetzt, gibt es dort nichts zu löschen. Google wird beim Bearbeiten trotzdem
+        // immer kontaktiert, weil title (ein Pflichtfeld) hier immer mitgeschickt wird.
         const clearFields: ClearField[] = []
         if (task.notes && normalizedNotes === null) clearFields.push('notes')
         if (task.dueDate && normalizedDueDate === null) clearFields.push('dueDate')
@@ -126,12 +137,12 @@ export function TaskDialog({ task, memberId, onClose }: TaskDialogProps) {
         <fieldset className="flex flex-col gap-2 text-primary">
           <legend>Priorität</legend>
           <div className="flex gap-3">
-            {PRIORITIES.map((p) => (
+            {PRIORITY_OPTIONS.map((p) => (
               <button
-                key={p.value}
+                key={p.label}
                 type="button"
                 aria-pressed={priority === p.value}
-                onClick={() => togglePriority(p.value)}
+                onClick={() => setPriority(p.value)}
                 className={`flex-1 rounded-xl px-3 py-3 min-h-[44px] font-medium ${
                   priority === p.value ? 'bg-accent text-white' : 'bg-surface-2 text-primary'
                 }`}
@@ -156,18 +167,27 @@ export function TaskDialog({ task, memberId, onClose }: TaskDialogProps) {
         {failed && <p className="text-danger text-sm">Speichern fehlgeschlagen.</p>}
 
         <div className="flex flex-wrap gap-3 justify-end">
-          {editing && (
+          {editing && !confirmDelete && (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setConfirmDelete(true)}
               className="mr-auto rounded-xl bg-danger px-4 py-3 min-h-[44px] text-white"
             >
               Löschen
             </button>
           )}
+          {editing && confirmDelete && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="mr-auto rounded-xl bg-danger px-4 py-3 min-h-[44px] text-white"
+            >
+              Wirklich löschen
+            </button>
+          )}
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleCancel}
             className="rounded-xl bg-surface-2 px-4 py-3 min-h-[44px] text-primary"
           >
             Abbrechen
