@@ -171,6 +171,38 @@ class TaskControllerTest {
         assertThat(cmdSlot.captured.status).isNull()
     }
 
+    @Test
+    fun `PATCH tasks maps clearFields to the command's clear flags`() {
+        val cmdSlot = slot<UpdateTaskCommand>()
+        every { service.update(taskId, capture(cmdSlot)) } returns aView(title = "X")
+
+        mockMvc.patch("/api/v1/tasks/$taskId") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"clearFields": ["notes", "dueDate", "priority"]}"""
+        }.andExpect {
+            status { isOk() }
+        }
+        assertThat(cmdSlot.captured.clearNotes).isTrue()
+        assertThat(cmdSlot.captured.clearDueDate).isTrue()
+        assertThat(cmdSlot.captured.clearPriority).isTrue()
+    }
+
+    @Test
+    fun `PATCH tasks without clearFields leaves all clear flags false`() {
+        val cmdSlot = slot<UpdateTaskCommand>()
+        every { service.update(taskId, capture(cmdSlot)) } returns aView(title = "Nur Titel")
+
+        mockMvc.patch("/api/v1/tasks/$taskId") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"title": "Nur Titel"}"""
+        }.andExpect {
+            status { isOk() }
+        }
+        assertThat(cmdSlot.captured.clearNotes).isFalse()
+        assertThat(cmdSlot.captured.clearDueDate).isFalse()
+        assertThat(cmdSlot.captured.clearPriority).isFalse()
+    }
+
     // ─── DELETE /v1/tasks/{id} ──────────────────────────────────────────────
 
     @Test

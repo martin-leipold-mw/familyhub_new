@@ -1,5 +1,6 @@
 package com.familyhub.google.tasks
 
+import com.google.api.client.util.Data
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -146,6 +147,42 @@ class TaskMapperTest {
         assertThat(google.notes).isNull()
         assertThat(google.due).isNull()
         assertThat(google.status).isNull()
+    }
+
+    // ─── clearing notes/dueDate (Task 13: PATCH cannot otherwise express "clear this field") ───
+
+    @Test
+    fun `toGoogleTask sends an explicit JSON null for notes when clearNotes is set`() {
+        val google = mapper.toGoogleTask(title = null, notes = null, dueDate = null, status = null, clearNotes = true)
+
+        // Data.isNull, not a plain null-check: an unset field serialises to "absent" (unchanged),
+        // while Data.NULL_STRING serialises to a literal JSON null (clear) — that distinction is
+        // the entire point of this mechanism, so the test has to assert the sentinel, not just
+        // "notes is somehow falsy".
+        assertThat(Data.isNull(google.notes)).isTrue()
+    }
+
+    @Test
+    fun `toGoogleTask sends an explicit JSON null for dueDate when clearDueDate is set`() {
+        val google = mapper.toGoogleTask(title = null, notes = null, dueDate = null, status = null, clearDueDate = true)
+
+        assertThat(Data.isNull(google.due)).isTrue()
+    }
+
+    @Test
+    fun `toGoogleTask clearing wins over a simultaneously provided value`() {
+        val google =
+            mapper.toGoogleTask(
+                title = null,
+                notes = "wird ignoriert, weil clearNotes gewinnt",
+                dueDate = LocalDate.of(2026, 9, 1),
+                status = null,
+                clearNotes = true,
+                clearDueDate = true,
+            )
+
+        assertThat(Data.isNull(google.notes)).isTrue()
+        assertThat(Data.isNull(google.due)).isTrue()
     }
 
     @Test

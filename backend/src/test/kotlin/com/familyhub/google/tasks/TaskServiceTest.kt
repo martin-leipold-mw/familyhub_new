@@ -4,6 +4,7 @@ import com.familyhub.google.connection.GoogleConnection
 import com.familyhub.google.connection.GoogleConnectionRepository
 import com.familyhub.shared.exceptions.ResourceNotFoundException
 import com.familyhub.shared.exceptions.ValidationException
+import com.google.api.client.util.Data
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -413,6 +414,88 @@ class TaskServiceTest {
         assertThat(local.title).isEqualTo("Alt")
         assertThat(local.notes).isEqualTo("alte Notiz")
         assertThat(local.priority).isEqualTo("medium")
+    }
+
+    // ─── update — clearing fields (Task 13) ─────────────────────────────────────
+
+    @Test
+    fun `update clears notes at google when clearNotes is set`() {
+        val local = existingTask(notes = "alte Notiz")
+        stubUpdatePrereqs(local)
+        val patchSlot = slot<GoogleTask>()
+        every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, capture(patchSlot)) } returns
+            GoogleTask().setId(local.googleTaskId).setTitle(local.title).setStatus("needsAction")
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = null, status = null, clearNotes = true)
+        val result = service.update(taskId, cmd)
+
+        assertThat(Data.isNull(patchSlot.captured.notes)).isTrue()
+        assertThat(result.notes).isNull()
+    }
+
+    @Test
+    fun `update clears dueDate at google when clearDueDate is set`() {
+        val local = existingTask(dueDate = LocalDate.of(2026, 8, 15))
+        stubUpdatePrereqs(local)
+        val patchSlot = slot<GoogleTask>()
+        every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, capture(patchSlot)) } returns
+            GoogleTask().setId(local.googleTaskId).setTitle(local.title).setStatus("needsAction")
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = null, status = null, clearDueDate = true)
+        val result = service.update(taskId, cmd)
+
+        assertThat(Data.isNull(patchSlot.captured.due)).isTrue()
+        assertThat(result.dueDate).isNull()
+    }
+
+    @Test
+    fun `update clears priority locally without ever calling google`() {
+        // priority has no Google equivalent — clearing it must not touch the network at all.
+        val local = existingTask(priority = "high")
+        stubUpdatePrereqs(local)
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = null, status = null, clearPriority = true)
+        val result = service.update(taskId, cmd)
+
+        assertThat(result.priority).isNull()
+        verify(exactly = 0) { tasksClient.patchTask(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `update clearing priority wins over a simultaneously provided priority value`() {
+        val local = existingTask(priority = "high")
+        stubUpdatePrereqs(local)
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = "low", status = null, clearPriority = true)
+        val result = service.update(taskId, cmd)
+
+        assertThat(result.priority).isNull()
+    }
+
+    @Test
+    fun `update does not persist anything when google fails while clearing notes`() {
+        val local = existingTask(title = "Alt", notes = "alte Notiz", priority = "medium")
+        stubUpdatePrereqs(local)
+        every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, any()) } throws RuntimeException("Google down")
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = null, status = null, clearNotes = true)
+
+        assertThatThrownBy { service.update(taskId, cmd) }.isInstanceOf(RuntimeException::class.java)
+        verify(exactly = 0) { taskRepository.save(any<Task>()) }
+        assertThat(local.notes).isEqualTo("alte Notiz")
+    }
+
+    @Test
+    fun `update does not persist anything when google fails while clearing dueDate`() {
+        val local = existingTask(dueDate = LocalDate.of(2026, 8, 15))
+        stubUpdatePrereqs(local)
+        every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, any()) } throws RuntimeException("Google down")
+
+        val cmd = UpdateTaskCommand(title = null, notes = null, dueDate = null, priority = null, status = null, clearDueDate = true)
+
+        assertThatThrownBy { service.update(taskId, cmd) }.isInstanceOf(RuntimeException::class.java)
+        verify(exactly = 0) { taskRepository.save(any<Task>()) }
+        assertThat(local.dueDate).isEqualTo(LocalDate.of(2026, 8, 15))
     }
 
     // ─── delete ───────────────────────────────────────────────────────────────

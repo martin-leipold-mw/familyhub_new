@@ -1256,6 +1256,16 @@ components:
           nullable: true
           enum: [low, medium, high]
 
+    ClearableTaskField:
+      type: string
+      description: >-
+        A task field that can be explicitly cleared via `UpdateTaskRequest.clearFields`.
+        Nullable properties alone cannot express "clear this field" in a PATCH, because
+        `null` there already means "leave unchanged" (property absent from the payload
+        is indistinguishable from `null` once deserialised) — listing the field name here
+        is what expresses the clear intent explicitly.
+      enum: [notes, dueDate, priority]
+
     UpdateTaskRequest:
       type: object
       properties:
@@ -1275,6 +1285,14 @@ components:
         status:
           type: string
           enum: [pending, completed]
+        clearFields:
+          type: array
+          description: >-
+            Fields to explicitly clear (set to null). A field listed here is cleared
+            regardless of its own property's value in this request. `priority` is
+            local-only and clearing it never reaches Google.
+          items:
+            $ref: "#/components/schemas/ClearableTaskField"
 
     SelectedCalendarsRequest:
       type: object

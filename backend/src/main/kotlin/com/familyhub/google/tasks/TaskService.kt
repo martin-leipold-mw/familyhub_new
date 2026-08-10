@@ -39,6 +39,10 @@ data class UpdateTaskCommand(
     val dueDate: LocalDate?,
     val priority: String?,
     val status: String?,
+    // Löscht das jeweilige Feld explizit, unabhängig vom Wert oben — siehe TaskMapper.toGoogleTask.
+    val clearNotes: Boolean = false,
+    val clearDueDate: Boolean = false,
+    val clearPriority: Boolean = false,
 )
 
 /**
@@ -84,11 +88,17 @@ class TaskService(
         if (cmd.touchesGoogleFields()) {
             val connection = requireConnection(local.ownerMemberId)
             val list = requireList(local.taskListId, connection.id!!)
-            val patch = mapper.toGoogleTask(cmd.title, cmd.notes, cmd.dueDate, cmd.status)
+            val patch = mapper.toGoogleTask(cmd.title, cmd.notes, cmd.dueDate, cmd.status, cmd.clearNotes, cmd.clearDueDate)
             val patched = tasksClient.patchTask(connection, list.googleTaskListId, local.googleTaskId, patch)
             mapper.applyGoogleFields(local, patched)
         }
-        if (cmd.priority != null) local.priority = cmd.priority
+        // clearPriority gewinnt gegen einen gleichzeitig übergebenen priority-Wert — priority
+        // ist rein lokal, ein Löschwunsch hier erreicht Google nie.
+        if (cmd.clearPriority) {
+            local.priority = null
+        } else if (cmd.priority != null) {
+            local.priority = cmd.priority
+        }
         return taskRepository.save(local).toView()
     }
 
@@ -100,8 +110,9 @@ class TaskService(
         taskRepository.delete(local)
     }
 
-    /** Ob mindestens ein bei Google gepflegtes Feld geändert wurde (priority zählt nicht — die ist rein lokal). */
-    private fun UpdateTaskCommand.touchesGoogleFields(): Boolean = listOfNotNull(title, notes, dueDate, status).isNotEmpty()
+    /** Ob mindestens ein bei Google gepflegtes Feld geändert oder gelöscht wurde (priority zählt nicht — die ist rein lokal). */
+    private fun UpdateTaskCommand.touchesGoogleFields(): Boolean =
+        listOfNotNull(title, notes, dueDate, status).isNotEmpty() || clearNotes || clearDueDate
 
     private fun isRecent(
         completedAt: Instant?,

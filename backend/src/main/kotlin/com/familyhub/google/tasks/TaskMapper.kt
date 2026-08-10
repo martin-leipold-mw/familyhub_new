@@ -1,5 +1,6 @@
 package com.familyhub.google.tasks
 
+import com.google.api.client.util.Data
 import org.springframework.stereotype.Component
 import java.time.Instant
 import java.time.LocalDate
@@ -43,17 +44,38 @@ class TaskMapper {
         target.googleUpdated = parseInstant(google.updated)
     }
 
-    /** Baut ein Teil-DTO für `tasks.patch` — nur nicht-null-Felder werden gesetzt. */
+    /**
+     * Baut ein Teil-DTO für `tasks.patch` — nur nicht-null-Felder werden gesetzt.
+     *
+     * [clearNotes] / [clearDueDate] existieren, weil `null` in den übrigen Parametern
+     * bereits "unverändert" bedeutet (siehe [TaskService.UpdateTaskCommand]) — es gibt sonst
+     * keinen Weg, ein Google-Feld über PATCH explizit zu löschen. Ein Löschwunsch gewinnt
+     * immer gegen einen gleichzeitig übergebenen Wert (siehe Kommentar unten).
+     *
+     * [Data.NULL_STRING] ist die vom google-api-client vorgesehene Markierung, um ein Feld
+     * als JSON `null` zu serialisieren statt es (wie bei einem echten Kotlin-`null`) einfach
+     * wegzulassen — nur so unterscheidet die Anfrage "unverändert" von "löschen".
+     */
     fun toGoogleTask(
         title: String?,
         notes: String?,
         dueDate: LocalDate?,
         status: String?,
+        clearNotes: Boolean = false,
+        clearDueDate: Boolean = false,
     ): GoogleTask {
         val google = GoogleTask()
         title?.let { google.title = it }
-        notes?.let { google.notes = it }
-        dueDate?.let { google.due = "${it}T00:00:00.000Z" }
+        if (clearNotes) {
+            google.notes = Data.NULL_STRING
+        } else {
+            notes?.let { google.notes = it }
+        }
+        if (clearDueDate) {
+            google.due = Data.NULL_STRING
+        } else {
+            dueDate?.let { google.due = "${it}T00:00:00.000Z" }
+        }
         status?.let { google.status = if (it == "completed") "completed" else "needsAction" }
         return google
     }

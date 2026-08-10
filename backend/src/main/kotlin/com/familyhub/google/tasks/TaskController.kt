@@ -1,6 +1,7 @@
 package com.familyhub.google.tasks
 
 import com.familyhub.generated.api.TasksApi
+import com.familyhub.generated.model.ClearableTaskField
 import com.familyhub.generated.model.CreateTaskRequest
 import com.familyhub.generated.model.TaskResponse
 import com.familyhub.generated.model.UpdateTaskRequest
@@ -36,6 +37,7 @@ class TaskController(
         id: UUID,
         updateTaskRequest: UpdateTaskRequest,
     ): ResponseEntity<TaskResponse> {
+        val clearFields = updateTaskRequest.clearFields ?: emptyList()
         val view =
             service.update(
                 id,
@@ -45,6 +47,9 @@ class TaskController(
                     dueDate = updateTaskRequest.dueDate,
                     priority = updateTaskRequest.priority?.value,
                     status = updateTaskRequest.status?.value,
+                    clearNotes = clearFields.contains(ClearableTaskField.NOTES),
+                    clearDueDate = clearFields.contains(ClearableTaskField.DUE_DATE),
+                    clearPriority = clearFields.contains(ClearableTaskField.PRIORITY),
                 ),
             )
         return ResponseEntity.ok(view.toResponse())
