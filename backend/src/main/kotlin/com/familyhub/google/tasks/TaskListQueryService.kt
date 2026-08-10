@@ -1,7 +1,9 @@
 package com.familyhub.google.tasks
 
 import com.familyhub.google.connection.GoogleConnectionRepository
+import com.familyhub.google.oauth.TASKS_SCOPE
 import com.familyhub.shared.exceptions.ResourceNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -19,6 +21,8 @@ class TaskListQueryService(
     private val taskListRepository: TaskListRepository,
     private val taskSyncService: TaskSyncService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     private fun TaskList.toView(memberId: UUID) =
         TaskListView(
             id = googleTaskListId,
@@ -30,7 +34,15 @@ class TaskListQueryService(
 
     fun listForMember(memberId: UUID): List<TaskListView> {
         val connection = connectionRepository.findByFamilyMemberId(memberId) ?: return emptyList()
-        taskSyncService.refreshTaskLists(connection)
+        if (TASKS_SCOPE in connection.scopes) {
+            taskSyncService.refreshTaskLists(connection)
+        } else {
+            log.warn(
+                "Verbindung {} (Mitglied {}) hat den Tasks-Scope nicht — Aufgabenlisten-Abgleich übersprungen",
+                connection.id,
+                connection.familyMemberId,
+            )
+        }
         return taskListRepository.findAllByConnectionId(connection.id!!)
             .map { it.toView(connection.familyMemberId) }
     }

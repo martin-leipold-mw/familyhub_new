@@ -152,6 +152,19 @@ class TaskSyncServiceTest {
         verify(exactly = 0) { taskListRepo.delete(list1) }
     }
 
+    @Test
+    fun `refreshTaskLists skips the deletion pass when google returns zero lists`() {
+        // Ein leerer, aber erfolgreicher Response darf NICHT als "alle Listen sind weg"
+        // interpretiert werden — genau der Bug, der im Altsystem Daten gelöscht hat
+        // (TA-GOO-17), nur eine Ebene höher (Listen statt Aufgaben).
+        every { tasksClient.listTaskLists(connection) } returns emptyList()
+
+        service.refreshTaskLists(connection)
+
+        verify(exactly = 0) { taskListRepo.findAllByConnectionId(any()) }
+        verify(exactly = 0) { taskListRepo.delete(any()) }
+    }
+
     // ─── syncConnection: guards ────────────────────────────────────────────────
 
     @Test

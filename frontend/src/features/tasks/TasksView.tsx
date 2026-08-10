@@ -43,7 +43,7 @@ export function TasksView() {
 
   function handleToggle(task: TaskResponse) {
     const next = task.status === 'completed' ? 'pending' : 'completed'
-    void updateMutation.mutateAsync({ id: task.id, data: { status: next } })
+    updateMutation.mutate({ id: task.id, data: { status: next } })
   }
 
   function handleRetry() {
@@ -69,6 +69,8 @@ export function TasksView() {
       <TasksScopeNotice connections={connections} />
 
       {syncFailed && <p className="text-danger">Synchronisierung fehlgeschlagen.</p>}
+
+      {updateMutation.isError && <p className="text-danger">Status konnte nicht geändert werden.</p>}
 
       {connections.length === 0 && (
         <p className="text-muted">Kein Google-Konto verbunden. Aufgaben werden aus Google Tasks synchronisiert.</p>

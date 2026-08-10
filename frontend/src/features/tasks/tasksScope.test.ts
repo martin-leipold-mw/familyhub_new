@@ -45,4 +45,22 @@ describe('connectionsMissingTasksScope', () => {
     const b = connection({ connectionId: 'conn-2', scopes: [TASKS_SCOPE] })
     expect(connectionsMissingTasksScope([a, b])).toEqual([])
   })
+
+  it('excludes a revoked connection even though it also lacks the scope', () => {
+    // Revoked connections already get their own reconnect affordance
+    // (RevokedConnectionSnackbars); showing the scope notice too would give the
+    // user two competing prompts for the same connection.
+    const revoked = connection({ connectionId: 'conn-1', status: 'REVOKED', scopes: [] })
+    expect(connectionsMissingTasksScope([revoked])).toEqual([])
+  })
+
+  it('excludes a revoked connection regardless of status casing', () => {
+    const revoked = connection({ connectionId: 'conn-1', status: 'revoked', scopes: [] })
+    expect(connectionsMissingTasksScope([revoked])).toEqual([])
+  })
+
+  it('still returns a non-revoked connection missing the scope', () => {
+    const active = connection({ connectionId: 'conn-1', status: 'ACTIVE', scopes: [] })
+    expect(connectionsMissingTasksScope([active])).toEqual([active])
+  })
 })

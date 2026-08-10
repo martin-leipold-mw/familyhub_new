@@ -82,7 +82,7 @@ const hausaufgaben = task({ id: 't3', memberId: 'mem-2', title: 'Hausaufgaben', 
 
 const defaultTasks = [einkaufen, rasenMaehen, blumenGiessen, hausaufgaben]
 
-const updateMock = vi.fn()
+const updateMutateMock = vi.fn()
 const syncMock = vi.fn()
 
 function mockTasks(overrides: Partial<{ tasks: TaskResponse[]; isLoading: boolean; isError: boolean }> = {}) {
@@ -105,6 +105,14 @@ function mockSync(overrides: Partial<{ isSyncing: boolean; isError: boolean }> =
   })
 }
 
+function mockUpdate(overrides: Partial<{ isError: boolean }> = {}) {
+  vi.mocked(useUpdateTaskMutation).mockReturnValue({
+    mutate: updateMutateMock,
+    isPending: false,
+    isError: overrides.isError ?? false,
+  } as never)
+}
+
 function renderView() {
   const client = createTestQueryClient()
   const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
@@ -120,9 +128,9 @@ beforeEach(() => {
   vi.mocked(useMembers).mockReturnValue({ members: [anna, boris], isLoading: false, isError: false } as never)
   mockConnections()
   mockSync()
-  updateMock.mockReset().mockResolvedValue({})
+  updateMutateMock.mockReset()
   syncMock.mockReset()
-  vi.mocked(useUpdateTaskMutation).mockReturnValue({ mutateAsync: updateMock, isPending: false } as never)
+  mockUpdate()
   mockTasks()
 })
 
@@ -226,14 +234,25 @@ describe('TasksView', () => {
   it('toggles an open task to completed via the row checkbox', async () => {
     renderView()
     await userEvent.click(screen.getByRole('button', { name: 'Einkaufen' }))
-    expect(updateMock).toHaveBeenCalledWith({ id: 't1', data: { status: 'completed' } })
+    expect(updateMutateMock).toHaveBeenCalledWith({ id: 't1', data: { status: 'completed' } })
   })
 
   it('toggles a completed task back to open via the row checkbox', async () => {
     renderView()
     await userEvent.click(screen.getByRole('button', { name: 'Erledigt 1' }))
     await userEvent.click(screen.getByRole('button', { name: 'Rasen mähen' }))
-    expect(updateMock).toHaveBeenCalledWith({ id: 't2', data: { status: 'pending' } })
+    expect(updateMutateMock).toHaveBeenCalledWith({ id: 't2', data: { status: 'pending' } })
+  })
+
+  it('shows an error when toggling a task fails, so the tap is never silently ignored', () => {
+    mockUpdate({ isError: true })
+    renderView()
+    expect(screen.getByText('Status konnte nicht geändert werden.')).toBeInTheDocument()
+  })
+
+  it('does not show the toggle error when the mutation has not failed', () => {
+    renderView()
+    expect(screen.queryByText('Status konnte nicht geändert werden.')).not.toBeInTheDocument()
   })
 
   it('triggers a sync and shows the syncing state', async () => {

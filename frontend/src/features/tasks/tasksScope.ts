@@ -7,6 +7,11 @@ export function hasTasksScope(connection: ConnectionResponse): boolean {
   return connection.scopes.includes(TASKS_SCOPE)
 }
 
+/**
+ * Revoked connections already get their own reconnect affordance
+ * (RevokedConnectionSnackbars), so they are excluded here to avoid showing two
+ * competing reconnect prompts for the same connection at once.
+ */
 export function connectionsMissingTasksScope(connections: ConnectionResponse[]): ConnectionResponse[] {
-  return connections.filter((c) => !hasTasksScope(c))
+  return connections.filter((c) => !hasTasksScope(c) && c.status.toLowerCase() !== 'revoked')
 }

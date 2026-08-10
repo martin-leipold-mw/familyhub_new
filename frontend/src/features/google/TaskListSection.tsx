@@ -7,6 +7,7 @@ import {
   useTaskListsForMember,
   useSaveSelectedTaskListsMutation,
 } from '@/features/tasks/useTaskLists'
+import { TasksScopeNotice } from '@/features/tasks/TasksScopeNotice'
 
 function ConnectionTaskLists({ connection }: { connection: ConnectionResponse }) {
   const { taskLists, isLoading, isError } = useTaskListsForMember(connection.memberId)
@@ -26,9 +27,10 @@ function ConnectionTaskLists({ connection }: { connection: ConnectionResponse })
 
   function handleToggle(taskListId: string, checked: boolean) {
     setSelectedIds((prev) => (checked ? [...prev, taskListId] : prev.filter((id) => id !== taskListId)))
-    // A write target that is no longer selected is rejected by the backend, so
-    // deselecting the current write target clears it rather than sending an
-    // invalid combination.
+    // The backend silently ignores a write target that is no longer selected
+    // (it resolves to null rather than rejecting the request), so deselecting
+    // the current write target clears it here rather than sending a
+    // combination that would be quietly dropped.
     if (!checked && writeTargetId === taskListId) {
       setWriteTargetId(null)
     }
@@ -36,9 +38,10 @@ function ConnectionTaskLists({ connection }: { connection: ConnectionResponse })
 
   function handleSelectWriteTarget(taskListId: string) {
     setWriteTargetId(taskListId)
-    // The backend rejects a write target that isn't among the selected list ids,
-    // so choosing a target implicitly selects its list rather than leaving the
-    // user free to create an invalid combination.
+    // The backend silently ignores a write target that isn't among the selected
+    // list ids (it resolves to null rather than rejecting the request), so
+    // choosing a target implicitly selects its list rather than leaving the
+    // user free to create a combination that would be quietly dropped.
     setSelectedIds((prev) => (prev.includes(taskListId) ? prev : [...prev, taskListId]))
   }
 
@@ -135,6 +138,7 @@ export function TaskListSection() {
       </button>
       {open && (
         <div className="p-4 pt-0">
+          <TasksScopeNotice connections={connections} />
           {connections.length === 0 ? (
             <p className="text-muted">Keine Google-Konten verbunden.</p>
           ) : (

@@ -7,6 +7,7 @@ vi.mock('@/features/tasks/useTaskLists', () => ({
   useTaskListsForMember: vi.fn(),
   useSaveSelectedTaskListsMutation: vi.fn(),
 }))
+vi.mock('@/features/google/useCalendars', () => ({ useStartGoogleAuth: vi.fn() }))
 
 import { useGoogleConnections } from '@/features/google/useGoogleConnections'
 import {
@@ -14,9 +15,20 @@ import {
   useTaskListsForMember,
   useSaveSelectedTaskListsMutation,
 } from '@/features/tasks/useTaskLists'
+import { useStartGoogleAuth } from '@/features/google/useCalendars'
 import { TaskListSection } from './TaskListSection'
 
-const connection = { connectionId: 'c1', memberId: 'm1', email: 'a@x.de', name: 'Anna', status: 'ACTIVE', lastSyncedAt: null, scopes: [] }
+const TASKS_SCOPE = 'https://www.googleapis.com/auth/tasks'
+
+const connection = {
+  connectionId: 'c1',
+  memberId: 'm1',
+  email: 'a@x.de',
+  name: 'Anna',
+  status: 'ACTIVE',
+  lastSyncedAt: null,
+  scopes: [TASKS_SCOPE],
+}
 const tl1 = { id: 'tl1', title: 'Erledigungen', isSelected: true, isWriteTarget: true, memberId: 'm1' }
 const tl2 = { id: 'tl2', title: 'Einkauf', isSelected: true, isWriteTarget: false, memberId: 'm1' }
 const tl4 = { id: 'tl4', title: 'Projekt', isSelected: false, isWriteTarget: false, memberId: 'm1' }
@@ -39,6 +51,7 @@ describe('TaskListSection', () => {
     vi.mocked(useSaveSelectedTaskListsMutation).mockReturnValue({ mutateAsync: save } as never)
     save.mockResolvedValue(undefined)
     vi.mocked(useGoogleConnections).mockReturnValue({ connections: [connection], isLoading: false, isError: false } as never)
+    vi.mocked(useStartGoogleAuth).mockReturnValue({ mutateAsync: vi.fn() } as never)
   })
 
   // ── section-level branches ──
@@ -124,7 +137,7 @@ describe('TaskListSection', () => {
     expect(targetRadios[1]).toBeChecked()
 
     // Deselecting the list that is now the write target must clear it (backend
-    // rejects a writeTargetId that isn't among the selected list ids).
+    // silently ignores a writeTargetId that isn't among the selected list ids).
     fireEvent.click(screen.getByRole('checkbox', { name: 'Einkauf' }))
     fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
     await waitFor(() =>
@@ -160,5 +173,28 @@ describe('TaskListSection', () => {
         data: { memberId: 'm1', taskListIds: ['tl1', 'tl2'], writeTargetId: 'tl1' },
       }),
     )
+  })
+
+  // ── scope notice for pre-Sprint-5 connections ──
+  it('shows the tasks-scope notice for a connection missing the scope, with a reconnect button', () => {
+    vi.mocked(useGoogleConnections).mockReturnValue({
+      connections: [{ ...connection, scopes: [] }],
+      isLoading: false,
+      isError: false,
+    } as never)
+    render(<TaskListSection />)
+    expand()
+    expect(
+      screen.getByText('Für Aufgaben braucht dieses Konto eine erweiterte Google-Berechtigung.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Konto neu verbinden' })).toBeInTheDocument()
+  })
+
+  it('does not show the tasks-scope notice when every connection has the scope', () => {
+    render(<TaskListSection />)
+    expand()
+    expect(
+      screen.queryByText('Für Aufgaben braucht dieses Konto eine erweiterte Google-Berechtigung.'),
+    ).not.toBeInTheDocument()
   })
 })

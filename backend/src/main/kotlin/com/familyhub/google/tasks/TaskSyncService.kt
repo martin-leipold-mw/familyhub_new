@@ -30,6 +30,9 @@ class TaskSyncService(
      * Neue Listen kommen mit isSelected=false herein; bestehende werden nur im
      * Titel aktualisiert. Bei Google verschwundene Listen werden gelöscht — die
      * zugehörigen Aufgaben folgen per FK-CASCADE.
+     * Eine leere (aber erfolgreiche) Antwort von Google löst KEINEN Löschabgleich
+     * aus — sonst würde eine Liste mit z. B. leerem Google-Ergebnis alle lokalen
+     * Listen samt Aufgaben, Prioritäten und Auswahl-Flags löschen.
      */
     fun refreshTaskLists(connection: GoogleConnection) {
         val connectionId = connection.id!!
@@ -51,10 +54,17 @@ class TaskSyncService(
                 taskListRepo.save(existing)
             }
         }
-        val remoteIds = remote.map { it.id }.toSet()
-        taskListRepo.findAllByConnectionId(connectionId)
-            .filter { it.googleTaskListId !in remoteIds }
-            .forEach { taskListRepo.delete(it) }
+        if (remote.isNotEmpty()) {
+            val remoteIds = remote.map { it.id }.toSet()
+            taskListRepo.findAllByConnectionId(connectionId)
+                .filter { it.googleTaskListId !in remoteIds }
+                .forEach { taskListRepo.delete(it) }
+        } else {
+            log.warn(
+                "Keine Aufgabenlisten von Google für Verbindung {} — Löschabgleich übersprungen",
+                connectionId,
+            )
+        }
     }
 
     fun syncConnection(connection: GoogleConnection): TaskSyncResult {

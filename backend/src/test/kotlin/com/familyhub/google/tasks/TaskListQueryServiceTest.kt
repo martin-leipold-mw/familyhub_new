@@ -2,6 +2,7 @@ package com.familyhub.google.tasks
 
 import com.familyhub.google.connection.GoogleConnection
 import com.familyhub.google.connection.GoogleConnectionRepository
+import com.familyhub.google.oauth.TASKS_SCOPE
 import com.familyhub.shared.exceptions.ResourceNotFoundException
 import io.mockk.every
 import io.mockk.justRun
@@ -33,6 +34,7 @@ class TaskListQueryServiceTest {
             accessToken = "enc_token",
             refreshToken = "enc_refresh",
             tokenExpiresAt = null,
+            scopes = listOf(TASKS_SCOPE),
             status = "active",
             lastSyncedAt = null,
         ).also { it.id = connectionId }
@@ -88,6 +90,37 @@ class TaskListQueryServiceTest {
         assertThat(result[0].memberId).isEqualTo(memberId)
         assertThat(result[1].id).isEqualTo("list2")
         assertThat(result[1].isSelected).isFalse()
+    }
+
+    @Test
+    fun `listForMember skips the refresh and returns locally-known lists when the connection lacks the tasks scope`() {
+        // Jede vor Sprint 5 autorisierte Verbindung hat den Tasks-Scope nicht. Ein
+        // refreshTaskLists-Aufruf würde bei Google mit 403 scheitern und diesen Fehler
+        // ungefiltert an die aufrufende Route durchreichen (siehe TaskSyncService.
+        // syncConnection, das dieselbe Prüfung schon für den Sync-Pfad hat).
+        val connectionWithoutScope =
+            GoogleConnection(
+                familyMemberId = memberId,
+                credentialsId = null,
+                googleAccountId = "g123",
+                email = "anna@example.com",
+                accessToken = "enc_token",
+                refreshToken = "enc_refresh",
+                tokenExpiresAt = null,
+                scopes = emptyList(),
+                status = "active",
+                lastSyncedAt = null,
+            ).also { it.id = connectionId }
+        val list1 = taskList("list1", title = "Einkauf", isSelected = true)
+
+        every { connectionRepository.findByFamilyMemberId(memberId) } returns connectionWithoutScope
+        every { taskListRepository.findAllByConnectionId(connectionId) } returns listOf(list1)
+
+        val result = service.listForMember(memberId)
+
+        verify(exactly = 0) { taskSyncService.refreshTaskLists(any()) }
+        assertThat(result).hasSize(1)
+        assertThat(result[0].id).isEqualTo("list1")
     }
 
     // ─── listAll ────────────────────────────────────────────────────────────
