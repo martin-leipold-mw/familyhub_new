@@ -2636,7 +2636,7 @@ git commit -m "feat(tasks): add task query hooks and manual sync"
 
 `today` wird **als Prop hereingereicht**, nicht in der Komponente aus `new Date()` gelesen — sonst sind die Fälligkeits-Zweige nicht deterministisch testbar.
 
-- [ ] **Step 1: Failing Tests schreiben**
+- [x] **Step 1: Failing Tests schreiben**
 
 `ProgressRing.test.tsx`:
 
@@ -2665,12 +2665,12 @@ it('calls onEdit when the edit button is pressed')
 
 Die Checkbox ist ein `<button>` mit `aria-label={task.title}` und `aria-pressed={task.status === 'completed'}` — dadurch ist der Zustand ohne Klassen-Assertions prüfbar.
 
-- [ ] **Step 2: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 2: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `npm run test:run -- src/features/tasks/ProgressRing.test.tsx src/features/tasks/TaskRow.test.tsx`
 Expected: FAIL
 
-- [ ] **Step 3: Komponenten implementieren**
+- [x] **Step 3: Komponenten implementieren**
 
 `ProgressRing.tsx` — verzweigungsfrei, damit die Branch-Schwelle hier nichts kostet:
 
@@ -2779,12 +2779,12 @@ Pflichten aus den Global Constraints: Abhak-Button `min-h-[44px] min-w-[44px]`, 
 
 **Branch-Warnung:** `task.priority ?? ''` und `?? 0` sind zwei Zweige; die Tests „renders no stars without a priority" und die drei Sternentests decken beide Seiten ab. `TONE_CLASS[due.tone]` braucht keinen Fallback, weil `DueTone` erschöpfend ist — **füge keinen hinzu**, er wäre nicht testbar.
 
-- [ ] **Step 4: Tests laufen lassen — müssen grün sein**
+- [x] **Step 4: Tests laufen lassen — müssen grün sein**
 
 Run: `npm run test:run -- src/features/tasks/ProgressRing.test.tsx src/features/tasks/TaskRow.test.tsx`
 Expected: PASS (15 Tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/features/tasks/ProgressRing.tsx \
