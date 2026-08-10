@@ -1780,7 +1780,7 @@ git commit -m "feat(api): add task and task-list endpoints to the contract"
   - `TaskListQueryService.saveSelection(memberId, taskListIds, writeTargetId): Unit`
   - `TaskListQueryService.syncForMember(memberId): TaskSyncResult`
 
-- [ ] **Step 1: Failing Tests schreiben**
+- [x] **Step 1: Failing Tests schreiben**
 
 `TaskListQueryServiceTest.kt` (MockK):
 
@@ -1835,12 +1835,12 @@ fun `PUT selected with a valid pin session returns 200`()
 fun `POST sync returns the sync result`()
 ```
 
-- [ ] **Step 2: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 2: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskList*"`
 Expected: FAIL — Klassen existieren nicht.
 
-- [ ] **Step 3: Service implementieren**
+- [x] **Step 3: Service implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -1912,7 +1912,7 @@ class TaskListQueryService(
 }
 ```
 
-- [ ] **Step 4: Controller implementieren**
+- [x] **Step 4: Controller implementieren**
 
 ```kotlin
 package com.familyhub.google.tasks
@@ -1965,12 +1965,12 @@ private fun TaskListView.toResponse() =
 
 Die exakten Signaturen der generierten `GoogleTaskListsApi`-Methoden nach `./gradlew openApiGenerate` prüfen und übernehmen — insbesondere, ob `memberId` als `UUID?` ankommt.
 
-- [ ] **Step 5: Tests laufen lassen — müssen grün sein**
+- [x] **Step 5: Tests laufen lassen — müssen grün sein**
 
 Run: `./gradlew test --tests "com.familyhub.google.tasks.TaskList*"`
 Expected: PASS (14 Tests)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/main/kotlin/com/familyhub/google/tasks/TaskListQueryService.kt \
