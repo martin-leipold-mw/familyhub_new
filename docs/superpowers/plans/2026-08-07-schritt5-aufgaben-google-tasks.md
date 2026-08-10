@@ -2821,7 +2821,18 @@ git commit -m "feat(tasks): add progress ring and task row"
 
 Voreinstellung der Priorität beim Anlegen: `Mittel`.
 
-- [ ] **Step 1: Failing Test schreiben**
+> **Nachtrag (Umsetzung):** Task 9 hatte eine echte fachliche Lücke offen gelassen: ein PATCH
+> konnte ein Feld nie *löschen* — `null` bedeutete in `UpdateTaskRequest` immer "unverändert",
+> für `notes`, `dueDate` und `priority` gab es also keinen Weg, einen einmal gesetzten Wert
+> wieder zu entfernen. Auf menschliche Entscheidung wurde dieser Fix bewusst hierher verschoben,
+> in die Aufgabe, die den betroffenen Dialog baut, statt ihn separat in Task 9 nachzuziehen.
+> Umgesetzt zusammen mit dem Dialog: additive Vertragserweiterung (`ClearableTaskField` +
+> `UpdateTaskRequest.clearFields`), `TaskMapper.toGoogleTask`/`TaskService.update` beachten sie
+> (notes/dueDate erreichen Google via `Data.NULL_STRING`, priority bleibt lokal), und
+> `TaskDialog` befüllt `clearFields`, wenn ein zuvor gesetztes Feld geleert wird. Siehe
+> Task-13-Report für Details (Contract/Backend/Frontend, TDD-Nachweise, Testergebnisse).
+
+- [x] **Step 1: Failing Test schreiben**
 
 ```tsx
 it('shows the create title and default priority')
@@ -2838,12 +2849,12 @@ it('shows an error message when saving fails')
 it('does not submit an empty title')
 ```
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `npm run test:run -- src/features/tasks/TaskDialog.test.tsx`
 Expected: FAIL
 
-- [ ] **Step 3: Dialog implementieren**
+- [x] **Step 3: Dialog implementieren**
 
 Overlay, Karte in `bg-surface`, Fokusverhalten und Button-Reihe **aus `frontend/src/features/calendar/EventDialog.tsx` übernehmen** — lies die Datei und spiegele ihren Aufbau, damit beide Dialoge gleich aussehen und sich gleich verhalten. Der fachliche Kern:
 
@@ -2903,12 +2914,12 @@ Leerer Titel deaktiviert die Speichern-Schaltfläche: `disabled={title.trim() ==
 
 Beim Anlegen wird `memberId` aus den Props übernommen — es gibt **keine** Personenauswahl im Dialog, weil das Mitglied durch die Karte bestimmt ist, aus der der Dialog geöffnet wurde (Owner = Mitglied der Google-Verbindung).
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `npm run test:run -- src/features/tasks/TaskDialog.test.tsx`
 Expected: PASS (12 Tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/src/features/tasks/TaskDialog.tsx \
