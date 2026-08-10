@@ -3343,11 +3343,11 @@ git commit -m "feat(tasks): prompt to reconnect accounts missing the tasks scope
 | Zielliste (Radio) | `Zielliste`, `aria-label="Zielliste für neue Aufgaben"` |
 | Speichern | `Speichern` |
 
-- [ ] **Step 1: `useTaskLists.ts` schreiben**
+- [x] **Step 1: `useTaskLists.ts` schreiben**
 
 Exakt nach dem Muster von `useCalendars.ts` (siehe Task 11), mit `useListTaskLists`, `useSaveSelectedTaskLists`, `getListTaskListsQueryKey`.
 
-- [ ] **Step 2: Failing Test schreiben**
+- [x] **Step 2: Failing Test schreiben**
 
 `TaskListSection.test.tsx` — Hooks per `vi.mock`, Muster aus `GoogleAccountsSettings.test.tsx`:
 
@@ -3365,25 +3365,25 @@ it('selects a write target')
 it('saves the selection')
 ```
 
-- [ ] **Step 3: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 3: Test laufen lassen — muss fehlschlagen**
 
 Run: `npm run test:run -- src/features/google/TaskListSection.test.tsx`
 Expected: FAIL
 
-- [ ] **Step 4: `TaskListSection.tsx` implementieren**
+- [x] **Step 4: `TaskListSection.tsx` implementieren**
 
 Struktur 1:1 aus `frontend/src/features/google/CalendarSection.tsx` übernehmen: äußere `<section>` mit aufklappbarem Kopf (`aria-expanded`), darin je Verbindung eine innere Komponente mit Checkbox-Liste, Radio für die Zielliste (`name={`write-target-tasks-${connection.connectionId}`}`) und Speichern-Schaltfläche. Lokaler `selectedIds`-Zustand mit `useEffect`-Sync auf die geladenen Daten — genau wie dort.
 
-- [ ] **Step 5: In `SettingsView` einhängen**
+- [x] **Step 5: In `SettingsView` einhängen**
 
 Direkt unter der bestehenden `<CalendarSection />` einfügen. Den `SettingsView`-Test um eine Assertion ergänzen, dass die Sektionsüberschrift erscheint.
 
-- [ ] **Step 6: Tests laufen lassen — müssen grün sein**
+- [x] **Step 6: Tests laufen lassen — müssen grün sein**
 
 Run: `npm run test:run -- src/features/google/TaskListSection.test.tsx src/features/settings/`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/features/tasks/useTaskLists.ts \

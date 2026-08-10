@@ -5,6 +5,7 @@ import { ThemeToggle } from '@/features/theme/ThemeToggle'
 import { MemberSection } from './MemberSection'
 import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
 import { CalendarSection } from '@/features/google/CalendarSection'
+import { TaskListSection } from '@/features/google/TaskListSection'
 import { ChangePinDialog } from './ChangePinDialog'
 
 export function SettingsView() {
@@ -23,6 +24,7 @@ export function SettingsView() {
           <MemberSection />
           <GoogleAccountsSettings />
           <CalendarSection />
+          <TaskListSection />
 
           <button
             type="button"
