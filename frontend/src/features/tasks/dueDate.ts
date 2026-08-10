@@ -3,11 +3,20 @@ export type DueLabel = { text: string; tone: DueTone }
 
 const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez']
 
-/** Tagesdifferenz in UTC — beide Seiten auf Mitternacht normalisiert. */
+/**
+ * Tagesdifferenz zwischen dem Fälligkeitsdatum (kalenderdatum, keine Uhrzeit)
+ * und dem lokalen Kalendertag von `today`. `due` wird als UTC-Mitternacht
+ * normalisiert (String-Parsing statt `new Date(str)`, um die UTC-Mitternacht-
+ * Falle zu vermeiden); `today` wird über die lokalen Getter auf denselben
+ * Kalendertag normalisiert — nicht über die UTC-Getter, da diese in jeder
+ * Zeitzone östlich von UTC (u. a. CET/CEST) zwischen lokaler Mitternacht und
+ * UTC-Mitternacht noch den Vortag liefern und "Heute"/"Überfällig" auf einem
+ * 24/7-Display in genau diesem Fenster falsch berechnen würden.
+ */
 function daysBetween(due: string, today: Date): number {
   const [y, m, d] = due.split('-').map(Number)
   const dueUtc = Date.UTC(y, m - 1, d)
-  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
   return Math.round((dueUtc - todayUtc) / 86_400_000)
 }
 
