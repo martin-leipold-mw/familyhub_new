@@ -12,4 +12,9 @@ interface TaskListRepository : JpaRepository<TaskList, UUID> {
     ): TaskList?
 
     fun findAllByConnectionIdAndIsSelectedTrue(connectionId: UUID): List<TaskList>
+
+    fun findByIdAndConnectionId(
+        id: UUID,
+        connectionId: UUID,
+    ): TaskList?
 }

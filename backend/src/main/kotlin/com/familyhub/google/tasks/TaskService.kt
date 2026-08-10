@@ -54,7 +54,7 @@ class TaskService(
     private val connectionRepository: GoogleConnectionRepository,
     private val tasksClient: GoogleTasksClient,
     private val mapper: TaskMapper,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) {
     fun list(memberId: UUID?): List<TaskView> {
         val cutoff = Instant.now(clock).minus(COMPLETED_RETENTION_DAYS, ChronoUnit.DAYS)
@@ -83,7 +83,7 @@ class TaskService(
         // priority ist rein lokal — eine Änderung nur daran erreicht Google nie.
         if (cmd.touchesGoogleFields()) {
             val connection = requireConnection(local.ownerMemberId)
-            val list = requireList(local.taskListId)
+            val list = requireList(local.taskListId, connection.id!!)
             val patch = mapper.toGoogleTask(cmd.title, cmd.notes, cmd.dueDate, cmd.status)
             val patched = tasksClient.patchTask(connection, list.googleTaskListId, local.googleTaskId, patch)
             mapper.applyGoogleFields(local, patched)
@@ -95,7 +95,7 @@ class TaskService(
     fun delete(id: UUID) {
         val local = requireTask(id)
         val connection = requireConnection(local.ownerMemberId)
-        val list = requireList(local.taskListId)
+        val list = requireList(local.taskListId, connection.id!!)
         tasksClient.deleteTask(connection, list.googleTaskListId, local.googleTaskId)
         taskRepository.delete(local)
     }
@@ -114,10 +114,12 @@ class TaskService(
         connectionRepository.findByFamilyMemberId(memberId)
             ?: throw ResourceNotFoundException("Keine Google-Verbindung für dieses Mitglied gefunden")
 
-    private fun requireList(taskListId: UUID) =
-        taskListRepository.findById(taskListId).orElseThrow {
-            ResourceNotFoundException("Aufgabenliste nicht gefunden")
-        }
+    private fun requireList(
+        taskListId: UUID,
+        connectionId: UUID,
+    ): TaskList =
+        taskListRepository.findByIdAndConnectionId(taskListId, connectionId)
+            ?: throw ResourceNotFoundException("Aufgabenliste nicht gefunden")
 
     private fun requireWriteTarget(connection: GoogleConnection): TaskList {
         val lists = taskListRepository.findAllByConnectionIdAndIsSelectedTrue(connection.id!!)

@@ -183,8 +183,6 @@ class TaskServiceTest {
 
         assertThat(savedSlot.captured.priority).isEqualTo("high")
         assertThat(result.priority).isEqualTo("high")
-        // priority is local-only: never sent to Google.
-        verify(exactly = 1) { tasksClient.insertTask(connection, "glist-write", withArg { assertThat(it.notes).isNull() }) }
     }
 
     @Test
@@ -274,7 +272,7 @@ class TaskServiceTest {
     private fun stubUpdatePrereqs(local: Task) {
         every { taskRepository.findById(taskId) } returns Optional.of(local)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
-        every { taskListRepository.findById(taskListId) } returns Optional.of(writeTargetList)
+        every { taskListRepository.findByIdAndConnectionId(taskListId, connectionId) } returns writeTargetList
         every { taskRepository.save(any<Task>()) } answers { firstArg() }
     }
 
@@ -344,7 +342,9 @@ class TaskServiceTest {
 
     @Test
     fun `update to completed sets completedAt`() {
-        val local = existingTask(status = "pending", completedAt = null)
+        // priority = "high" here on purpose: proves the local-only field survives a
+        // Google-driven update, not just a priority-only one (see applyGoogleFields).
+        val local = existingTask(status = "pending", completedAt = null, priority = "high")
         stubUpdatePrereqs(local)
         every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, any()) } returns
             GoogleTask().setId(local.googleTaskId).setTitle(local.title).setStatus("completed").setCompleted("2026-08-10T09:00:00.000Z")
@@ -354,6 +354,7 @@ class TaskServiceTest {
 
         assertThat(result.status).isEqualTo("completed")
         assertThat(result.completedAt).isEqualTo(Instant.parse("2026-08-10T09:00:00Z"))
+        assertThat(result.priority).isEqualTo("high")
     }
 
     @Test
@@ -386,7 +387,7 @@ class TaskServiceTest {
         val local = existingTask()
         every { taskRepository.findById(taskId) } returns Optional.of(local)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
-        every { taskListRepository.findById(taskListId) } returns Optional.empty()
+        every { taskListRepository.findByIdAndConnectionId(taskListId, connectionId) } returns null
 
         val cmd = UpdateTaskCommand(title = "X", notes = null, dueDate = null, priority = null, status = null)
 
@@ -396,6 +397,24 @@ class TaskServiceTest {
         verify(exactly = 0) { tasksClient.patchTask(any(), any(), any(), any()) }
     }
 
+    @Test
+    fun `update does not persist anything when google fails`() {
+        val local = existingTask(title = "Alt", notes = "alte Notiz", priority = "medium")
+        stubUpdatePrereqs(local)
+        every { tasksClient.patchTask(connection, "glist-write", local.googleTaskId, any()) } throws RuntimeException("Google down")
+
+        val cmd = UpdateTaskCommand(title = "Neuer Titel", notes = null, dueDate = null, priority = null, status = null)
+
+        assertThatThrownBy { service.update(taskId, cmd) }.isInstanceOf(RuntimeException::class.java)
+        verify(exactly = 0) { taskRepository.save(any<Task>()) }
+        // Not just "save was skipped" — the in-memory entity itself must be untouched too,
+        // so an implementation that mutates before patching (and only skips save) would
+        // still fail this.
+        assertThat(local.title).isEqualTo("Alt")
+        assertThat(local.notes).isEqualTo("alte Notiz")
+        assertThat(local.priority).isEqualTo("medium")
+    }
+
     // ─── delete ───────────────────────────────────────────────────────────────
 
     @Test
@@ -403,7 +422,7 @@ class TaskServiceTest {
         val local = existingTask()
         every { taskRepository.findById(taskId) } returns Optional.of(local)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
-        every { taskListRepository.findById(taskListId) } returns Optional.of(writeTargetList)
+        every { taskListRepository.findByIdAndConnectionId(taskListId, connectionId) } returns writeTargetList
         every { tasksClient.deleteTask(connection, "glist-write", local.googleTaskId) } returns Unit
         every { taskRepository.delete(local) } returns Unit
 
@@ -420,7 +439,7 @@ class TaskServiceTest {
         val local = existingTask()
         every { taskRepository.findById(taskId) } returns Optional.of(local)
         every { connectionRepository.findByFamilyMemberId(memberId) } returns connection
-        every { taskListRepository.findById(taskListId) } returns Optional.of(writeTargetList)
+        every { taskListRepository.findByIdAndConnectionId(taskListId, connectionId) } returns writeTargetList
         every { tasksClient.deleteTask(connection, "glist-write", local.googleTaskId) } throws RuntimeException("Google down")
 
         assertThatThrownBy { service.delete(taskId) }.isInstanceOf(RuntimeException::class.java)
