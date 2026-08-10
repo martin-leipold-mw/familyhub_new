@@ -106,11 +106,53 @@ describe('useTaskSync', () => {
 
   it('resets isSyncing when finished', async () => {
     connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
+    let resolveSync!: (value: { status: number; data: unknown }) => void
+    const deferred = new Promise<{ status: number; data: unknown }>((resolve) => {
+      resolveSync = resolve
+    })
+    syncTaskLists.mockReturnValue(deferred)
+
     const { result } = renderHook(() => useTaskSync(), { wrapper })
     expect(result.current.isSyncing).toBe(false)
+
+    let syncPromise!: Promise<void>
+    act(() => {
+      syncPromise = result.current.sync()
+    })
+    await waitFor(() => expect(result.current.isSyncing).toBe(true))
+
+    await act(async () => {
+      resolveSync({ status: 200, data: {} })
+      await syncPromise
+    })
+    expect(result.current.isSyncing).toBe(false)
+  })
+
+  it('invalidates the tasks query after syncing', async () => {
+    connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    function spyWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    }
+    const { result } = renderHook(() => useTaskSync(), { wrapper: spyWrapper })
     await act(async () => {
       await result.current.sync()
     })
-    expect(result.current.isSyncing).toBe(false)
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/tasks'] })
+  })
+
+  it('invalidates the connections query after syncing so revoked status surfaces', async () => {
+    connectionsRef.current = [{ memberId: 'm1', status: 'connected' }]
+    const client = createTestQueryClient()
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    function spyWrapper({ children }: { children: ReactNode }) {
+      return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    }
+    const { result } = renderHook(() => useTaskSync(), { wrapper: spyWrapper })
+    await act(async () => {
+      await result.current.sync()
+    })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['/api/v1/connections'] })
   })
 })
