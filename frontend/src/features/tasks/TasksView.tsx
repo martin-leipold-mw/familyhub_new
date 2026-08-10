@@ -8,6 +8,7 @@ import { useGoogleConnections } from '@/features/google/useGoogleConnections'
 import { MemberTaskCard } from './MemberTaskCard'
 import { TaskFilterBar } from './TaskFilterBar'
 import { TaskDialog } from './TaskDialog'
+import { TasksScopeNotice } from './TasksScopeNotice'
 import { useTasks, useUpdateTaskMutation } from './useTasks'
 import { useTaskSync } from './useTaskSync'
 import { taskProgress } from './progress'
@@ -64,6 +65,8 @@ export function TasksView() {
           <RefreshCw aria-hidden className={isSyncing ? 'animate-spin' : ''} />
         </button>
       </header>
+
+      <TasksScopeNotice connections={connections} />
 
       {syncFailed && <p className="text-danger">Synchronisierung fehlgeschlagen.</p>}
 

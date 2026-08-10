@@ -3248,7 +3248,7 @@ git commit -m "feat(routing): add section navigation and the tasks route"
 - `Für Aufgaben braucht dieses Konto eine erweiterte Google-Berechtigung.`
 - Schaltfläche: `Konto neu verbinden`
 
-- [ ] **Step 1: Failing Tests schreiben**
+- [x] **Step 1: Failing Tests schreiben**
 
 `tasksScope.test.ts`:
 
@@ -3268,12 +3268,12 @@ it('names each affected account')
 it('starts the OAuth flow for the affected member when reconnect is pressed')
 ```
 
-- [ ] **Step 2: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 2: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `npm run test:run -- src/features/tasks/tasksScope.test.ts src/features/tasks/TasksScopeNotice.test.tsx`
 Expected: FAIL
 
-- [ ] **Step 3: Implementieren**
+- [x] **Step 3: Implementieren**
 
 ```ts
 import type { ConnectionResponse } from '@/api/generated/model'
@@ -3292,7 +3292,7 @@ export function connectionsMissingTasksScope(connections: ConnectionResponse[]):
 
 `TasksScopeNotice.tsx` nutzt `useStartGoogleAuth` aus `@/features/google/useCalendars` und leitet mit `window.location.href = url` weiter — dasselbe Muster wie `GoogleAccountsSettings.tsx`. Der `memberId`-Parameter wird mitgegeben, damit die Verbindung am richtigen Mitglied hängt.
 
-- [ ] **Step 4: Hinweis in `TasksView` einhängen**
+- [x] **Step 4: Hinweis in `TasksView` einhängen**
 
 Direkt unter der Kopfzeile rendern. Die zugehörigen `TasksView`-Tests ergänzen:
 
@@ -3301,12 +3301,12 @@ it('shows the scope notice when a connection lacks the tasks scope')
 it('does not show the scope notice when every connection has it')
 ```
 
-- [ ] **Step 5: Tests laufen lassen — müssen grün sein**
+- [x] **Step 5: Tests laufen lassen — müssen grün sein**
 
 Run: `npm run test:run -- src/features/tasks/`
 Expected: PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/features/tasks/ docs/superpowers/plans/2026-08-07-schritt5-aufgaben-google-tasks.md

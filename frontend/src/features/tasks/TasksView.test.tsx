@@ -50,7 +50,7 @@ const annaConnection: ConnectionResponse = {
   name: 'Anna',
   status: 'ACTIVE',
   lastSyncedAt: null,
-  scopes: [],
+  scopes: ['https://www.googleapis.com/auth/tasks'],
 }
 
 function task(overrides: Partial<TaskResponse> & { id: string; memberId: string }): TaskResponse {
@@ -250,5 +250,20 @@ describe('TasksView', () => {
     mockSync({ isError: true })
     renderView()
     expect(screen.getByText('Synchronisierung fehlgeschlagen.')).toBeInTheDocument()
+  })
+
+  it('shows the scope notice when a connection lacks the tasks scope', () => {
+    mockConnections([{ ...annaConnection, scopes: [] }])
+    renderView()
+    expect(
+      screen.getByText('Für Aufgaben braucht dieses Konto eine erweiterte Google-Berechtigung.'),
+    ).toBeInTheDocument()
+  })
+
+  it('does not show the scope notice when every connection has it', () => {
+    renderView()
+    expect(
+      screen.queryByText('Für Aufgaben braucht dieses Konto eine erweiterte Google-Berechtigung.'),
+    ).not.toBeInTheDocument()
   })
 })
