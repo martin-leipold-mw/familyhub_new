@@ -3402,7 +3402,7 @@ git commit -m "feat(settings): add task list selection section"
 - Create: `frontend/e2e/tasks.spec.ts`
 - Modify: `CLAUDE.md`
 
-- [ ] **Step 1: E2E-Test schreiben**
+- [x] **Step 1: E2E-Test schreiben**
 
 `frontend/e2e/tasks.spec.ts` — Aufbau und Backend-Behandlung exakt aus `frontend/e2e/calendar.spec.ts` übernehmen (dort steht, wie der Zustand für den Testlauf hergestellt wird; folge demselben Weg, erfinde keinen neuen).
 
@@ -3415,12 +3415,12 @@ test('checks a task off and sees it struck through')
 test('switches the filter to Erledigt and back to Offen')
 ```
 
-- [ ] **Step 2: E2E-Test laufen lassen**
+- [x] **Step 2: E2E-Test laufen lassen**
 
 Run: `npm run test:e2e -- tasks.spec.ts`
 Expected: PASS
 
-- [ ] **Step 3: `CLAUDE.md` aktualisieren**
+- [x] **Step 3: `CLAUDE.md` aktualisieren**
 
 Im Abschnitt „Recommended build order":
 - Zeile 5 auf `5. ✅ Tasks + Google Tasks sync` setzen,
@@ -3430,12 +3430,12 @@ Im Abschnitt „Repository status": den Satz auf Sprint 5 fortschreiben und die 
 
 Im Abschnitt „Code layout": das neue Backend-Package `tasks` in die `google/{…}`-Aufzählung aufnehmen und `tasks` bei den Frontend-Features ergänzen.
 
-- [ ] **Step 4: Vollgate laufen lassen**
+- [x] **Step 4: Vollgate laufen lassen**
 
 Run: `scripts/pre-commit-check.sh`
 Expected: PASS — Backend `./gradlew check` **und** Frontend `npm run check` grün.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add frontend/e2e/tasks.spec.ts CLAUDE.md \
