@@ -40,6 +40,7 @@ class TaskListQueryServiceTest {
     @BeforeEach
     fun setUp() {
         service = TaskListQueryService(connectionRepository, taskListRepository, taskSyncService)
+        justRun { taskListRepository.flush() }
     }
 
     private fun taskList(

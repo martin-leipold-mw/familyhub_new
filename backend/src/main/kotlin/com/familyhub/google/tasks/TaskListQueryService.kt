@@ -55,16 +55,29 @@ class TaskListQueryService(
         }
         // Eine nicht ausgewählte Liste kann niemals Zielliste sein.
         val target = lists.firstOrNull { it.isSelected && it.googleTaskListId == writeTargetId }
-        for (list in lists) {
-            list.isWriteTarget = list === target
-        }
         // Der partielle Unique-Index idx_task_lists_write_target erlaubt nie zwei
-        // gleichzeitige Ziellisten je Verbindung: erst alle anderen Listen speichern
-        // (inkl. dem Löschen einer bisherigen Zielliste), erst danach die neue
-        // Zielliste setzen — sonst würde ein Zwischenzustand mit zwei
-        // is_write_target = TRUE den Index verletzen.
-        lists.filter { it !== target }.forEach { taskListRepository.save(it) }
-        target?.let { taskListRepository.save(it) }
+        // gleichzeitige Ziellisten je Verbindung. Weder save()-Aufrufreihenfolge noch
+        // Feldänderungsreihenfolge genügen dafür: die von findAllByConnectionId
+        // gelieferten Listen sind bereits JPA-verwaltet, save() ist auf ihnen ein
+        // No-Op, und Hibernates Dirty-Checking schreibt beim (einzigen, gemeinsamen)
+        // Flush alle geänderten Zeilen in ihrer Registrierungsreihenfolge im
+        // Persistence-Context — unabhängig davon, wann ihre Felder verändert oder
+        // save() aufgerufen wurde. Deshalb wird hier explizit geflusht, nachdem eine
+        // bisherige Zielliste gelöscht wurde und bevor die neue gesetzt wird: das
+        // erzwingt die "Löschen"-UPDATE(s) sofort in der Datenbank, entkoppelt von
+        // Hibernates Registrierungsreihenfolge, sodass zu keinem Zeitpunkt zwei
+        // is_write_target = TRUE Zeilen gleichzeitig existieren.
+        for (list in lists) {
+            if (list !== target) {
+                list.isWriteTarget = false
+                taskListRepository.save(list)
+            }
+        }
+        taskListRepository.flush()
+        if (target != null) {
+            target.isWriteTarget = true
+            taskListRepository.save(target)
+        }
     }
 
     fun syncForMember(memberId: UUID): TaskSyncResult {
