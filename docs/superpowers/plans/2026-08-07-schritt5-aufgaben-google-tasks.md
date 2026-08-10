@@ -2977,7 +2977,7 @@ git commit -m "feat(tasks): add task dialog with due date field"
 
 Voreinstellung des Filters ist **`Offen`**; die Zähler beziehen sich immer auf den **Gesamtbestand** (FA-AUF-06) — sie kommen aus `taskProgress` über die ungefilterte Liste, nicht über die angezeigte Teilmenge.
 
-- [ ] **Step 1: Failing Tests für `TaskFilterBar` schreiben**
+- [x] **Step 1: Failing Tests für `TaskFilterBar` schreiben**
 
 ```tsx
 it('renders all three filters with their counts')
@@ -2985,7 +2985,7 @@ it('marks the active filter with aria-pressed')
 it('calls onChange for each filter')     // drei fireEvent.click, drei Erwartungen
 ```
 
-- [ ] **Step 2: `TaskFilterBar` implementieren und Test grün bekommen**
+- [x] **Step 2: `TaskFilterBar` implementieren und Test grün bekommen**
 
 ```tsx
 import type { TaskFilter } from './taskSort'
@@ -3026,7 +3026,7 @@ export function TaskFilterBar({ filter, counts, onChange }: TaskFilterBarProps) 
 Run: `npm run test:run -- src/features/tasks/TaskFilterBar.test.tsx`
 Expected: PASS
 
-- [ ] **Step 3: Failing Tests für `MemberTaskCard` schreiben**
+- [x] **Step 3: Failing Tests für `MemberTaskCard` schreiben**
 
 ```tsx
 it('renders the member name and the completion subtitle')
@@ -3039,11 +3039,11 @@ it('sorts rows by the given sort mode')
 it('calls onAdd with the member id')
 ```
 
-- [ ] **Step 4: `MemberTaskCard` implementieren und Test grün bekommen**
+- [x] **Step 4: `MemberTaskCard` implementieren und Test grün bekommen**
 
 Kopfzeile in Mitgliedsfarbe über `memberColorHex(member.color)` aus `@/features/members/colors` (Inline-`style={{ backgroundColor: … }}`, das etablierte Muster). Rechts der `ProgressRing`. Darunter `filterTasks` → `sortTasks` → je Aufgabe eine `TaskRow`.
 
-- [ ] **Step 5: Failing Tests für `TasksView` schreiben**
+- [x] **Step 5: Failing Tests für `TasksView` schreiben**
 
 Die Hooks werden per `vi.mock` ersetzt — Muster exakt aus `frontend/src/features/google/GoogleAccountsSettings.test.tsx` (`vi.mock` oben, `vi.mocked(...).mockReturnValue(... as never)` im `beforeEach`).
 
@@ -3068,7 +3068,7 @@ it('shows an error when the sync fails')
 
 Der Test `counts always refer to the full set` ist der Wächter für FA-AUF-06: Filter auf `Erledigt` stellen und prüfen, dass der Zähler an `Offen` unverändert bleibt.
 
-- [ ] **Step 6: `TasksView` implementieren und Tests grün bekommen**
+- [x] **Step 6: `TasksView` implementieren und Tests grün bekommen**
 
 Gerüst — die Zählerbildung ist der Teil, der FA-AUF-06 trägt und deshalb ausgeschrieben ist:
 
@@ -3105,7 +3105,7 @@ export function TasksView() {
 Run: `npm run test:run -- src/features/tasks/`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/features/tasks/ docs/superpowers/plans/2026-08-07-schritt5-aufgaben-google-tasks.md
