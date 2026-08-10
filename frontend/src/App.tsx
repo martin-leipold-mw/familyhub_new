@@ -4,6 +4,7 @@ import { AppShell } from '@/routing/AppShell'
 import NotFound from '@/routing/NotFound'
 import { SetupWizard } from '@/features/setup/SetupWizard'
 import { CalendarView } from '@/features/calendar/CalendarView'
+import { TasksView } from '@/features/tasks/TasksView'
 import { SettingsView } from '@/features/settings/SettingsView'
 import { OAuthCallback } from '@/features/google/OAuthCallback'
 
@@ -19,6 +20,16 @@ export default function App() {
             <SetupGuard>
               <AppShell>
                 <CalendarView />
+              </AppShell>
+            </SetupGuard>
+          }
+        />
+        <Route
+          path="/tasks"
+          element={
+            <SetupGuard>
+              <AppShell>
+                <TasksView />
               </AppShell>
             </SetupGuard>
           }

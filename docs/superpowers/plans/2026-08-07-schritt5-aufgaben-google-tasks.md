@@ -3124,7 +3124,7 @@ git commit -m "feat(tasks): add member cards, filter bar and tasks view"
 **Interfaces:**
 - Produces: `AppShell` rendert oberhalb der Kinder eine Navigationsleiste mit `Kalender` (`/`), `Aufgaben` (`/tasks`) und `Einstellungen` (`/settings`).
 
-- [ ] **Step 1: Failing Tests schreiben**
+- [x] **Step 1: Failing Tests schreiben**
 
 In `AppShell.test.tsx` ergänzen:
 
@@ -3137,12 +3137,12 @@ it('marks the settings link as current on the settings route')
 
 `renderWithProviders(ui, { route: '/tasks' })` aus `@/test/testUtils` benutzt bereits einen `MemoryRouter` — die Route lässt sich also direkt setzen.
 
-- [ ] **Step 2: Tests laufen lassen — müssen fehlschlagen**
+- [x] **Step 2: Tests laufen lassen — müssen fehlschlagen**
 
 Run: `npm run test:run -- src/routing/AppShell.test.tsx`
 Expected: FAIL — es gibt noch keine Navigation.
 
-- [ ] **Step 3: Navigation implementieren**
+- [x] **Step 3: Navigation implementieren**
 
 ```tsx
 import { type ReactNode } from 'react'
@@ -3186,7 +3186,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
 `NavLink` setzt `aria-current="page"` selbst — die Tests prüfen genau das. Die `isActive`-Verzweigung in der Klassenfunktion ist ein Branch; die Tests „marks the current section" und „marks the calendar link as current" decken beide Seiten ab.
 
-- [ ] **Step 4: Route ergänzen**
+- [x] **Step 4: Route ergänzen**
 
 In `frontend/src/App.tsx` nach der `/`-Route:
 
@@ -3205,17 +3205,17 @@ In `frontend/src/App.tsx` nach der `/`-Route:
 
 samt Import `import { TasksView } from '@/features/tasks/TasksView'`.
 
-- [ ] **Step 5: Tests laufen lassen — müssen grün sein**
+- [x] **Step 5: Tests laufen lassen — müssen grün sein**
 
 Run: `npm run test:run -- src/routing/AppShell.test.tsx src/App.test.tsx`
 Expected: PASS
 
-- [ ] **Step 6: Phase C abschließen**
+- [x] **Step 6: Phase C abschließen**
 
 Run: `npm run check`
 Expected: PASS — insbesondere die **branches-100-Schwelle**. Bleibt sie rot, zeigt der Coverage-Report die unbedeckte Zeile; ergänze den fehlenden Test, statt die Schwelle zu senken oder den Zweig mit `/* v8 ignore */` zu verstecken.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend/src/routing/AppShell.tsx frontend/src/routing/AppShell.test.tsx \
