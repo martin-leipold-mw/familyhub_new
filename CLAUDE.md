@@ -113,3 +113,4 @@ A feature is only done when it is **reachable through the UI, tests are green, a
 - **Backend needs Java 21.** `./gradlew` fails with `IllegalArgumentException: 25.0.3` if `JAVA_HOME` points elsewhere — point it at a JDK 21 first.
 - **Backend tests require Docker** (Testcontainers spins up PostgreSQL).
 - **Never hand-edit generated API code** — change `api/openapi.yml` and regenerate (see contract-first workflow above).
+- **Google Tasks needs a broader OAuth scope.** Connections authorized before Sprint 5 lack it and must be reconnected once; `TasksScopeNotice` prompts for this, and `TaskSyncService` skips such connections with a WARN until then.
