@@ -2356,7 +2356,7 @@ git commit -m "feat(tasks): add task CRUD writing through to Google Tasks"
 
 **Hier liegt der Schlüssel zur 100-%-Branch-Schwelle:** Diese drei Module enthalten praktisch jede Verzweigung des Features und lassen sich mit Tabellen-Tests erschöpfend abdecken. Die Komponenten in Task 11–14 bleiben dadurch fast verzweigungsfrei.
 
-- [ ] **Step 1: Failing Tests für `dueDate.ts` schreiben**
+- [x] **Step 1: Failing Tests für `dueDate.ts` schreiben**
 
 ```ts
 import { formatDueDate } from './dueDate'
@@ -2396,12 +2396,12 @@ describe('formatDueDate', () => {
 })
 ```
 
-- [ ] **Step 2: Test laufen lassen — muss fehlschlagen**
+- [x] **Step 2: Test laufen lassen — muss fehlschlagen**
 
 Run: `npm run test:run -- src/features/tasks/dueDate.test.ts`
 Expected: FAIL — Modul existiert nicht.
 
-- [ ] **Step 3: `dueDate.ts` implementieren**
+- [x] **Step 3: `dueDate.ts` implementieren**
 
 ```ts
 export type DueTone = 'urgent' | 'overdue' | 'normal'
@@ -2428,12 +2428,12 @@ export function formatDueDate(due: string | null | undefined, today: Date): DueL
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen — muss grün sein**
+- [x] **Step 4: Test laufen lassen — muss grün sein**
 
 Run: `npm run test:run -- src/features/tasks/dueDate.test.ts`
 Expected: PASS (6 Tests)
 
-- [ ] **Step 5: `taskSort.ts` mit Tests bauen**
+- [x] **Step 5: `taskSort.ts` mit Tests bauen**
 
 Test zuerst; diese Fälle:
 
@@ -2491,7 +2491,7 @@ export function filterTasks(tasks: TaskResponse[], filter: TaskFilter): TaskResp
 
 **Achtung Branch-Coverage:** `a.dueDate ?? '…'` und `PRIORITY_RANK[…] ?? 3` sind Zweige. Die Tests „puts tasks without a due date last" und „puts tasks without a priority last in priority mode" müssen **beide** Seiten treffen — also je mindestens eine Aufgabe mit und eine ohne Wert enthalten.
 
-- [ ] **Step 6: `progress.ts` mit Tests bauen**
+- [x] **Step 6: `progress.ts` mit Tests bauen**
 
 ```ts
 export function taskProgress(tasks: TaskResponse[]): { done: number; total: number; percent: number } {
@@ -2503,12 +2503,12 @@ export function taskProgress(tasks: TaskResponse[]): { done: number; total: numb
 
 Tests: leere Liste → `{done:0,total:0,percent:0}`; alle erledigt → 100; 1 von 3 → 33; keine erledigt → 0.
 
-- [ ] **Step 7: Alle drei Testdateien grün**
+- [x] **Step 7: Alle drei Testdateien grün**
 
 Run: `npm run test:run -- src/features/tasks/`
 Expected: PASS
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add frontend/src/features/tasks/ docs/superpowers/plans/2026-08-07-schritt5-aufgaben-google-tasks.md
