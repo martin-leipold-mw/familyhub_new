@@ -19,6 +19,7 @@ import { TaskListSection } from './TaskListSection'
 const connection = { connectionId: 'c1', memberId: 'm1', email: 'a@x.de', name: 'Anna', status: 'ACTIVE', lastSyncedAt: null, scopes: [] }
 const tl1 = { id: 'tl1', title: 'Erledigungen', isSelected: true, isWriteTarget: true, memberId: 'm1' }
 const tl2 = { id: 'tl2', title: 'Einkauf', isSelected: true, isWriteTarget: false, memberId: 'm1' }
+const tl4 = { id: 'tl4', title: 'Projekt', isSelected: false, isWriteTarget: false, memberId: 'm1' }
 
 const save = vi.fn()
 
@@ -128,6 +129,25 @@ describe('TaskListSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
     await waitFor(() =>
       expect(save).toHaveBeenCalledWith({ data: { memberId: 'm1', taskListIds: ['tl1'], writeTargetId: null } }),
+    )
+  })
+
+  it('selecting a write target on an unselected list also selects it', async () => {
+    vi.mocked(useTaskListsForMember).mockReturnValue({ taskLists: [tl1, tl4], isLoading: false, isError: false } as never)
+    render(<TaskListSection />)
+    expand()
+    const projectCheckbox = screen.getByRole('checkbox', { name: 'Projekt' })
+    expect(projectCheckbox).not.toBeChecked()
+
+    const targetRadios = screen.getAllByRole('radio', { name: 'Zielliste für neue Aufgaben' })
+    fireEvent.click(targetRadios[1]) // "Projekt" isn't selected yet
+    expect(projectCheckbox).toBeChecked()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Speichern' }))
+    await waitFor(() =>
+      expect(save).toHaveBeenCalledWith({
+        data: { memberId: 'm1', taskListIds: ['tl1', 'tl4'], writeTargetId: 'tl4' },
+      }),
     )
   })
 

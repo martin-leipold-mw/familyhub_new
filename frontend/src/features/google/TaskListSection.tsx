@@ -34,6 +34,14 @@ function ConnectionTaskLists({ connection }: { connection: ConnectionResponse })
     }
   }
 
+  function handleSelectWriteTarget(taskListId: string) {
+    setWriteTargetId(taskListId)
+    // The backend rejects a write target that isn't among the selected list ids,
+    // so choosing a target implicitly selects its list rather than leaving the
+    // user free to create an invalid combination.
+    setSelectedIds((prev) => (prev.includes(taskListId) ? prev : [...prev, taskListId]))
+  }
+
   async function handleSave() {
     await saveMutation.mutateAsync({
       data: { memberId: connection.memberId, taskListIds: selectedIds, writeTargetId },
@@ -69,7 +77,7 @@ function ConnectionTaskLists({ connection }: { connection: ConnectionResponse })
                   aria-label="Zielliste für neue Aufgaben"
                   name={`write-target-tasks-${connection.connectionId}`}
                   checked={writeTargetId === taskList.id}
-                  onChange={() => setWriteTargetId(taskList.id)}
+                  onChange={() => handleSelectWriteTarget(taskList.id)}
                   className="w-5 h-5"
                 />
                 Zielliste
