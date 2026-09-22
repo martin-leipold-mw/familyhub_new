@@ -298,7 +298,7 @@ Alle Änderungen sind **additiv** — kein oasdiff-Breaking-Change, kein `breaki
 
 | Methode | Pfad | Zweck | Schutz |
 |---|---|---|---|
-| GET | `/v1/chores` | Vorlagen, optional `activeOnly` | — |
+| GET | `/v1/chores` | Vorlagen inkl. `nextDueOn` und `openAssignment`, optional `activeOnly` | — |
 | POST | `/v1/chores` | anlegen | `@RequiresPinSession` |
 | PATCH | `/v1/chores/{id}` | ändern, inkl. `isActive` | `@RequiresPinSession` |
 | DELETE | `/v1/chores/{id}` | löschen (400 bei Historie) | `@RequiresPinSession` |
@@ -375,10 +375,54 @@ ohne Zusatzarbeit funktioniert.
 
 ## Phase D — Einstellungen
 
-`frontend/src/features/chores/ChoreSection.tsx` als weiterer `SectionCard` in `SettingsView` —
-Überschrift „Haushalt", Knopf „Neue Aufgabe". Je Vorlage eine Zeile mit Emoji, Name und der Zeile
-„Wöchentlich · Kinder · 10 Pkt."; pausierte Vorlagen sind markiert. Aktionen je Zeile: Pausieren
-bzw. Aktivieren und Bearbeiten.
+### Eigene Unterseite statt Abschnitt
+
+Die Ämtli-Verwaltung bekommt eine **eigene Route `/settings/chores`**. `SettingsView` zeigt dafür
+nur eine Zeile „Haushalt · {n} Aufgaben →", die dorthin führt.
+
+Begründung: Kalender- und Aufgabenlisten-Abschnitte sind reine Auswahl (Haken setzen), Mitglieder
+eine Handvoll Kacheln. Die Ämtli-Verwaltung ist echtes CRUD mit reichem Dialog und realistisch
+10–20 Einträgen — bedient auf einem 24-Zoll-Touchdisplay ohne Tastatur. Eine eigene Seite gibt ihr
+volle Breite und große Touch-Ziele, statt sie in eine ohnehin wachsende Scrollseite zu quetschen.
+Damit entsteht zugleich das Muster **„Einstellungen mit Unterseiten"**, das die Schritte 7–9
+(Belohnungen, Synology-Fotos, Kiosk/Wetter) ohnehin brauchen werden.
+
+Das `PinGate` liegt wie bisher vor dem gesamten Einstellungsbereich, also auch vor der Unterseite;
+diese trägt einen „← Zu den Einstellungen"-Weg zurück.
+
+### Inhalt der Verwaltungsseite
+
+| Datei | Inhalt |
+|---|---|
+| `ChoreSettingsView.tsx` | Route `/settings/chores`: Kopf „Haushaltsaufgaben", Knopf „Neue Aufgabe", Liste, Lade-/Fehler-/Leerzustand |
+| `ChoreSettingsRow.tsx` | eine Zeile je Vorlage |
+| `ChoreDialog.tsx` | Anlegen und Bearbeiten |
+| `choreStatus.ts` | reine Funktion: Vorlage + Mitglieder + heute → Zustandstext |
+| `ChoreSettingsLink.tsx` | die Zeile „Haushalt · {n} Aufgaben →" in `SettingsView` |
+
+Je Zeile links Emoji, Name und darunter die Konfiguration „Wöchentlich · Kinder · 10 Pkt.", rechts
+der **aktuelle Zustand**, dahinter Pausieren/Aktivieren und Bearbeiten.
+
+| Lage der Vorlage | Text |
+|---|---|
+| hat eine offene Zuweisung | „Offen bei {Name} · seit {n} Tagen" |
+| keine offene, `next_due_on` in der Zukunft | „Wieder fällig in {n} Tagen" bzw. „morgen" |
+| keine offene, `next_due_on` erreicht | „Wartet auf freien Platz" |
+| keine offene, kein aktives Mitglied in der Gruppe | „Keine Mitglieder in dieser Gruppe" |
+| `is_active = false` | „Pausiert" |
+
+**Warum das hier steht und nicht in der Familienansicht:** Das Warteschlangen-Modell nimmt der
+Familie die Kalenderfrage „wann ist das Bad wieder dran?" — für ein Kind ist genau das richtig, für
+einen Elternteil nicht. Die Verwaltungsseite ist der Ort, an dem der sonst unsichtbare Ausgabelauf
+nachvollziehbar wird: man sieht, **warum** eine Aufgabe gerade nicht auftaucht. Ohne das gäbe es
+keine Stelle, an der man einem stillstehenden Ämtli nachgehen könnte.
+
+`ChoreResponse` trägt dafür zwei zusätzliche Felder: `nextDueOn` und `openAssignment` (nullbar, mit
+`memberId`, `memberName`, `assignedOn`). Die Unterscheidung „wartet auf Platz" gegen „Gruppe ist
+leer" trifft das Frontend aus der ohnehin geladenen Mitgliederliste — der Server bleibt dumm, und
+die gesamte Verzweigung liegt in `choreStatus.ts` und ist damit erschöpfend testbar.
+
+### Der Dialog
 
 `ChoreDialog.tsx`: Name, **Emoji-Auswahl aus der Palette**, Beschreibung, Intervall-Kacheln,
 Gruppen-Kacheln (Eltern / Kinder / Alle), Punkte-Schieberegler, im Bearbeiten-Modus zusätzlich
@@ -432,15 +476,16 @@ unpassend.
 **Frontend — die 100-%-Branch-Schwelle ist die härteste Nebenbedingung** (`branches: 100`, Rest 90;
 `src/api/generated/` ist ausgenommen):
 
-- **Verzweigungen wandern in reine Module** — `choreLanes.ts` und `undoWindow.ts` werden mit
-  Tabellen-Tests erschöpfend abgedeckt, die Komponenten bleiben dünn.
+- **Verzweigungen wandern in reine Module** — `choreLanes.ts`, `undoWindow.ts` und `choreStatus.ts`
+  werden mit Tabellen-Tests erschöpfend abgedeckt, die Komponenten bleiben dünn. `choreStatus.ts`
+  trägt allein fünf Zustände und ist der Hauptkandidat für liegenbleibende Zweige.
 - **Jeder `isLoading` / `isError` / Leerzustand-Zweig bekommt einen Test.**
 - **Keine defensiven `??` / `?.` ohne erreichbaren Nullfall** — wo generierte Typen optional sind,
   es fachlich aber nicht sein kann, wird an **einer** Stelle normalisiert.
 
-**E2E** (`frontend/e2e/chores.spec.ts`, analog `tasks.spec.ts`): Vorlage in den Einstellungen
-anlegen (mit PIN), sie erscheint sofort in der Lane des zugewiesenen Mitglieds, abhaken, rückgängig
-machen.
+**E2E** (`frontend/e2e/chores.spec.ts`, analog `tasks.spec.ts`): PIN eingeben, über die Zeile
+„Haushalt" auf `/settings/chores` navigieren, Vorlage anlegen, sie erscheint sofort in der Lane des
+zugewiesenen Mitglieds, abhaken, rückgängig machen.
 
 **Gate:** `scripts/pre-commit-check.sh` — `./gradlew check` (OpenAPI-Codegen, ktlint, detekt, Tests,
 JaCoCo) + `npm run check` (tsc, eslint `--max-warnings 0`, dependency-cruiser, Coverage).
@@ -449,14 +494,16 @@ JaCoCo) + `npm run check` (tsc, eslint `--max-warnings 0`, dependency-cruiser, C
 
 Der Sprint ist fertig, wenn:
 
-1. Eine Ämtli-Vorlage in den Einstellungen anlegbar ist und **sofort** in der Lane des zugewiesenen
-   Mitglieds erscheint.
-2. `/chores` über die Bereichsnavigation erreichbar ist und je aktivem Mitglied eine Spalte mit
+1. Eine Ämtli-Vorlage unter `/settings/chores` anlegbar ist und **sofort** in der Lane des
+   zugewiesenen Mitglieds erscheint.
+2. Die Verwaltungsseite je Vorlage zeigt, bei wem sie gerade liegt bzw. wann sie wieder fällig
+   wird — und warum sie wartet, falls sie es tut.
+3. `/chores` über die Bereichsnavigation erreichbar ist und je aktivem Mitglied eine Spalte mit
    höchstens fünf offenen Aufgaben zeigt — mit großem Emoji, groß genug für ein Kind, das noch nicht
    liest.
-3. Abhaken und Rückgängigmachen per Fingertipp funktionieren, inklusive sichtbarer Fehlermeldung.
-4. Nach einer Erledigung die Aufgabe erst nach Ablauf ihres Intervalls wieder auftaucht — bei der
+4. Abhaken und Rückgängigmachen per Fingertipp funktionieren, inklusive sichtbarer Fehlermeldung.
+5. Nach einer Erledigung die Aufgabe erst nach Ablauf ihres Intervalls wieder auftaucht — bei der
    **nächsten** Person der Rotation.
-5. Ein mehrtägiger Ausfall des NAS keine Aufgabe verschluckt.
-6. Eine leere Liste „Alles erledigt!" zeigt.
-7. `scripts/pre-commit-check.sh` grün ist.
+6. Ein mehrtägiger Ausfall des NAS keine Aufgabe verschluckt.
+7. Eine leere Liste „Alles erledigt!" zeigt.
+8. `scripts/pre-commit-check.sh` grün ist.
