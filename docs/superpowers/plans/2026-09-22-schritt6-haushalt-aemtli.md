@@ -1789,7 +1789,7 @@ git commit -m "feat(chores): complete and undo assignments with a 5-minute windo
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreServiceTest.kt`:
 
@@ -2096,14 +2096,14 @@ class ChoreServiceTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreServiceTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreService`.
 
-- [ ] **Step 3: ChoreService implementieren**
+- [x] **Step 3: ChoreService implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreService.kt`:
 
@@ -2299,7 +2299,7 @@ private fun Chore.toView(open: OpenAssignmentView?) =
     )
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreServiceTest'
@@ -2308,7 +2308,7 @@ Erwartet: PASS, 18 Tests.
 
 Bleibt ein Zweig unbedeckt, sind es fast immer diese beiden: `description?.trim()?.ifBlank { null }` in `create` (Test mit `description = "  "` ergänzen) und `if (cmd.clearDescription) … else cmd.description?.let …` in `update` (Test mit gesetzter `description` **und** `clearDescription = false`). Ergänze die fehlenden Fälle, statt die Defensive zu entfernen — beide Nullfälle sind über die API erreichbar.
 
-- [ ] **Step 5: Lint + Commit**
+- [x] **Step 5: Lint + Commit**
 
 ```bash
 cd backend && ./gradlew ktlintCheck detekt
