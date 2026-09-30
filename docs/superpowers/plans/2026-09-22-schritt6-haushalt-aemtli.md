@@ -110,7 +110,7 @@ Jede `.ts`/`.tsx`-Datei bekommt eine Schwesterdatei `*.test.ts(x)` im selben Ver
 
 ---
 
-- [ ] **Step 1: Migration schreiben**
+- [x] **Step 1: Migration schreiben**
 
 `backend/src/main/resources/db/migration/V12__chores.sql`:
 
@@ -165,7 +165,7 @@ CREATE INDEX idx_chore_assignments_member_status
     ON chore_assignments (member_id, status);
 ```
 
-- [ ] **Step 2: Entities schreiben**
+- [x] **Step 2: Entities schreiben**
 
 `backend/src/main/kotlin/com/familyhub/chores/Chore.kt`:
 
@@ -306,7 +306,7 @@ class ChoreAssignment(
 }
 ```
 
-- [ ] **Step 3: Repositories schreiben**
+- [x] **Step 3: Repositories schreiben**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreRepository.kt`:
 
@@ -368,7 +368,7 @@ interface ChoreAssignmentRepository : JpaRepository<ChoreAssignment, UUID> {
 }
 ```
 
-- [ ] **Step 4: Persistenztest schreiben**
+- [x] **Step 4: Persistenztest schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChorePersistenceTest.kt`:
 
@@ -492,7 +492,7 @@ class ChorePersistenceTest
     }
 ```
 
-- [ ] **Step 5: MigrationSmokeTest um V12 erweitern**
+- [x] **Step 5: MigrationSmokeTest um V12 erweitern**
 
 In `backend/src/test/kotlin/com/familyhub/google/MigrationSmokeTest.kt` die `assertThat(tables).contains(...)`-Liste ergänzen:
 
@@ -509,21 +509,21 @@ In `backend/src/test/kotlin/com/familyhub/google/MigrationSmokeTest.kt` die `ass
             )
 ```
 
-- [ ] **Step 6: Tests laufen lassen**
+- [x] **Step 6: Tests laufen lassen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChorePersistenceTest' --tests 'com.familyhub.google.MigrationSmokeTest'
 ```
 Erwartet: PASS, 6 Tests. Schlägt `eine Vorlage kann nur eine offene Zuweisung haben` mit einer anderen Meldung als `ux_chore_assignments_one_open` fehl, prüfe, ob `saveAndFlush` statt `save` verwendet wird — ohne Flush schlägt der Constraint erst beim Commit zu.
 
-- [ ] **Step 7: Volles Backend-Gate**
+- [x] **Step 7: Volles Backend-Gate**
 
 ```bash
 cd backend && ./gradlew check
 ```
 Erwartet: BUILD SUCCESSFUL. Entities und Repositories haben keine Verzweigungen, das 100-%-Branch-Limit bleibt also erfüllt.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add backend/src/main/resources/db/migration/V12__chores.sql \

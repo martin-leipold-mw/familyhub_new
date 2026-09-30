@@ -14,6 +14,10 @@
     <ID>NestedBlockDepth:GoogleCalendarClient.kt$GoogleCalendarClient$fun listEvents( connection: GoogleConnection, calendarId: String, syncToken: String?, timeMin: DateTime?, timeMax: DateTime?, ): EventPage</ID>
     <ID>ProtectedMemberInFinalClass:CalendarSubscription.kt$CalendarSubscription$@PrePersist protected fun onCreate()</ID>
     <ID>ProtectedMemberInFinalClass:CalendarSubscription.kt$CalendarSubscription$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:Chore.kt$Chore$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:Chore.kt$Chore$@PreUpdate protected fun onUpdate()</ID>
+    <ID>ProtectedMemberInFinalClass:ChoreAssignment.kt$ChoreAssignment$@PrePersist protected fun onCreate()</ID>
+    <ID>ProtectedMemberInFinalClass:ChoreAssignment.kt$ChoreAssignment$@PreUpdate protected fun onUpdate()</ID>
     <ID>ProtectedMemberInFinalClass:Event.kt$Event$@PrePersist protected fun onCreate()</ID>
     <ID>ProtectedMemberInFinalClass:Event.kt$Event$@PreUpdate protected fun onUpdate()</ID>
     <ID>ProtectedMemberInFinalClass:FamilyMember.kt$FamilyMember$@PrePersist protected fun onCreate()</ID>
@@ -32,7 +36,6 @@
     <ID>SwallowedException:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
     <ID>SwallowedException:PinSessionInterceptor.kt$PinSessionInterceptor$ex: IllegalArgumentException</ID>
     <ID>SwallowedException:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>
-    <ID>ThrowsCount:ConnectionService.kt$ConnectionService$@Transactional fun handleCallback( code: String, state: String, ): CallbackResult</ID>
     <ID>ThrowsCount:EventService.kt$EventService$fun create(cmd: CreateEventCommand): EventView</ID>
     <ID>ThrowsCount:GoogleTokenProvider.kt$GoogleTokenProvider$@Transactional fun validAccessToken(connection: GoogleConnection): String</ID>
     <ID>ThrowsCount:RedirectUriNormalizer.kt$RedirectUriNormalizer$fun normalize(uri: String): String</ID>

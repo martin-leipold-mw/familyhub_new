@@ -27,6 +27,8 @@ class MigrationSmokeTest
                 "events",
                 "task_lists",
                 "tasks",
+                "chores",
+                "chore_assignments",
             )
             val interval =
                 jdbc.queryForObject(
