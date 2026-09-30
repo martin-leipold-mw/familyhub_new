@@ -3297,7 +3297,7 @@ feat(chores): add REST contract and controllers for chores and assignments
 
 ---
 
-- [ ] **Step 1: Verzeichnis anlegen und die Emoji-Palette schreiben**
+- [x] **Step 1: Verzeichnis anlegen und die Emoji-Palette schreiben**
 
 `frontend/src/features/chores/choreIcons.ts`:
 
@@ -3319,7 +3319,7 @@ export const DEFAULT_CHORE_ICON = '🧹'
 
 Diese Datei enthält keine Logik und braucht daher keinen eigenen Test; sie wird über `ChoreDialog` (Task 13) mit abgedeckt.
 
-- [ ] **Step 2: Den fehlschlagenden Test für choreLabels schreiben**
+- [x] **Step 2: Den fehlschlagenden Test für choreLabels schreiben**
 
 `frontend/src/features/chores/choreLabels.test.ts`:
 
@@ -3359,7 +3359,7 @@ describe('Paletten', () => {
 })
 ```
 
-- [ ] **Step 3: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 3: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreLabels.test.ts
@@ -3367,7 +3367,7 @@ cd frontend && npx vitest run src/features/chores/choreLabels.test.ts
 
 Erwartet: `Failed to resolve import "./choreLabels"`.
 
-- [ ] **Step 4: choreLabels implementieren**
+- [x] **Step 4: choreLabels implementieren**
 
 `frontend/src/features/chores/choreLabels.ts`:
 
@@ -3408,7 +3408,7 @@ export const GROUP_OPTIONS: { value: ChoreGroup; label: string }[] = [
 ]
 ```
 
-- [ ] **Step 5: Test laufen lassen, grün bestätigen**
+- [x] **Step 5: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreLabels.test.ts
@@ -3416,7 +3416,7 @@ cd frontend && npx vitest run src/features/chores/choreLabels.test.ts
 
 Erwartet: PASS, 4 Tests.
 
-- [ ] **Step 6: Den fehlschlagenden Test für choreLanes schreiben**
+- [x] **Step 6: Den fehlschlagenden Test für choreLanes schreiben**
 
 `frontend/src/features/chores/choreLanes.test.ts`:
 
@@ -3524,7 +3524,7 @@ describe('buildChoreLanes', () => {
 })
 ```
 
-- [ ] **Step 7: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 7: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreLanes.test.ts
@@ -3532,7 +3532,7 @@ cd frontend && npx vitest run src/features/chores/choreLanes.test.ts
 
 Erwartet: `Failed to resolve import "./choreLanes"`.
 
-- [ ] **Step 8: choreLanes implementieren**
+- [x] **Step 8: choreLanes implementieren**
 
 `frontend/src/features/chores/choreLanes.ts`:
 
@@ -3575,7 +3575,7 @@ export function buildChoreLanes(
 }
 ```
 
-- [ ] **Step 9: Test laufen lassen, grün bestätigen**
+- [x] **Step 9: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreLanes.test.ts
@@ -3583,7 +3583,7 @@ cd frontend && npx vitest run src/features/chores/choreLanes.test.ts
 
 Erwartet: PASS, 7 Tests.
 
-- [ ] **Step 10: Den fehlschlagenden Test für undoWindow schreiben**
+- [x] **Step 10: Den fehlschlagenden Test für undoWindow schreiben**
 
 `frontend/src/features/chores/undoWindow.test.ts`:
 
@@ -3614,7 +3614,7 @@ describe('canUndo', () => {
 })
 ```
 
-- [ ] **Step 11: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 11: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/undoWindow.test.ts
@@ -3622,7 +3622,7 @@ cd frontend && npx vitest run src/features/chores/undoWindow.test.ts
 
 Erwartet: `Failed to resolve import "./undoWindow"`.
 
-- [ ] **Step 12: undoWindow implementieren**
+- [x] **Step 12: undoWindow implementieren**
 
 `frontend/src/features/chores/undoWindow.ts`:
 
@@ -3640,7 +3640,7 @@ export function canUndo(completedAt: string | null | undefined, now: Date): bool
 }
 ```
 
-- [ ] **Step 13: Test laufen lassen, grün bestätigen**
+- [x] **Step 13: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/undoWindow.test.ts
@@ -3648,7 +3648,7 @@ cd frontend && npx vitest run src/features/chores/undoWindow.test.ts
 
 Erwartet: PASS, 4 Tests.
 
-- [ ] **Step 14: Den fehlschlagenden Test für choreOptimistic schreiben**
+- [x] **Step 14: Den fehlschlagenden Test für choreOptimistic schreiben**
 
 `frontend/src/features/chores/choreOptimistic.test.ts`:
 
@@ -3695,7 +3695,7 @@ describe('patchAssignment', () => {
 })
 ```
 
-- [ ] **Step 15: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 15: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreOptimistic.test.ts
@@ -3703,7 +3703,7 @@ cd frontend && npx vitest run src/features/chores/choreOptimistic.test.ts
 
 Erwartet: `Failed to resolve import "./choreOptimistic"`.
 
-- [ ] **Step 16: choreOptimistic implementieren**
+- [x] **Step 16: choreOptimistic implementieren**
 
 `frontend/src/features/chores/choreOptimistic.ts`:
 
@@ -3726,7 +3726,7 @@ export function patchAssignment(
 }
 ```
 
-- [ ] **Step 17: Test laufen lassen, grün bestätigen**
+- [x] **Step 17: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreOptimistic.test.ts
@@ -3734,7 +3734,7 @@ cd frontend && npx vitest run src/features/chores/choreOptimistic.test.ts
 
 Erwartet: PASS, 3 Tests.
 
-- [ ] **Step 18: Typprüfung und Lint**
+- [x] **Step 18: Typprüfung und Lint**
 
 ```bash
 cd frontend && npm run type-check && npx eslint src/features/chores --max-warnings 0
@@ -3742,7 +3742,7 @@ cd frontend && npm run type-check && npx eslint src/features/chores --max-warnin
 
 Erwartet: keine Ausgabe. Meldet `type-check` unbekannte Typen aus `@/api/generated/model`, wurde `npm run generate:api` aus Task 7, Step 4 noch nicht ausgeführt — nachholen.
 
-- [ ] **Step 19: Commit**
+- [x] **Step 19: Commit**
 
 Die fünf neuen Module, ihre vier Tests und diesen Plan committen:
 
