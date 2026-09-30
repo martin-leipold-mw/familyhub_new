@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository status
 
-Active codebase under construction. Implemented through **Sprint 5** (Tasks + Google Tasks sync — `/tasks` view, bidirectional sync, task lists in settings) on top of the Sprint 4 calendar view (week + day) and the settings overhaul (theme system, full-page PIN gate, section layout, member↔Google link): backend (`backend/`), frontend (`frontend/`), OpenAPI contract (`api/openapi.yml`), and CI (`.github/workflows/ci.yml`) all exist. **Sprint 6 (household chores) is next.** The original requirements spec (Lastenheft) now lives in `docs/concept/` — it is the source of truth for *what* to build; this file plus the code are the source of truth for *how* it is built.
+Active codebase under construction. Implemented through **Sprint 6** (household chores — `/chores` queue view, rotation, `/settings/chores` admin) on top of the Sprint 5 Tasks + Google Tasks sync (`/tasks` view, bidirectional sync, task lists in settings) and the Sprint 4 calendar view (week + day) and the settings overhaul (theme system, full-page PIN gate, section layout, member↔Google link): backend (`backend/`), frontend (`frontend/`), OpenAPI contract (`api/openapi.yml`), and CI (`.github/workflows/ci.yml`) all exist. **Sprint 7 (gamification: points, streaks, badges, leaderboard) is next.** The original requirements spec (Lastenheft) now lives in `docs/concept/` — it is the source of truth for *what* to build; this file plus the code are the source of truth for *how* it is built.
 
 ## Build, test & lint commands
 
@@ -46,9 +46,9 @@ Redis: explicitly **not** used — drop it from the stack.
 
 ## Code layout
 
-- Backend is **package-by-feature** under `com.familyhub` (`members`, `settings`, `pin`, `google/{oauth,calendar,token,crypto,connection,sync,credentials,tasks}`, `shared/{security,health,exceptions}`). An ArchUnit test in `architecture/` enforces module boundaries.
-- Flyway migrations live in `backend/src/main/resources/db/migration/` (`V1__…` → `V11__…`). Never edit an applied migration — add a new `V{n}__…` file.
-- Frontend is feature-sliced under `frontend/src/` (`features/{calendar,google,members,pin,settings,setup,tasks,theme}`, `api/`, `routing/`).
+- Backend is **package-by-feature** under `com.familyhub` (`members`, `settings`, `pin`, `google/{oauth,calendar,token,crypto,connection,sync,credentials,tasks}`, `chores`, `shared/{security,health,exceptions}`). An ArchUnit test in `architecture/` enforces module boundaries.
+- Flyway migrations live in `backend/src/main/resources/db/migration/` (`V1__…` → `V12__…`). Never edit an applied migration — add a new `V{n}__…` file.
+- Frontend is feature-sliced under `frontend/src/` (`features/{calendar,chores,google,members,pin,settings,setup,tasks,theme}`, `api/`, `routing/`).
 
 ## Key architectural decisions (from concept docs)
 
@@ -86,8 +86,8 @@ Requirements are tagged with IDs like `FA-KAL-01` (functional) or `TA-BUILD-01` 
 3. ✅ Google OAuth + Calendar read/write
 4. ✅ Calendar view (week + day) — incl. agenda list, reminders, recurring events, member colours
 5. ✅ Tasks + Google Tasks sync
-6. Household chores: templates, rotation, completion ← *current*
-7. Gamification: points, streaks, badges, leaderboard
+6. ✅ Household chores: templates, rotation, completion
+7. Gamification: points, streaks, badges, leaderboard ← *current*
 8. Synology Photos + slideshow (with thumbnail-sized images, never originals)
 9. Kiosk mode, on-screen keyboard, themes, weather
 10. Production readiness: backup, update path, load test
@@ -114,3 +114,4 @@ A feature is only done when it is **reachable through the UI, tests are green, a
 - **Backend tests require Docker** (Testcontainers spins up PostgreSQL).
 - **Never hand-edit generated API code** — change `api/openapi.yml` and regenerate (see contract-first workflow above).
 - **Google Tasks needs a broader OAuth scope.** Connections authorized before Sprint 5 lack it and must be reconnected once; `TasksScopeNotice` prompts for this, and `TaskSyncService` skips such connections with a WARN until then.
+- **Chores sind datumslos.** `chores.next_due_on` ist der gesamte Terminzustand; es gibt keine Tagesinstanzen. Der Ausgabelauf (`ChoreRefillService`, täglich 05:00) holt alles mit `next_due_on <= heute` nach — ein mehrtägiger Ausfall verschluckt daher nichts. Ein partieller Unique-Index (`ux_chore_assignments_one_open`) garantiert, dass eine Vorlage nie zweimal gleichzeitig offen ist.

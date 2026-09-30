@@ -6390,7 +6390,7 @@ feat(chores): add the /settings/chores admin sub-page
 
 ---
 
-- [ ] **Step 1: Den End-to-End-Test schreiben**
+- [x] **Step 1: Den End-to-End-Test schreiben**
 
 `frontend/e2e/chores.spec.ts`:
 
@@ -6590,7 +6590,7 @@ test('zeigt eine leere Lane als Alles erledigt', async ({ page }) => {
 
 Die Beschriftung der Bestätigungsschaltfläche im `PinInputDialog` (oben als „Bestätigen" angenommen) und die Ziffern-`aria-label` in `frontend/src/features/pin/PinInputDialog.tsx` nachschlagen und hier angleichen — die E2E-Tests der anderen Bereiche geben die PIN nicht ein und liefern daher kein Muster.
 
-- [ ] **Step 2: End-to-End-Tests laufen lassen**
+- [x] **Step 2: End-to-End-Tests laufen lassen**
 
 ```bash
 cd frontend && npx playwright test e2e/chores.spec.ts
@@ -6598,7 +6598,7 @@ cd frontend && npx playwright test e2e/chores.spec.ts
 
 Erwartet: 3 Tests grün. Hängt ein Test an einem Selektor, öffne `npx playwright test e2e/chores.spec.ts --ui` und lies die tatsächliche Beschriftung ab.
 
-- [ ] **Step 3: Gesamtes E2E-Paket laufen lassen**
+- [x] **Step 3: Gesamtes E2E-Paket laufen lassen**
 
 ```bash
 cd frontend && npm run test:e2e
@@ -6606,7 +6606,7 @@ cd frontend && npm run test:e2e
 
 Erwartet: alle Spezifikationen grün — insbesondere `tasks.spec.ts` und `calendar.spec.ts`, die die um „Haushalt" erweiterte Navigation mitbenutzen.
 
-- [ ] **Step 4: CLAUDE.md fortschreiben**
+- [x] **Step 4: CLAUDE.md fortschreiben**
 
 Drei Stellen in `CLAUDE.md`:
 
@@ -6620,7 +6620,7 @@ Ergänze außerdem unter **Gotchas** einen Eintrag:
 - **Chores sind datumslos.** `chores.next_due_on` ist der gesamte Terminzustand; es gibt keine Tagesinstanzen. Der Ausgabelauf (`ChoreRefillService`, täglich 05:00) holt alles mit `next_due_on <= heute` nach — ein mehrtägiger Ausfall verschluckt daher nichts. Ein partieller Unique-Index (`ux_chore_assignments_one_open`) garantiert, dass eine Vorlage nie zweimal gleichzeitig offen ist.
 ```
 
-- [ ] **Step 5: Das vollständige Gate laufen lassen**
+- [x] **Step 5: Das vollständige Gate laufen lassen**
 
 ```bash
 scripts/pre-commit-check.sh
@@ -6628,7 +6628,7 @@ scripts/pre-commit-check.sh
 
 Erwartet: „✓ Alle Prüfungen bestanden". Das ist die Bedingung aus der Definition of Done.
 
-- [ ] **Step 6: Die Definition of Done Punkt für Punkt gegen die laufende Anwendung prüfen**
+- [x] **Step 6: Die Definition of Done Punkt für Punkt gegen die laufende Anwendung prüfen**
 
 Backend und Frontend starten (`cd backend && ./gradlew bootRun`, in einem zweiten Terminal `cd frontend && npm run dev`) und abhaken:
 
@@ -6643,7 +6643,7 @@ Backend und Frontend starten (`cd backend && ./gradlew bootRun`, in einem zweite
 
 Was hier auffällt, wird behoben, bevor der letzte Commit fällt — nicht als „bekannte Einschränkung" notiert.
 
-- [ ] **Step 7: Abschluss-Commit**
+- [x] **Step 7: Abschluss-Commit**
 
 `frontend/e2e/chores.spec.ts`, `CLAUDE.md` und diesen Plan committen:
 
