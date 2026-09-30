@@ -866,7 +866,7 @@ git commit -m "feat(chores): add household clock and round-robin rotation"
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreRefillServiceTest.kt`:
 
@@ -1096,14 +1096,14 @@ class ChoreRefillServiceTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRefillServiceTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreRefillService`.
 
-- [ ] **Step 3: ChoreRefillService implementieren**
+- [x] **Step 3: ChoreRefillService implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreRefillService.kt`:
 
@@ -1223,14 +1223,14 @@ class ChoreRefillService(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRefillServiceTest'
 ```
 Erwartet: PASS, 12 Tests.
 
-- [ ] **Step 5: Lint + Commit**
+- [x] **Step 5: Lint + Commit**
 
 ```bash
 cd backend && ./gradlew ktlintCheck detekt
