@@ -558,7 +558,7 @@ git commit -m "feat(chores): add V12 schema, entities and repositories"
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test für ChoreClock schreiben**
+- [x] **Step 1: Den fehlschlagenden Test für ChoreClock schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreClockTest.kt`:
 
@@ -614,14 +614,14 @@ class ChoreClockTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreClockTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreClock`.
 
-- [ ] **Step 3: ChoreClock implementieren**
+- [x] **Step 3: ChoreClock implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreClock.kt`:
 
@@ -656,14 +656,14 @@ class ChoreClock(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreClockTest'
 ```
 Erwartet: PASS, 4 Tests.
 
-- [ ] **Step 5: Den fehlschlagenden Test für ChoreRotation schreiben**
+- [x] **Step 5: Den fehlschlagenden Test für ChoreRotation schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreRotationTest.kt`:
 
@@ -776,14 +776,14 @@ class ChoreRotationTest {
 }
 ```
 
-- [ ] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRotationTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreRotation`.
 
-- [ ] **Step 7: ChoreRotation implementieren**
+- [x] **Step 7: ChoreRotation implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreRotation.kt`:
 
@@ -835,14 +835,14 @@ object ChoreRotation {
 }
 ```
 
-- [ ] **Step 8: Test laufen lassen, grün bestätigen**
+- [x] **Step 8: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRotationTest'
 ```
 Erwartet: PASS, 12 Tests.
 
-- [ ] **Step 9: Lint + Commit**
+- [x] **Step 9: Lint + Commit**
 
 ```bash
 cd backend && ./gradlew ktlintCheck detekt
