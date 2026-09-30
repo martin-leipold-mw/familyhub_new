@@ -5077,7 +5077,7 @@ Die Ämtli-Verwaltung bekommt eine **eigene Route `/settings/chores`**. `Setting
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `frontend/src/features/chores/choreStatus.test.ts`:
 
@@ -5192,7 +5192,7 @@ describe('choreStatus', () => {
 })
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreStatus.test.ts
@@ -5200,7 +5200,7 @@ cd frontend && npx vitest run src/features/chores/choreStatus.test.ts
 
 Erwartet: `Failed to resolve import "./choreStatus"`.
 
-- [ ] **Step 3: choreStatus implementieren**
+- [x] **Step 3: choreStatus implementieren**
 
 `frontend/src/features/chores/choreStatus.ts`:
 
@@ -5269,7 +5269,7 @@ export function choreStatus(
 
 Abweichung vom Spec, bewusst: der Spec schreibt für die offene Zuweisung pauschal „seit {n} Tagen". `ageText` bildet zusätzlich „seit heute" und „seit 1 Tag" ab — „seit 0 Tagen" wäre auf einem Familiendisplay falsches Deutsch.
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/choreStatus.test.ts
@@ -5277,7 +5277,7 @@ cd frontend && npx vitest run src/features/chores/choreStatus.test.ts
 
 Erwartet: PASS, 13 Tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `choreStatus.ts`, seinen Test und diesen Plan committen:
 
