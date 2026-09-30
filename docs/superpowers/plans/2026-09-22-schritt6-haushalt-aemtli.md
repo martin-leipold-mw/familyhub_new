@@ -5298,7 +5298,7 @@ feat(chores): add the admin-page status text for a chore template
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `frontend/src/features/chores/ChoreDialog.test.tsx`:
 
@@ -5520,7 +5520,7 @@ describe('ChoreDialog — Bearbeiten', () => {
 
 Der dritte Test („übernimmt Emoji, Intervall, Gruppe und Punkte") prüft den Schieberegler nicht mit; setze den Punktewert in diesem Test über `fireEvent.change(slider, { target: { value: '25' } })` aus `@testing-library/react` und ergänze die Erwartung `points: 25` — `userEvent` kann einen `range`-Eingang nicht sinnvoll bedienen.
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreDialog.test.tsx
@@ -5528,7 +5528,7 @@ cd frontend && npx vitest run src/features/chores/ChoreDialog.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoreDialog"`.
 
-- [ ] **Step 3: ChoreDialog implementieren**
+- [x] **Step 3: ChoreDialog implementieren**
 
 `frontend/src/features/chores/ChoreDialog.tsx`:
 
@@ -5799,7 +5799,7 @@ export function ChoreDialog({ chore, onClose }: ChoreDialogProps) {
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreDialog.test.tsx
@@ -5807,7 +5807,7 @@ cd frontend && npx vitest run src/features/chores/ChoreDialog.test.tsx
 
 Erwartet: PASS, 15 Tests. Bleibt ein Zweig offen, sind die üblichen Verdächtigen `chore?.description ?? ''` (Test mit `description: null` existiert bereits — sonst ergänzen) und `normalizedDescription ?? undefined`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 `ChoreDialog.tsx`, seinen Test und diesen Plan committen:
 
