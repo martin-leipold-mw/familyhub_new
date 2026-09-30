@@ -230,6 +230,48 @@ class ChoreServiceTest {
     }
 
     @Test
+    fun `Pausieren entfernt die offene Zuweisung von der Familienansicht`() {
+        val c = chore(active = true)
+        val open =
+            ChoreAssignment(choreId = choreId, memberId = memberId, points = 10, assignedOn = today)
+                .also { it.id = UUID.randomUUID() }
+        var deleted = false
+        every { choreRepository.findById(choreId) } returns Optional.of(c)
+        every { assignmentRepository.findByChoreIdAndStatus(choreId, STATUS_OPEN) } answers { open.takeUnless { deleted } }
+        every { assignmentRepository.delete(open) } answers { deleted = true }
+
+        val view = service.update(choreId, emptyUpdate().copy(isActive = false))
+
+        verify(exactly = 1) { assignmentRepository.delete(open) }
+        assertThat(view.isActive).isFalse()
+        assertThat(view.openAssignment).isNull()
+    }
+
+    @Test
+    fun `Pausieren ohne offene Zuweisung loescht nichts`() {
+        val c = chore(active = true)
+        every { choreRepository.findById(choreId) } returns Optional.of(c)
+
+        service.update(choreId, emptyUpdate().copy(isActive = false))
+
+        verify(exactly = 0) { assignmentRepository.delete(any()) }
+    }
+
+    @Test
+    fun `andere Aenderungen an einer aktiven Vorlage lassen die offene Zuweisung stehen`() {
+        val c = chore(active = true)
+        every { choreRepository.findById(choreId) } returns Optional.of(c)
+        every { assignmentRepository.findByChoreIdAndStatus(choreId, STATUS_OPEN) } returns
+            ChoreAssignment(choreId = choreId, memberId = memberId, points = 10, assignedOn = today)
+                .also { it.id = UUID.randomUUID() }
+        every { memberRepository.findById(memberId) } returns Optional.empty()
+
+        service.update(choreId, emptyUpdate().copy(name = "Bad putzen", isActive = true))
+
+        verify(exactly = 0) { assignmentRepository.delete(any()) }
+    }
+
+    @Test
     fun `eine bereits aktive Vorlage wird durch isActive true nicht neu ausgegeben`() {
         val c = chore(active = true)
         every { choreRepository.findById(choreId) } returns Optional.of(c)

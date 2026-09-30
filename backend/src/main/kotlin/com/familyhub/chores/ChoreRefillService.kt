@@ -88,6 +88,10 @@ class ChoreRefillService(
         // würden sonst am partiellen Unique-Index scheitern statt hier sauber
         // abzubrechen.
         if (assignmentRepository.existsByChoreIdAndStatus(chore.id!!, STATUS_OPEN)) return false
+        // Auch die Sofortausgabe (Anlegen, Reaktivieren) gibt nur Fälliges aus:
+        // sonst käme eine gestern erledigte Wochenaufgabe nach Pausieren und
+        // Reaktivieren sechs Tage zu früh zurück — Intervall ab letzter Erledigung.
+        if (!chore.isActive || chore.nextDueOn.isAfter(today)) return false
 
         val pool = ChoreRotation.poolFor(chore.assignmentGroup, memberRepository.findByIsActiveTrueOrderByCreatedAtAsc())
         val openCounts =

@@ -253,6 +253,35 @@ class ChoreRefillServiceTest {
     }
 
     @Test
+    fun `refillChore gibt eine noch nicht faellige Vorlage nicht aus`() {
+        // Pausieren + Reaktivieren einer gestern erledigten Wochenaufgabe darf
+        // sie nicht sechs Tage zu früh ausgeben — Intervall ab letzter Erledigung.
+        val c = chore("Tisch decken", due = today.plusDays(6))
+        every { assignmentRepository.existsByChoreIdAndStatus(c.id!!, STATUS_OPEN) } returns false
+
+        assertThat(service.refillChore(c)).isFalse()
+        verify(exactly = 0) { assignmentRepository.save(any()) }
+        assertThat(c.lastAssignedMemberId).isNull()
+    }
+
+    @Test
+    fun `refillChore gibt eine ueberfaellige Vorlage aus`() {
+        val c = chore("Tisch decken", due = today.minusDays(3))
+        every { assignmentRepository.existsByChoreIdAndStatus(c.id!!, STATUS_OPEN) } returns false
+
+        assertThat(service.refillChore(c)).isTrue()
+    }
+
+    @Test
+    fun `refillChore gibt eine pausierte Vorlage nicht aus`() {
+        val c = chore("Tisch decken").also { it.isActive = false }
+        every { assignmentRepository.existsByChoreIdAndStatus(c.id!!, STATUS_OPEN) } returns false
+
+        assertThat(service.refillChore(c)).isFalse()
+        verify(exactly = 0) { assignmentRepository.save(any()) }
+    }
+
+    @Test
     fun `refillChore gibt false zurueck wenn die Vorlage schon offen ist`() {
         val c = chore("Tisch decken")
         every { assignmentRepository.existsByChoreIdAndStatus(c.id!!, STATUS_OPEN) } returns true

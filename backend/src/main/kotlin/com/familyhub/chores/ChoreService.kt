@@ -119,6 +119,11 @@ class ChoreService(
         choreRepository.save(chore)
 
         if (!wasActive && chore.isActive) refillService.refillChore(chore)
+        // Eine pausierte Vorlage ist in der Familienansicht unsichtbar: ihre
+        // offene Zuweisung verschwindet mit. Erledigte Zeilen sind Historie und bleiben.
+        if (wasActive && !chore.isActive) {
+            assignmentRepository.findByChoreIdAndStatus(id, STATUS_OPEN)?.let { assignmentRepository.delete(it) }
+        }
         return viewOf(chore)
     }
 
