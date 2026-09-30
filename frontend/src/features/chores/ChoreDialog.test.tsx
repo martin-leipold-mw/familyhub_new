@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/testUtils'
+import { ApiError } from '@/api/customFetch'
 import type { ChoreResponse } from '@/api/generated/model'
 
 const createAsync = vi.fn()
@@ -189,7 +190,7 @@ describe('ChoreDialog — Bearbeiten', () => {
   })
 
   it('meldet ein abgelehntes Loeschen', async () => {
-    deleteAsync.mockRejectedValueOnce(new Error('400'))
+    deleteAsync.mockRejectedValueOnce(new ApiError('Conflict', 409))
     renderWithProviders(<ChoreDialog chore={bestehend} onClose={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
@@ -198,6 +199,17 @@ describe('ChoreDialog — Bearbeiten', () => {
     expect(
       await screen.findByText('Löschen nicht möglich — die Aufgabe wurde bereits erledigt. Bitte pausieren.'),
     ).toBeInTheDocument()
+  })
+
+  it('meldet ein sonstiges Loeschversagen ohne Pausier-Hinweis', async () => {
+    deleteAsync.mockRejectedValueOnce(new ApiError('boom', 500))
+    renderWithProviders(<ChoreDialog chore={bestehend} onClose={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Ja, löschen' }))
+
+    expect(await screen.findByText('Löschen fehlgeschlagen. Bitte erneut versuchen.')).toBeInTheDocument()
+    expect(screen.queryByText('Wirklich löschen?')).not.toBeInTheDocument()
   })
 
   it('nimmt die Loeschabsicht zurueck', async () => {

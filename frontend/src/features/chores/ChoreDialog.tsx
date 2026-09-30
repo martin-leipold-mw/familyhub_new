@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ChoreResponse } from '@/api/generated/model'
+import { ApiError } from '@/api/customFetch'
 import { CHORE_ICONS, DEFAULT_CHORE_ICON } from './choreIcons'
 import { INTERVAL_OPTIONS, GROUP_OPTIONS, type ChoreGroup } from './choreLabels'
 import { useCreateChoreMutation, useUpdateChoreMutation, useDeleteChoreMutation } from './useChores'
@@ -87,8 +88,12 @@ export function ChoreDialog({ chore, onClose }: ChoreDialogProps) {
     try {
       await deleteMutation.mutateAsync({ id: chore!.id })
       onClose()
-    } catch {
-      setError('Löschen nicht möglich — die Aufgabe wurde bereits erledigt. Bitte pausieren.')
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof ApiError && deleteError.status === 409
+          ? 'Löschen nicht möglich — die Aufgabe wurde bereits erledigt. Bitte pausieren.'
+          : 'Löschen fehlgeschlagen. Bitte erneut versuchen.',
+      )
       setConfirmDelete(false)
     }
   }
