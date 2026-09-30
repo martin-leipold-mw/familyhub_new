@@ -28,6 +28,15 @@ vi.mock('./ChoreDialog', () => ({
 import { useChores } from './useChores'
 import { useMembers } from '@/features/members/useMembersQuery'
 import { ChoreSettingsView } from './ChoreSettingsView'
+import { SnackbarProvider } from '@/routing/SnackbarProvider'
+
+function renderView() {
+  return renderWithProviders(
+    <SnackbarProvider>
+      <ChoreSettingsView />
+    </SnackbarProvider>,
+  )
+}
 
 const anna: MemberResponse = {
   id: 'm1',
@@ -61,11 +70,12 @@ function mockState({ chores = [] as ChoreResponse[], isLoading = false, isError 
 describe('ChoreSettingsView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mutate.mockReset()
   })
 
   it('zeigt Kopfzeile und Rueckweg', () => {
     mockState()
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     expect(screen.getByRole('heading', { name: 'Haushaltsaufgaben' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '← Zu den Einstellungen' })).toHaveAttribute('href', '/settings')
@@ -73,35 +83,35 @@ describe('ChoreSettingsView', () => {
 
   it('zeigt einen Ladezustand', () => {
     mockState({ isLoading: true })
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     expect(screen.getByText('Wird geladen…')).toBeInTheDocument()
   })
 
   it('zeigt einen Fehlerzustand', () => {
     mockState({ isError: true })
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     expect(screen.getByText('Fehler beim Laden der Haushaltsaufgaben.')).toBeInTheDocument()
   })
 
   it('zeigt einen Leerzustand', () => {
     mockState()
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     expect(screen.getByText('Noch keine Haushaltsaufgaben angelegt.')).toBeInTheDocument()
   })
 
   it('listet die Vorlagen auf', () => {
     mockState({ chores: [chore()] })
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     expect(screen.getByText('Toilette putzen')).toBeInTheDocument()
   })
 
   it('oeffnet den Dialog fuer eine neue Aufgabe', async () => {
     mockState()
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     await userEvent.click(screen.getByRole('button', { name: 'Neue Aufgabe' }))
 
@@ -110,7 +120,7 @@ describe('ChoreSettingsView', () => {
 
   it('oeffnet den Dialog zum Bearbeiten', async () => {
     mockState({ chores: [chore()] })
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     await userEvent.click(screen.getByRole('button', { name: 'Toilette putzen bearbeiten' }))
 
@@ -119,10 +129,20 @@ describe('ChoreSettingsView', () => {
 
   it('pausiert eine Vorlage', async () => {
     mockState({ chores: [chore()] })
-    renderWithProviders(<ChoreSettingsView />)
+    renderView()
 
     await userEvent.click(screen.getByRole('button', { name: 'Toilette putzen pausieren' }))
 
-    expect(mutate).toHaveBeenCalledWith({ id: 'c1', data: { isActive: false } })
+    expect(mutate).toHaveBeenCalledWith({ id: 'c1', data: { isActive: false } }, expect.anything())
+  })
+
+  it('meldet ein fehlgeschlagenes Pausieren ueber eine Snackbar', async () => {
+    mutate.mockImplementation((_vars, handlers) => handlers.onError())
+    mockState({ chores: [chore()] })
+    renderView()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Toilette putzen pausieren' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Speichern fehlgeschlagen. Bitte erneut versuchen.')
   })
 })

@@ -7,6 +7,7 @@ import { useMembers } from '@/features/members/useMembersQuery'
 import { ChoreDialog } from './ChoreDialog'
 import { ChoreSettingsRow } from './ChoreSettingsRow'
 import { choreStatus } from './choreStatus'
+import { useSnackbar } from '@/routing/SnackbarProvider'
 import { useChores, useUpdateChoreMutation } from './useChores'
 
 type DialogState = { chore: ChoreResponse | null }
@@ -21,6 +22,7 @@ export function ChoreSettingsView() {
   const { chores, isLoading, isError } = useChores()
   const { members } = useMembers()
   const updateMutation = useUpdateChoreMutation()
+  const { show } = useSnackbar()
   const [dialog, setDialog] = useState<DialogState | null>(null)
 
   // Der Browser des Wanddisplays läuft in der Haushaltszeitzone; 'sv-SE'
@@ -28,7 +30,13 @@ export function ChoreSettingsView() {
   const today = new Date().toLocaleDateString('sv-SE')
 
   function handleToggleActive(chore: ChoreResponse, next: boolean) {
-    updateMutation.mutate({ id: chore.id, data: { isActive: next } })
+    updateMutation.mutate(
+      { id: chore.id, data: { isActive: next } },
+      {
+        onError: () =>
+          show({ id: `chore-toggle-${chore.id}`, message: 'Speichern fehlgeschlagen. Bitte erneut versuchen.' }),
+      },
+    )
   }
 
   return (
