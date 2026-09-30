@@ -5834,7 +5834,7 @@ feat(chores): add the create/edit dialog for chore templates
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test für ChoreSettingsRow schreiben**
+- [x] **Step 1: Den fehlschlagenden Test für ChoreSettingsRow schreiben**
 
 `frontend/src/features/chores/ChoreSettingsRow.test.tsx`:
 
@@ -5912,7 +5912,7 @@ describe('ChoreSettingsRow', () => {
 })
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreSettingsRow.test.tsx
@@ -5920,7 +5920,7 @@ cd frontend && npx vitest run src/features/chores/ChoreSettingsRow.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoreSettingsRow"`.
 
-- [ ] **Step 3: ChoreSettingsRow implementieren**
+- [x] **Step 3: ChoreSettingsRow implementieren**
 
 `frontend/src/features/chores/ChoreSettingsRow.tsx`:
 
@@ -5983,7 +5983,7 @@ export function ChoreSettingsRow({ chore, status, onEdit, onToggleActive }: Chor
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreSettingsRow.test.tsx
@@ -5991,7 +5991,7 @@ cd frontend && npx vitest run src/features/chores/ChoreSettingsRow.test.tsx
 
 Erwartet: PASS, 5 Tests.
 
-- [ ] **Step 5: Den fehlschlagenden Test für ChoreSettingsView schreiben**
+- [x] **Step 5: Den fehlschlagenden Test für ChoreSettingsView schreiben**
 
 `frontend/src/features/chores/ChoreSettingsView.test.tsx`:
 
@@ -6126,7 +6126,7 @@ describe('ChoreSettingsView', () => {
 })
 ```
 
-- [ ] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreSettingsView.test.tsx
@@ -6134,7 +6134,7 @@ cd frontend && npx vitest run src/features/chores/ChoreSettingsView.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoreSettingsView"`.
 
-- [ ] **Step 7: ChoreSettingsView implementieren**
+- [x] **Step 7: ChoreSettingsView implementieren**
 
 `frontend/src/features/chores/ChoreSettingsView.tsx`:
 
@@ -6222,7 +6222,7 @@ export function ChoreSettingsView() {
 }
 ```
 
-- [ ] **Step 8: Test laufen lassen, grün bestätigen**
+- [x] **Step 8: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreSettingsView.test.tsx
@@ -6230,7 +6230,7 @@ cd frontend && npx vitest run src/features/chores/ChoreSettingsView.test.tsx
 
 Erwartet: PASS, 8 Tests.
 
-- [ ] **Step 9: Den fehlschlagenden Test für ChoreSettingsLink schreiben**
+- [x] **Step 9: Den fehlschlagenden Test für ChoreSettingsLink schreiben**
 
 `frontend/src/features/chores/ChoreSettingsLink.test.tsx`:
 
@@ -6273,7 +6273,7 @@ describe('ChoreSettingsLink', () => {
 })
 ```
 
-- [ ] **Step 10: ChoreSettingsLink implementieren**
+- [x] **Step 10: ChoreSettingsLink implementieren**
 
 `frontend/src/features/chores/ChoreSettingsLink.tsx`:
 
@@ -6302,7 +6302,7 @@ export function ChoreSettingsLink() {
 }
 ```
 
-- [ ] **Step 11: Test laufen lassen, grün bestätigen**
+- [x] **Step 11: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreSettingsLink.test.tsx
@@ -6310,7 +6310,7 @@ cd frontend && npx vitest run src/features/chores/ChoreSettingsLink.test.tsx
 
 Erwartet: PASS, 2 Tests.
 
-- [ ] **Step 12: Zeile in SettingsView einhängen**
+- [x] **Step 12: Zeile in SettingsView einhängen**
 
 In `frontend/src/features/settings/SettingsView.tsx` den Import ergänzen und die Zeile nach `<TaskListSection />` einsetzen:
 
@@ -6337,7 +6337,7 @@ und den vorhandenen Test `renders the four sections and the theme toggle` umbene
     expect(screen.getByText('ChoreSettingsLink')).toBeInTheDocument()
 ```
 
-- [ ] **Step 13: Route `/settings/chores` ergänzen**
+- [x] **Step 13: Route `/settings/chores` ergänzen**
 
 In `frontend/src/App.tsx` den Import ergänzen und die Route **nach** `/settings` einsetzen:
 
@@ -6360,7 +6360,7 @@ import { ChoreSettingsView } from '@/features/chores/ChoreSettingsView'
 
 In `frontend/src/App.test.tsx` einen Route-Test nach dem Muster der vorhandenen ergänzen; erwartet wird die Überschrift „Haushaltsaufgaben".
 
-- [ ] **Step 14: Volles Frontend-Gate**
+- [x] **Step 14: Volles Frontend-Gate**
 
 ```bash
 cd frontend && npm run check
@@ -6368,7 +6368,7 @@ cd frontend && npm run check
 
 Erwartet: alles grün. Meldet dependency-cruiser `no-orphans` für eine der neuen Dateien, ist sie noch nirgends importiert — Einhängung in Step 12/13 nachholen.
 
-- [ ] **Step 15: Commit**
+- [x] **Step 15: Commit**
 
 Die drei neuen Komponenten, ihre Tests, `SettingsView.tsx`, `SettingsView.test.tsx`, `App.tsx`, `App.test.tsx` und diesen Plan committen:
 

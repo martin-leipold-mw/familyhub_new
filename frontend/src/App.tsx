@@ -7,6 +7,7 @@ import { CalendarView } from '@/features/calendar/CalendarView'
 import { TasksView } from '@/features/tasks/TasksView'
 import { ChoresView } from '@/features/chores/ChoresView'
 import { SettingsView } from '@/features/settings/SettingsView'
+import { ChoreSettingsView } from '@/features/chores/ChoreSettingsView'
 import { OAuthCallback } from '@/features/google/OAuthCallback'
 
 export default function App() {
@@ -51,6 +52,16 @@ export default function App() {
             <SetupGuard>
               <AppShell>
                 <SettingsView />
+              </AppShell>
+            </SetupGuard>
+          }
+        />
+        <Route
+          path="/settings/chores"
+          element={
+            <SetupGuard>
+              <AppShell>
+                <ChoreSettingsView />
               </AppShell>
             </SetupGuard>
           }

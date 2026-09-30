@@ -13,6 +13,9 @@ vi.mock('@/features/tasks/TasksView', () => ({
 vi.mock('@/features/chores/ChoresView', () => ({
   ChoresView: () => <div>HAUSHALT</div>,
 }))
+vi.mock('@/features/chores/ChoreSettingsView', () => ({
+  ChoreSettingsView: () => <div>Haushaltsaufgaben</div>,
+}))
 vi.mock('@/features/settings/SettingsView', () => ({
   SettingsView: () => <div>EINSTELLUNGEN</div>,
 }))
@@ -48,5 +51,11 @@ describe('App routing', () => {
     window.history.pushState({}, '', '/chores')
     render(<AppRoutes />)
     expect(screen.getByText('HAUSHALT')).toBeInTheDocument()
+  })
+
+  it('shows the chore admin page at /settings/chores', () => {
+    window.history.pushState({}, '', '/settings/chores')
+    render(<AppRoutes />)
+    expect(screen.getByText('Haushaltsaufgaben')).toBeInTheDocument()
   })
 })

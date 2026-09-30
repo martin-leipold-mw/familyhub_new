@@ -6,6 +6,7 @@ import { MemberSection } from './MemberSection'
 import { GoogleAccountsSettings } from '@/features/google/GoogleAccountsSettings'
 import { CalendarSection } from '@/features/google/CalendarSection'
 import { TaskListSection } from '@/features/google/TaskListSection'
+import { ChoreSettingsLink } from '@/features/chores/ChoreSettingsLink'
 import { ChangePinDialog } from './ChangePinDialog'
 
 export function SettingsView() {
@@ -25,6 +26,7 @@ export function SettingsView() {
           <GoogleAccountsSettings />
           <CalendarSection />
           <TaskListSection />
+          <ChoreSettingsLink />
 
           <button
             type="button"
