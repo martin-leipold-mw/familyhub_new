@@ -41,6 +41,7 @@
     <ID>ThrowsCount:RedirectUriNormalizer.kt$RedirectUriNormalizer$fun normalize(uri: String): String</ID>
     <ID>ThrowsCount:StartupValidator.kt$StartupValidator$@PostConstruct fun validate()</ID>
     <ID>TooGenericExceptionCaught:CalendarSyncScheduler.kt$CalendarSyncScheduler$ex: Exception</ID>
+    <ID>TooGenericExceptionCaught:ChoreRefillService.kt$ChoreRefillService$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:GoogleOAuthFlow.kt$GoogleOAuthFlow$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:GoogleTasksClient.kt$GoogleTasksClient$ex: Exception</ID>
     <ID>TooGenericExceptionCaught:RedirectUriNormalizer.kt$RedirectUriNormalizer$ex: Exception</ID>

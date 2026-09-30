@@ -185,12 +185,51 @@ class ChoreRefillServiceTest {
     }
 
     @Test
+    fun `verwaiste Zuweisung wird im selben Lauf an ein aktives Mitglied neu vergeben`() {
+        // Schritt 0 muss VOR dem Ausgabelauf laufen: erst gibt die Freigabe die
+        // Vorlage frei, dann kann derselbe Lauf sie neu vergeben. `released`
+        // simuliert den DB-Zustand dynamisch — anders als ein statischer Stub
+        // würde dieser Test fehlschlagen, wenn die beiden Schritte vertauscht wären.
+        val weg = UUID.randomUUID()
+        val c = chore("Klo putzen")
+        val verwaist = ChoreAssignment(choreId = c.id!!, memberId = weg, points = 10, assignedOn = today)
+        every { assignmentRepository.findAllByStatus(STATUS_OPEN) } returns listOf(verwaist)
+        every {
+            choreRepository.findAllByIsActiveTrueAndNextDueOnLessThanEqualOrderByNextDueOnAscCreatedAtAsc(today)
+        } returns listOf(c)
+        var released = false
+        every { assignmentRepository.deleteAll(listOf(verwaist)) } answers { released = true }
+        every { assignmentRepository.existsByChoreIdAndStatus(c.id!!, STATUS_OPEN) } answers { !released }
+
+        val result = service.refillAll()
+
+        assertThat(result).isEqualTo(RefillResult(assigned = 1, waiting = 0))
+        assertThat(c.lastAssignedMemberId).isEqualTo(papa.id)
+        verify { assignmentRepository.deleteAll(listOf(verwaist)) }
+    }
+
+    @Test
     fun `jede Vorlage laeuft in einer eigenen Transaktion`() {
         due(chore("A"), chore("B"))
 
         service.refillAll()
 
         verify(exactly = 2) { transactionTemplate.execute<Any>(any()) }
+    }
+
+    @Test
+    fun `eine fehlschlagende Vorlage haelt die weiteren nicht auf`() {
+        val kaputt = chore("Kaputte Vorlage", group = GROUP_PARENTS)
+        val ok = chore("Laeuft weiter", group = GROUP_CHILDREN)
+        due(kaputt, ok)
+        every { choreRepository.save(kaputt) } throws RuntimeException("Speichern fehlgeschlagen")
+
+        val result = service.refillAll()
+
+        // Eine gescheiterte Vorlage zählt als "wartend": ihr nextDueOn hat sich
+        // nicht verändert, sie bleibt fällig und kommt beim nächsten Lauf wieder dran.
+        assertThat(result).isEqualTo(RefillResult(assigned = 1, waiting = 1))
+        assertThat(ok.lastAssignedMemberId).isEqualTo(anna.id)
     }
 
     @Test

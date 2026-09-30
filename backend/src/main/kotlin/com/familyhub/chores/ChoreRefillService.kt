@@ -49,8 +49,18 @@ class ChoreRefillService(
         var waiting = 0
         for (chore in due) {
             // Eigene Transaktion je Vorlage: ein Fehler in einer einzigen
-            // Vorlage darf nicht den kompletten Lauf zurückrollen.
-            if (assignInOwnTransaction(chore, today, lastAssignedInRun)) assigned++ else waiting++
+            // Vorlage darf nicht den kompletten Lauf zurückrollen — und darf auch
+            // nicht die Vorlagen überspringen, die danach in der Liste stehen.
+            // Eine gescheiterte Vorlage zählt als "wartend": ihr `nextDueOn` hat
+            // sich nicht verändert, sie ist also weiterhin fällig und kommt beim
+            // nächsten Lauf erneut dran — exakt das Verhalten, das "wartend"
+            // schon für einen leeren Pool oder ein volles Limit beschreibt.
+            try {
+                if (assignInOwnTransaction(chore, today, lastAssignedInRun)) assigned++ else waiting++
+            } catch (ex: Exception) {
+                log.error("Ämtli '{}' ({}) im Ausgabelauf fehlgeschlagen", chore.name, chore.id, ex)
+                waiting++
+            }
         }
         log.info("Ämtli-Ausgabe: {} ausgegeben, {} wartend", assigned, waiting)
         return RefillResult(assigned = assigned, waiting = waiting)
