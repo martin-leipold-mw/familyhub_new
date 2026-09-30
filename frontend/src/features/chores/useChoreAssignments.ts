@@ -12,8 +12,14 @@ import { patchAssignment, type AssignmentsCache } from './choreOptimistic'
 /** Taktrate der Rücknahme-Anzeige: alle 30 s neu bewerten, ob die Frist noch läuft. */
 export const NOW_TICK_MS = 30_000
 
+/**
+ * Das Wanddisplay wird nie neu geladen: ohne Nachladen im Takt blieben die
+ * Ausgaben des Morgenlaufs und Erledigungen von anderen Geräten unsichtbar.
+ */
+export const ASSIGNMENTS_REFETCH_MS = 60_000
+
 export function useChoreAssignments() {
-  const query = useListChoreAssignments()
+  const query = useListChoreAssignments({ query: { refetchInterval: ASSIGNMENTS_REFETCH_MS } })
   return {
     assignments: (query.data?.data ?? []) as ChoreAssignmentResponse[],
     isLoading: query.isLoading,

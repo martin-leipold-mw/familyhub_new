@@ -23,6 +23,7 @@ import {
   useUndoAssignmentMutation,
   useNow,
   NOW_TICK_MS,
+  ASSIGNMENTS_REFETCH_MS,
 } from './useChoreAssignments'
 
 function makeWrapperWithClient() {
@@ -48,6 +49,20 @@ describe('useChoreAssignments', () => {
 
     expect(result.current.assignments).toHaveLength(1)
     expect(result.current.isError).toBe(false)
+  })
+
+  it('laedt die Liste jede Minute neu, damit das Wanddisplay aktuell bleibt', () => {
+    vi.mocked(useListChoreAssignments).mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    } as ReturnType<typeof useListChoreAssignments>)
+
+    const { wrapper } = makeWrapperWithClient()
+    renderHook(() => useChoreAssignments(), { wrapper })
+
+    expect(useListChoreAssignments).toHaveBeenCalledWith({ query: { refetchInterval: ASSIGNMENTS_REFETCH_MS } })
+    expect(ASSIGNMENTS_REFETCH_MS).toBe(60_000)
   })
 
   it('faellt auf eine leere Liste zurueck, solange nichts geladen ist', () => {

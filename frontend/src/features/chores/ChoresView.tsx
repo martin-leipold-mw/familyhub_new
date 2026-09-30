@@ -1,5 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { getListChoreAssignmentsQueryKey } from '@/api/generated/endpoints/familyHubAPI'
+import {
+  getListChoreAssignmentsQueryKey,
+  getListMembersQueryKey,
+} from '@/api/generated/endpoints/familyHubAPI'
 import { useMembers } from '@/features/members/useMembersQuery'
 import { useSnackbar } from '@/routing/SnackbarProvider'
 import { ChoreLane } from './ChoreLane'
@@ -19,8 +22,14 @@ import {
  */
 export function ChoresView() {
   const queryClient = useQueryClient()
-  const { assignments, isLoading, isError } = useChoreAssignments()
-  const { members } = useMembers()
+  const assignmentsQuery = useChoreAssignments()
+  const membersQuery = useMembers()
+  const { assignments } = assignmentsQuery
+  const { members } = membersQuery
+  // Beide Abfragen gemeinsam: sonst blitzt „Noch keine Familienmitglieder
+  // angelegt." auf, solange die Mitglieder noch unterwegs sind.
+  const isLoading = assignmentsQuery.isLoading || membersQuery.isLoading
+  const isError = assignmentsQuery.isError || membersQuery.isError
   const { show } = useSnackbar()
   const now = useNow(NOW_TICK_MS)
   const completeMutation = useCompleteAssignmentMutation()
@@ -53,6 +62,7 @@ export function ChoresView() {
 
   function handleRetry() {
     void queryClient.invalidateQueries({ queryKey: getListChoreAssignmentsQueryKey() })
+    void queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() })
   }
 
   return (

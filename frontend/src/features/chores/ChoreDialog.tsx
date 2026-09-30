@@ -89,8 +89,9 @@ export function ChoreDialog({ chore, onClose }: ChoreDialogProps) {
       await deleteMutation.mutateAsync({ id: chore!.id })
       onClose()
     } catch (deleteError) {
+      // Erledigte Historie meldet der Server laut Vertrag als 400 (nicht 409).
       setError(
-        deleteError instanceof ApiError && deleteError.status === 409
+        deleteError instanceof ApiError && deleteError.status === 400
           ? 'Löschen nicht möglich — die Aufgabe wurde bereits erledigt. Bitte pausieren.'
           : 'Löschen fehlgeschlagen. Bitte erneut versuchen.',
       )

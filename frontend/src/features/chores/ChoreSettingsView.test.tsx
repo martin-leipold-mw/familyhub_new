@@ -62,9 +62,16 @@ function chore(overrides: Partial<ChoreResponse> = {}): ChoreResponse {
   }
 }
 
-function mockState({ chores = [] as ChoreResponse[], isLoading = false, isError = false } = {}) {
+function mockState({
+  chores = [] as ChoreResponse[],
+  isLoading = false,
+  isError = false,
+  members = [anna],
+  membersLoading = false,
+  membersError = false,
+} = {}) {
   vi.mocked(useChores).mockReturnValue({ chores, isLoading, isError })
-  vi.mocked(useMembers).mockReturnValue({ members: [anna], isLoading: false, isError: false })
+  vi.mocked(useMembers).mockReturnValue({ members, isLoading: membersLoading, isError: membersError })
 }
 
 describe('ChoreSettingsView', () => {
@@ -93,6 +100,23 @@ describe('ChoreSettingsView', () => {
     renderView()
 
     expect(screen.getByText('Fehler beim Laden der Haushaltsaufgaben.')).toBeInTheDocument()
+  })
+
+  it('zeigt keinen falschen Gruppenhinweis, solange die Mitglieder laden', () => {
+    mockState({ chores: [chore()], members: [], membersLoading: true })
+    renderView()
+
+    expect(screen.getByText('Wird geladen…')).toBeInTheDocument()
+    expect(screen.queryByText('Keine Mitglieder in dieser Gruppe')).not.toBeInTheDocument()
+    expect(screen.queryByText('Toilette putzen')).not.toBeInTheDocument()
+  })
+
+  it('zeigt den Fehlerzustand, wenn die Mitglieder nicht laden', () => {
+    mockState({ chores: [chore()], members: [], membersError: true })
+    renderView()
+
+    expect(screen.getByText('Fehler beim Laden der Haushaltsaufgaben.')).toBeInTheDocument()
+    expect(screen.queryByText('Keine Mitglieder in dieser Gruppe')).not.toBeInTheDocument()
   })
 
   it('zeigt einen Leerzustand', () => {

@@ -19,8 +19,14 @@ type DialogState = { chore: ChoreResponse | null }
  * Breite und große Touch-Ziele.
  */
 export function ChoreSettingsView() {
-  const { chores, isLoading, isError } = useChores()
-  const { members } = useMembers()
+  const choresQuery = useChores()
+  const membersQuery = useMembers()
+  const { chores } = choresQuery
+  const { members } = membersQuery
+  // Der Status je Zeile hängt an den Mitgliedern: vor deren Laden stünde dort
+  // fälschlich „Keine Mitglieder in dieser Gruppe".
+  const isLoading = choresQuery.isLoading || membersQuery.isLoading
+  const isError = choresQuery.isError || membersQuery.isError
   const updateMutation = useUpdateChoreMutation()
   const { show } = useSnackbar()
   const [dialog, setDialog] = useState<DialogState | null>(null)

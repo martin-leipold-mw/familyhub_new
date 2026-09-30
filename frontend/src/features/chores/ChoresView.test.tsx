@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { QueryClient } from '@tanstack/react-query'
 import { screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderWithProviders } from '@/test/testUtils'
@@ -22,6 +23,10 @@ vi.mock('@/features/members/useMembersQuery', () => ({ useMembers: vi.fn() }))
 import { useChoreAssignments } from './useChoreAssignments'
 import { useMembers } from '@/features/members/useMembersQuery'
 import { ChoresView } from './ChoresView'
+import {
+  getListChoreAssignmentsQueryKey,
+  getListMembersQueryKey,
+} from '@/api/generated/endpoints/familyHubAPI'
 import { SnackbarProvider } from '@/routing/SnackbarProvider'
 
 function renderView() {
@@ -61,9 +66,11 @@ function mockState({
   members = [anna],
   isLoading = false,
   isError = false,
+  membersLoading = false,
+  membersError = false,
 } = {}) {
   vi.mocked(useChoreAssignments).mockReturnValue({ assignments, isLoading, isError })
-  vi.mocked(useMembers).mockReturnValue({ members, isLoading: false, isError: false })
+  vi.mocked(useMembers).mockReturnValue({ members, isLoading: membersLoading, isError: membersError })
 }
 
 describe('ChoresView', () => {
@@ -90,6 +97,34 @@ describe('ChoresView', () => {
     renderView()
 
     expect(screen.getByText('Fehler beim Laden der Haushaltsaufgaben.')).toBeInTheDocument()
+  })
+
+  it('zeigt den Ladezustand statt des Leerhinweises, solange die Mitglieder laden', () => {
+    mockState({ members: [], membersLoading: true })
+    renderView()
+
+    expect(screen.getByText('Wird geladen…')).toBeInTheDocument()
+    expect(screen.queryByText('Noch keine Familienmitglieder angelegt.')).not.toBeInTheDocument()
+  })
+
+  it('zeigt den Fehlerzustand, wenn die Mitglieder nicht laden', () => {
+    mockState({ members: [], membersError: true })
+    renderView()
+
+    expect(screen.getByText('Fehler beim Laden der Haushaltsaufgaben.')).toBeInTheDocument()
+    expect(screen.queryByText('Noch keine Familienmitglieder angelegt.')).not.toBeInTheDocument()
+  })
+
+  it('laedt beim erneuten Versuch Aufgaben und Mitglieder neu', async () => {
+    const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
+    mockState({ members: [], membersError: true })
+    renderView()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }))
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: getListChoreAssignmentsQueryKey() })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: getListMembersQueryKey() })
+    invalidate.mockRestore()
   })
 
   it('weist auf fehlende Mitglieder hin', () => {

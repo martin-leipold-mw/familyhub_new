@@ -189,8 +189,8 @@ describe('ChoreDialog — Bearbeiten', () => {
     expect(onClose).toHaveBeenCalled()
   })
 
-  it('meldet ein abgelehntes Loeschen', async () => {
-    deleteAsync.mockRejectedValueOnce(new ApiError('Conflict', 409))
+  it('zeigt bei 400 (erledigte Historie) den Pausier-Hinweis', async () => {
+    deleteAsync.mockRejectedValueOnce(new ApiError('Diese Aufgabe wurde bereits erledigt und kann nicht gelöscht werden. Bitte pausieren.', 400))
     renderWithProviders(<ChoreDialog chore={bestehend} onClose={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Löschen' }))

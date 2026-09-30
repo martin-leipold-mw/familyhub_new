@@ -1,7 +1,16 @@
+import { useRef } from 'react'
 import { memberColorHex } from '@/features/members/colors'
 import { ChoreCard } from './ChoreCard'
 import { canUndo } from './undoWindow'
 import type { ChoreLaneModel } from './choreLanes'
+
+/**
+ * Nach einem Haken nimmt dieselbe Spalte so lange keinen weiteren an: die
+ * erledigte Karte rutscht sofort ans Ende, und der Knopf der nächsten offenen
+ * Karte gleitet unter den Finger — ein schneller Doppeltipp hakte sonst die
+ * falsche Aufgabe ab. „Rückgängig" bleibt ungesperrt.
+ */
+export const COMPLETE_LOCKOUT_MS = 600
 
 type ChoreLaneProps = {
   lane: ChoreLaneModel
@@ -18,6 +27,14 @@ type ChoreLaneProps = {
 export function ChoreLane({ lane, now, onComplete, onUndo }: ChoreLaneProps) {
   const color = memberColorHex(lane.member.color)
   const countLabel = lane.open.length === 0 ? 'Alles erledigt! 🎉' : `${lane.open.length} offen`
+  const lastCompleteAt = useRef(Number.NEGATIVE_INFINITY)
+
+  function handleComplete(id: string) {
+    const tappedAt = Date.now()
+    if (tappedAt - lastCompleteAt.current < COMPLETE_LOCKOUT_MS) return
+    lastCompleteAt.current = tappedAt
+    onComplete(id)
+  }
 
   return (
     <section className="flex min-w-[20rem] flex-col gap-3 rounded-2xl bg-surface p-4">
@@ -45,7 +62,7 @@ export function ChoreLane({ lane, now, onComplete, onUndo }: ChoreLaneProps) {
             assignment={a}
             color={color}
             undoable={false}
-            onComplete={onComplete}
+            onComplete={handleComplete}
             onUndo={onUndo}
           />
         ))}
@@ -55,7 +72,7 @@ export function ChoreLane({ lane, now, onComplete, onUndo }: ChoreLaneProps) {
             assignment={a}
             color={color}
             undoable={canUndo(a.completedAt, now)}
-            onComplete={onComplete}
+            onComplete={handleComplete}
             onUndo={onUndo}
           />
         ))}

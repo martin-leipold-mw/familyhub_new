@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import type { ChoreAssignmentResponse, MemberResponse } from '@/api/generated/model'
 import type { ChoreLaneModel } from './choreLanes'
-import { ChoreLane } from './ChoreLane'
+import { ChoreLane, COMPLETE_LOCKOUT_MS } from './ChoreLane'
 
 const member: MemberResponse = {
   id: 'm1',
@@ -121,5 +121,99 @@ describe('ChoreLane', () => {
     render(<ChoreLane lane={lane()} now={now} onComplete={vi.fn()} onUndo={vi.fn()} />)
 
     expect(screen.getByText('A')).toBeInTheDocument()
+  })
+
+  describe('Sperre gegen Doppeltippen', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-09-22T09:00:00Z'))
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('ignoriert einen zweiten Haken in derselben Spalte innerhalb der Sperrfrist', () => {
+      const onComplete = vi.fn()
+      render(
+        <ChoreLane
+          lane={lane({ open: [assignment('a1'), assignment('a2')] })}
+          now={now}
+          onComplete={onComplete}
+          onUndo={vi.fn()}
+        />,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a1 erledigt' }))
+      act(() => {
+        vi.advanceTimersByTime(COMPLETE_LOCKOUT_MS - 1)
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a2 erledigt' }))
+
+      expect(onComplete).toHaveBeenCalledTimes(1)
+      expect(onComplete).toHaveBeenCalledWith('a1')
+    })
+
+    it('laesst einen Haken nach Ablauf der Sperrfrist durch', () => {
+      const onComplete = vi.fn()
+      render(
+        <ChoreLane
+          lane={lane({ open: [assignment('a1'), assignment('a2')] })}
+          now={now}
+          onComplete={onComplete}
+          onUndo={vi.fn()}
+        />,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a1 erledigt' }))
+      act(() => {
+        vi.advanceTimersByTime(COMPLETE_LOCKOUT_MS)
+      })
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a2 erledigt' }))
+
+      expect(onComplete).toHaveBeenNthCalledWith(1, 'a1')
+      expect(onComplete).toHaveBeenNthCalledWith(2, 'a2')
+    })
+
+    it('sperrt andere Spalten nicht mit', () => {
+      const onComplete = vi.fn()
+      const ben: MemberResponse = { ...member, id: 'm2', name: 'Ben' }
+      render(
+        <>
+          <ChoreLane lane={lane({ open: [assignment('a1')] })} now={now} onComplete={onComplete} onUndo={vi.fn()} />
+          <ChoreLane
+            lane={lane({ member: ben, open: [assignment('b1', { memberId: 'm2' })] })}
+            now={now}
+            onComplete={onComplete}
+            onUndo={vi.fn()}
+          />
+        </>,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a1 erledigt' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe b1 erledigt' }))
+
+      expect(onComplete).toHaveBeenNthCalledWith(1, 'a1')
+      expect(onComplete).toHaveBeenNthCalledWith(2, 'b1')
+    })
+
+    it('sperrt Rueckgaengig nicht', () => {
+      const onUndo = vi.fn()
+      render(
+        <ChoreLane
+          lane={lane({
+            open: [assignment('a1')],
+            completed: [assignment('fertig', { status: 'completed', completedAt: '2026-09-22T09:00:00Z' })],
+          })}
+          now={new Date('2026-09-22T09:00:30Z')}
+          onComplete={vi.fn()}
+          onUndo={onUndo}
+        />,
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Aufgabe a1 erledigt' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Rückgängig' }))
+
+      expect(onUndo).toHaveBeenCalledWith('fertig')
+    })
   })
 })
