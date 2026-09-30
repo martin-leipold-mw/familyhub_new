@@ -4684,7 +4684,7 @@ feat(chores): add chore card and per-member lane
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test für ChoresView schreiben**
+- [x] **Step 1: Den fehlschlagenden Test für ChoresView schreiben**
 
 `frontend/src/features/chores/ChoresView.test.tsx`:
 
@@ -4843,7 +4843,7 @@ describe('ChoresView', () => {
 
 Der Test für „Rückgängig" setzt die Systemzeit, weil `ChoresView` die Frist über `useNow` bewertet. Nutzt der Aufbau `vi.setSystemTime` ohne vorheriges `vi.useFakeTimers()`, ergänze es in einem `beforeEach` der beiden betroffenen Tests — `userEvent` braucht dann `userEvent.setup({ advanceTimers: vi.advanceTimersByTime })`.
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoresView.test.tsx
@@ -4851,7 +4851,7 @@ cd frontend && npx vitest run src/features/chores/ChoresView.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoresView"`.
 
-- [ ] **Step 3: ChoresView implementieren**
+- [x] **Step 3: ChoresView implementieren**
 
 `frontend/src/features/chores/ChoresView.tsx`:
 
@@ -4956,7 +4956,7 @@ export function ChoresView() {
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoresView.test.tsx
@@ -4964,7 +4964,7 @@ cd frontend && npx vitest run src/features/chores/ChoresView.test.tsx
 
 Erwartet: PASS, 9 Tests.
 
-- [ ] **Step 5: Bereichsnavigation um „Haushalt" erweitern**
+- [x] **Step 5: Bereichsnavigation um „Haushalt" erweitern**
 
 In `frontend/src/routing/AppShell.tsx` die `SECTIONS`-Liste und den Doku-Kommentar ändern:
 
@@ -4997,7 +4997,7 @@ Im Test `marks the current section with aria-current` zusätzlich prüfen:
     expect(screen.getByRole('link', { name: 'Haushalt' })).not.toHaveAttribute('aria-current')
 ```
 
-- [ ] **Step 6: Route `/chores` ergänzen**
+- [x] **Step 6: Route `/chores` ergänzen**
 
 In `frontend/src/App.tsx` den Import hinzufügen und die Route zwischen `/tasks` und `/settings` einsetzen:
 
@@ -5036,7 +5036,7 @@ und im `describe('App routing')` einen Test nach dem vorhandenen `/tasks`-Muster
   })
 ```
 
-- [ ] **Step 7: Volles Frontend-Gate**
+- [x] **Step 7: Volles Frontend-Gate**
 
 ```bash
 cd frontend && npm run check
@@ -5044,7 +5044,7 @@ cd frontend && npm run check
 
 Erwartet: kein TS-Fehler, keine eslint-Warnung, dependency-cruiser sauber, Coverage-Schwellen erfüllt. Bleibt eine Verzweigung offen, öffne `coverage/index.html` und suche die gelb markierte Zeile; die Regel aus den Global Constraints gilt: fehlende Fälle testen, nicht die Schwelle senken.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 `ChoresView`, ihren Test, `AppShell.tsx`, `AppShell.test.tsx`, `App.tsx`, `App.test.tsx` und diesen Plan committen:
 

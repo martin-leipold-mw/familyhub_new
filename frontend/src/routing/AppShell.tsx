@@ -6,12 +6,13 @@ import { RevokedConnectionSnackbars } from '@/features/google/RevokedConnectionS
 const SECTIONS = [
   { to: '/', label: 'Kalender' },
   { to: '/tasks', label: 'Aufgaben' },
+  { to: '/chores', label: 'Haushalt' },
   { to: '/settings', label: 'Einstellungen' },
 ]
 
 /**
  * Application frame. Renders the section navigation (Kalender/Aufgaben/
- * Einstellungen) above the page content, wraps everything in a
+ * Haushalt/Einstellungen) above the page content, wraps everything in a
  * SnackbarProvider, and mounts the revoked-connection watcher, which pops a
  * per-account reconnect snackbar when a Google connection's token has
  * expired.

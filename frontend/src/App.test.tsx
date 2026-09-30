@@ -10,6 +10,9 @@ vi.mock('@/features/calendar/CalendarView', () => ({
 vi.mock('@/features/tasks/TasksView', () => ({
   TasksView: () => <div>AUFGABEN</div>,
 }))
+vi.mock('@/features/chores/ChoresView', () => ({
+  ChoresView: () => <div>HAUSHALT</div>,
+}))
 vi.mock('@/features/settings/SettingsView', () => ({
   SettingsView: () => <div>EINSTELLUNGEN</div>,
 }))
@@ -39,5 +42,11 @@ describe('App routing', () => {
     window.history.pushState({}, '', '/tasks')
     render(<AppRoutes />)
     expect(screen.getByText('AUFGABEN')).toBeInTheDocument()
+  })
+
+  it('shows the chores view at /chores', () => {
+    window.history.pushState({}, '', '/chores')
+    render(<AppRoutes />)
+    expect(screen.getByText('HAUSHALT')).toBeInTheDocument()
   })
 })

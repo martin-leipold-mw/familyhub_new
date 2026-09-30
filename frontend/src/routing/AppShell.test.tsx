@@ -28,7 +28,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('revoked-snackbars')).toBeInTheDocument()
   })
 
-  it('renders links to calendar, tasks and settings', () => {
+  it('renders links to calendar, tasks, chores and settings', () => {
     renderWithProviders(
       <AppShell>
         <p>Inhalt</p>
@@ -36,6 +36,7 @@ describe('AppShell', () => {
     )
     expect(screen.getByRole('link', { name: 'Kalender' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Aufgaben' })).toHaveAttribute('href', '/tasks')
+    expect(screen.getByRole('link', { name: 'Haushalt' })).toHaveAttribute('href', '/chores')
     expect(screen.getByRole('link', { name: 'Einstellungen' })).toHaveAttribute('href', '/settings')
   })
 
@@ -48,6 +49,7 @@ describe('AppShell', () => {
     )
     expect(screen.getByRole('link', { name: 'Aufgaben' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Kalender' })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: 'Haushalt' })).not.toHaveAttribute('aria-current')
     expect(screen.getByRole('link', { name: 'Einstellungen' })).not.toHaveAttribute('aria-current')
   })
 
