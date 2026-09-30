@@ -32,6 +32,10 @@ tags:
     description: Google Tasks list, selection and manual sync
   - name: Tasks
     description: Task CRUD, synced with Google Tasks
+  - name: Chores
+    description: Household chores — templates and queued assignments
+  - name: ChoreAssignments
+    description: Household chore assignments — complete and undo
 
 paths:
   /health:
@@ -880,6 +884,159 @@ paths:
         "204":
           description: Task deleted
 
+  /v1/chores:
+    get:
+      operationId: listChores
+      summary: List chore templates with their next due date and open assignment
+      tags: [Chores]
+      security: []
+      parameters:
+        - name: activeOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Chore templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChoreResponse"
+    post:
+      operationId: createChore
+      summary: Create a chore template; it is handed out immediately
+      tags: [Chores]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChoreRequest"
+      responses:
+        "201":
+          description: Chore created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoreResponse"
+
+  /v1/chores/{id}:
+    patch:
+      operationId: updateChore
+      summary: Partially update a chore template, including pausing and resuming it
+      tags: [Chores]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChoreRequest"
+      responses:
+        "200":
+          description: Chore updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoreResponse"
+    delete:
+      operationId: deleteChore
+      summary: Delete a chore template; rejected once completed assignments exist
+      tags: [Chores]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Chore deleted
+        "400":
+          description: Chore has completed history — pause it instead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /v1/chore-assignments:
+    get:
+      operationId: listChoreAssignments
+      summary: Open assignments plus those completed today (household timezone)
+      tags: [ChoreAssignments]
+      security: []
+      responses:
+        "200":
+          description: Current assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChoreAssignmentResponse"
+
+  /v1/chore-assignments/{id}/complete:
+    post:
+      operationId: completeChoreAssignment
+      summary: Check an assignment off; always credited to its assigned member
+      tags: [ChoreAssignments]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Assignment completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoreAssignmentResponse"
+
+  /v1/chore-assignments/{id}/undo:
+    post:
+      operationId: undoChoreAssignment
+      summary: Re-open an assignment within five minutes of completing it
+      tags: [ChoreAssignments]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Assignment re-opened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChoreAssignmentResponse"
+        "400":
+          description: The five-minute undo window has passed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthResponse:
@@ -1294,6 +1451,147 @@ components:
             local-only and clearing it never reaches Google.
           items:
             $ref: "#/components/schemas/ClearableTaskField"
+
+    ChoreOpenAssignmentResponse:
+      type: object
+      required: [id, memberId, memberName, assignedOn]
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        assignedOn:
+          type: string
+          format: date
+
+    ChoreResponse:
+      type: object
+      required: [id, name, icon, intervalDays, assignmentGroup, points, isActive, nextDueOn]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        icon:
+          type: string
+          description: Emoji — the primary reading interface for pre-literate children
+        description:
+          type: string
+          nullable: true
+        intervalDays:
+          type: integer
+          description: Days after a completion before the chore becomes due again
+        assignmentGroup:
+          type: string
+          enum: [parents, children, all]
+        points:
+          type: integer
+        isActive:
+          type: boolean
+        nextDueOn:
+          type: string
+          format: date
+          description: The chore's entire scheduling state
+        openAssignment:
+          allOf:
+            - $ref: "#/components/schemas/ChoreOpenAssignmentResponse"
+          nullable: true
+          description: Null when nobody currently holds this chore
+
+    ChoreAssignmentResponse:
+      type: object
+      required: [id, choreId, memberId, name, icon, status, points, assignedOn]
+      properties:
+        id:
+          type: string
+          format: uuid
+        choreId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          description: Carried over from the template, so a rename takes effect at once
+        icon:
+          type: string
+        description:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, completed]
+        points:
+          type: integer
+          description: Frozen copy of the template's points at hand-out time
+        assignedOn:
+          type: string
+          format: date
+        completedAt:
+          type: string
+          nullable: true
+          description: ISO-8601 timestamp
+
+    CreateChoreRequest:
+      type: object
+      required: [name, icon, intervalDays, assignmentGroup]
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        description:
+          type: string
+          nullable: true
+        intervalDays:
+          type: integer
+        assignmentGroup:
+          type: string
+          enum: [parents, children, all]
+        points:
+          type: integer
+          default: 10
+
+    ClearableChoreField:
+      type: string
+      description: >-
+        A chore field that can be explicitly cleared via `UpdateChoreRequest.clearFields`.
+        A nullable property alone cannot express "clear this field" in a PATCH, because
+        `null` there already means "leave unchanged" (an absent property is
+        indistinguishable from `null` once deserialised).
+      enum: [description]
+
+    UpdateChoreRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+        description:
+          type: string
+          nullable: true
+        intervalDays:
+          type: integer
+        assignmentGroup:
+          type: string
+          enum: [parents, children, all]
+        points:
+          type: integer
+        isActive:
+          type: boolean
+        clearFields:
+          type: array
+          uniqueItems: true
+          description: Fields to explicitly clear; wins over the field's own value in this request.
+          items:
+            $ref: "#/components/schemas/ClearableChoreField"
 
     SelectedCalendarsRequest:
       type: object

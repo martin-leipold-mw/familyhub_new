@@ -2335,7 +2335,7 @@ git commit -m "feat(chores): add chore template CRUD with delete guard and insta
 
 ---
 
-- [ ] **Step 1: Tag ergänzen**
+- [x] **Step 1: Tag ergänzen**
 
 In `api/openapi.yml` unter `tags:` nach dem `Tasks`-Eintrag anfügen:
 
@@ -2344,7 +2344,7 @@ In `api/openapi.yml` unter `tags:` nach dem `Tasks`-Eintrag anfügen:
     description: Household chores — templates and queued assignments
 ```
 
-- [ ] **Step 2: Pfade ergänzen**
+- [x] **Step 2: Pfade ergänzen**
 
 In `api/openapi.yml` nach dem Block `/v1/tasks/{id}:` (also am Ende von `paths:`) anfügen:
 
@@ -2503,7 +2503,7 @@ In `api/openapi.yml` nach dem Block `/v1/tasks/{id}:` (also am Ende von `paths:`
                 $ref: "#/components/schemas/ErrorResponse"
 ```
 
-- [ ] **Step 3: Schemas ergänzen**
+- [x] **Step 3: Schemas ergänzen**
 
 In `api/openapi.yml` unter `components.schemas:` nach `UpdateTaskRequest` anfügen:
 
@@ -2650,7 +2650,7 @@ In `api/openapi.yml` unter `components.schemas:` nach `UpdateTaskRequest` anfüg
             $ref: "#/components/schemas/ClearableChoreField"
 ```
 
-- [ ] **Step 4: Codegen auf beiden Seiten laufen lassen und die erzeugten Typen prüfen**
+- [x] **Step 4: Codegen auf beiden Seiten laufen lassen und die erzeugten Typen prüfen**
 
 ```bash
 cd backend && ./gradlew openApiGenerate
@@ -2678,7 +2678,7 @@ Erwartet: `ChoresApi.kt` und `ChoreAssignmentsApi.kt` existieren; `ChoreResponse
 
 Dann heißt der generierte Typ `ChoreResponseOpenAssignment` statt `ChoreOpenAssignmentResponse`; das eigenständige Schema `ChoreOpenAssignmentResponse` wird in diesem Fall aus `components.schemas` wieder entfernt, da es dann niemand referenziert.
 
-- [ ] **Step 5: Den fehlschlagenden Controller-Test für Vorlagen schreiben**
+- [x] **Step 5: Den fehlschlagenden Controller-Test für Vorlagen schreiben**
 
 Vorher nachschlagen: den Namen des PIN-Headers und die Signatur von `PinSessionService.isValid` in `backend/src/main/kotlin/com/familyhub/pin/PinSessionInterceptor.kt` — der Test unten setzt beides voraus und ist die einzige Stelle des Plans, die das tut. Weicht etwas ab, hier angleichen.
 
@@ -2934,7 +2934,7 @@ class ChoreControllerTest {
 }
 ```
 
-- [ ] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreControllerTest'
@@ -2942,7 +2942,7 @@ cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreControllerTest'
 
 Erwartet: Kompilierfehler `Unresolved reference: ChoreController`.
 
-- [ ] **Step 7: ChoreController implementieren**
+- [x] **Step 7: ChoreController implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreController.kt`:
 
@@ -3050,7 +3050,7 @@ private fun ChoreView.toResponse() =
 
 Die exakten Namen der generierten Enum-Zugriffe (`ChoreResponse.AssignmentGroup.forValue(...)`, `ClearableChoreField.DESCRIPTION`) aus dem in Step 4 erzeugten Code übernehmen — `TaskController.kt` zeigt dasselbe Muster für `TaskResponse.Status`.
 
-- [ ] **Step 8: Test laufen lassen, grün bestätigen**
+- [x] **Step 8: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreControllerTest'
@@ -3058,7 +3058,7 @@ cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreControllerTest'
 
 Erwartet: PASS, 11 Tests.
 
-- [ ] **Step 9: Den fehlschlagenden Controller-Test für Zuweisungen schreiben**
+- [x] **Step 9: Den fehlschlagenden Controller-Test für Zuweisungen schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreAssignmentControllerTest.kt`:
 
@@ -3180,7 +3180,7 @@ class ChoreAssignmentControllerTest {
 }
 ```
 
-- [ ] **Step 10: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 10: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentControllerTest'
@@ -3188,7 +3188,7 @@ cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentContro
 
 Erwartet: Kompilierfehler `Unresolved reference: ChoreAssignmentController`.
 
-- [ ] **Step 11: ChoreAssignmentController implementieren**
+- [x] **Step 11: ChoreAssignmentController implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreAssignmentController.kt`:
 
@@ -3237,7 +3237,7 @@ private fun ChoreAssignmentView.toResponse() =
     )
 ```
 
-- [ ] **Step 12: Test laufen lassen, grün bestätigen**
+- [x] **Step 12: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentControllerTest'
@@ -3245,7 +3245,7 @@ cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentContro
 
 Erwartet: PASS, 5 Tests.
 
-- [ ] **Step 13: Volles Backend-Gate inklusive ArchUnit und Coverage**
+- [x] **Step 13: Volles Backend-Gate inklusive ArchUnit und Coverage**
 
 ```bash
 cd backend && ./gradlew check
@@ -3253,7 +3253,7 @@ cd backend && ./gradlew check
 
 Erwartet: BUILD SUCCESSFUL. Schlägt `LayeredArchitectureTest` an, liegt eine Schichtverletzung im neuen Code vor (meist: ein Controller greift direkt auf ein Repository zu) — beheben, nicht die Regel lockern. Schlägt `jacocoTestCoverageVerification` auf BRANCH an, öffne `backend/build/reports/jacoco/test/html/index.html` und suche die rot markierte Verzweigung.
 
-- [ ] **Step 14: Vertragsprüfung wie in CI**
+- [x] **Step 14: Vertragsprüfung wie in CI**
 
 ```bash
 cd .. && npx --yes @redocly/cli@latest lint api/openapi.yml
@@ -3261,7 +3261,7 @@ cd .. && npx --yes @redocly/cli@latest lint api/openapi.yml
 
 Erwartet: keine Fehler. Die CI führt zusätzlich `oasdiff` gegen `main` aus; alle Änderungen dieses Tasks sind additiv, dort ist also „no breaking changes" zu erwarten.
 
-- [ ] **Step 15: Commit**
+- [x] **Step 15: Commit**
 
 Die geänderte `api/openapi.yml`, beide Controller, beide Controller-Tests und diesen Plan committen:
 
