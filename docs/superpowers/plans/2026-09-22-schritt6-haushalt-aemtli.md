@@ -4242,7 +4242,7 @@ feat(chores): add query hooks with optimistic completion
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test für ChoreCard schreiben**
+- [x] **Step 1: Den fehlschlagenden Test für ChoreCard schreiben**
 
 `frontend/src/features/chores/ChoreCard.test.tsx`:
 
@@ -4348,7 +4348,7 @@ describe('ChoreCard', () => {
 })
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreCard.test.tsx
@@ -4356,7 +4356,7 @@ cd frontend && npx vitest run src/features/chores/ChoreCard.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoreCard"`.
 
-- [ ] **Step 3: ChoreCard implementieren**
+- [x] **Step 3: ChoreCard implementieren**
 
 `frontend/src/features/chores/ChoreCard.tsx`:
 
@@ -4423,7 +4423,7 @@ export function ChoreCard({ assignment, color, undoable, onComplete, onUndo }: C
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreCard.test.tsx
@@ -4431,7 +4431,7 @@ cd frontend && npx vitest run src/features/chores/ChoreCard.test.tsx
 
 Erwartet: PASS, 6 Tests.
 
-- [ ] **Step 5: Den fehlschlagenden Test für ChoreLane schreiben**
+- [x] **Step 5: Den fehlschlagenden Test für ChoreLane schreiben**
 
 `frontend/src/features/chores/ChoreLane.test.tsx`:
 
@@ -4563,7 +4563,7 @@ describe('ChoreLane', () => {
 })
 ```
 
-- [ ] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreLane.test.tsx
@@ -4571,7 +4571,7 @@ cd frontend && npx vitest run src/features/chores/ChoreLane.test.tsx
 
 Erwartet: `Failed to resolve import "./ChoreLane"`.
 
-- [ ] **Step 7: ChoreLane implementieren**
+- [x] **Step 7: ChoreLane implementieren**
 
 `frontend/src/features/chores/ChoreLane.tsx`:
 
@@ -4643,7 +4643,7 @@ export function ChoreLane({ lane, now, onComplete, onUndo }: ChoreLaneProps) {
 }
 ```
 
-- [ ] **Step 8: Test laufen lassen, grün bestätigen**
+- [x] **Step 8: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/ChoreLane.test.tsx
@@ -4651,7 +4651,7 @@ cd frontend && npx vitest run src/features/chores/ChoreLane.test.tsx
 
 Erwartet: PASS, 8 Tests.
 
-- [ ] **Step 9: Typprüfung und Lint**
+- [x] **Step 9: Typprüfung und Lint**
 
 ```bash
 cd frontend && npm run type-check && npx eslint src/features/chores --max-warnings 0
@@ -4659,7 +4659,7 @@ cd frontend && npm run type-check && npx eslint src/features/chores --max-warnin
 
 Erwartet: keine Ausgabe.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 Beide Komponenten, beide Tests und diesen Plan committen:
 
