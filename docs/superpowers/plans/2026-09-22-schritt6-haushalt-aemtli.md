@@ -1255,7 +1255,7 @@ git commit -m "feat(chores): add daily refill run with per-chore transactions"
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreRefillSchedulerTest.kt`:
 
@@ -1311,14 +1311,14 @@ class ChoreRefillSchedulerTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRefillSchedulerTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreRefillScheduler`.
 
-- [ ] **Step 3: Scheduler implementieren**
+- [x] **Step 3: Scheduler implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreRefillScheduler.kt`:
 
@@ -1378,14 +1378,14 @@ class ChoreRefillScheduler(
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreRefillSchedulerTest'
 ```
 Erwartet: PASS, 4 Tests.
 
-- [ ] **Step 5: Konfiguration dokumentieren**
+- [x] **Step 5: Konfiguration dokumentieren**
 
 In `backend/src/main/resources/application.yml` den `familyhub:`-Block ergänzen (die Werte sind identisch mit den Code-Defaults — sie stehen hier, damit die Stellschrauben auffindbar sind):
 
@@ -1402,14 +1402,14 @@ familyhub:
     max-open-per-member: ${FAMILYHUB_CHORES_MAX_OPEN:5}
 ```
 
-- [ ] **Step 6: Kontext startet weiterhin**
+- [x] **Step 6: Kontext startet weiterhin**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.google.sync.SchedulingConfigIntegrationTest' --tests 'com.familyhub.shared.health.HealthIntegrationTest'
 ```
 Erwartet: PASS. Schlägt der Start fehl, ist meist der Cron-Ausdruck oder die Zonen-Property falsch geschrieben.
 
-- [ ] **Step 7: Lint + Commit**
+- [x] **Step 7: Lint + Commit**
 
 ```bash
 cd backend && ./gradlew ktlintCheck detekt

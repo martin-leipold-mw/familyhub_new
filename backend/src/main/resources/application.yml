@@ -24,3 +24,9 @@ familyhub:
   version: ${APP_VERSION:dev}
   security:
     encryption-key: ${FAMILYHUB_ENCRYPTION_KEY:}
+  chores:
+    # Täglicher Ausgabelauf der Haushaltsaufgaben.
+    refill-cron: ${FAMILYHUB_CHORES_REFILL_CRON:0 0 5 * * *}
+    refill-zone: ${FAMILYHUB_CHORES_REFILL_ZONE:Europe/Berlin}
+    # Obergrenze OFFENER Zuweisungen je Mitglied; erledigte zählen nicht mit.
+    max-open-per-member: ${FAMILYHUB_CHORES_MAX_OPEN:5}
