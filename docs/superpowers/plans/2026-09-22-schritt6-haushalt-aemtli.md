@@ -1437,7 +1437,7 @@ git commit -m "feat(chores): schedule the daily refill run at 05:00 and on start
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test schreiben**
+- [x] **Step 1: Den fehlschlagenden Test schreiben**
 
 `backend/src/test/kotlin/com/familyhub/chores/ChoreAssignmentServiceTest.kt`:
 
@@ -1637,14 +1637,14 @@ class ChoreAssignmentServiceTest {
 }
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentServiceTest'
 ```
 Erwartet: Kompilierfehler `Unresolved reference: ChoreAssignmentService`.
 
-- [ ] **Step 3: ChoreAssignmentService implementieren**
+- [x] **Step 3: ChoreAssignmentService implementieren**
 
 `backend/src/main/kotlin/com/familyhub/chores/ChoreAssignmentService.kt`:
 
@@ -1751,7 +1751,7 @@ private fun ChoreAssignment.toView(chore: Chore) =
     )
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd backend && ./gradlew test --tests 'com.familyhub.chores.ChoreAssignmentServiceTest'
@@ -1760,7 +1760,7 @@ Erwartet: PASS, 10 Tests.
 
 Hinweis: `assignment.completedAt!!` ist kein Zweig für JaCoCo (Kotlin übersetzt `!!` in einen statischen `Intrinsics`-Aufruf). Der Fall „completed, aber `completedAt` null" ist durch `complete()` ausgeschlossen.
 
-- [ ] **Step 5: Lint + Commit**
+- [x] **Step 5: Lint + Commit**
 
 ```bash
 cd backend && ./gradlew ktlintCheck detekt
