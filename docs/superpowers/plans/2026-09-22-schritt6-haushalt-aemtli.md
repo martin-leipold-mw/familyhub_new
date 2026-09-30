@@ -3771,7 +3771,7 @@ feat(chores): add pure modules for lanes, labels, undo window and cache patching
 
 ---
 
-- [ ] **Step 1: Den fehlschlagenden Test für useChores schreiben**
+- [x] **Step 1: Den fehlschlagenden Test für useChores schreiben**
 
 `frontend/src/features/chores/useChores.test.tsx`:
 
@@ -3868,7 +3868,7 @@ describe.each([
 })
 ```
 
-- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/useChores.test.tsx
@@ -3876,7 +3876,7 @@ cd frontend && npx vitest run src/features/chores/useChores.test.tsx
 
 Erwartet: `Failed to resolve import "./useChores"`.
 
-- [ ] **Step 3: useChores implementieren**
+- [x] **Step 3: useChores implementieren**
 
 `frontend/src/features/chores/useChores.ts`:
 
@@ -3928,7 +3928,7 @@ export function useDeleteChoreMutation() {
 }
 ```
 
-- [ ] **Step 4: Test laufen lassen, grün bestätigen**
+- [x] **Step 4: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/useChores.test.tsx
@@ -3936,7 +3936,7 @@ cd frontend && npx vitest run src/features/chores/useChores.test.tsx
 
 Erwartet: PASS, 5 Tests.
 
-- [ ] **Step 5: Den fehlschlagenden Test für useChoreAssignments schreiben**
+- [x] **Step 5: Den fehlschlagenden Test für useChoreAssignments schreiben**
 
 `frontend/src/features/chores/useChoreAssignments.test.tsx`:
 
@@ -4111,7 +4111,7 @@ describe('useNow', () => {
 })
 ```
 
-- [ ] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 6: Test laufen lassen, Fehlschlag bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/useChoreAssignments.test.tsx
@@ -4119,7 +4119,7 @@ cd frontend && npx vitest run src/features/chores/useChoreAssignments.test.tsx
 
 Erwartet: `Failed to resolve import "./useChoreAssignments"`.
 
-- [ ] **Step 7: useChoreAssignments implementieren**
+- [x] **Step 7: useChoreAssignments implementieren**
 
 `frontend/src/features/chores/useChoreAssignments.ts`:
 
@@ -4202,7 +4202,7 @@ export function useNow(intervalMs: number): Date {
 
 Sollte `context?.previous` in `onError` einen unbedeckten Zweig hinterlassen, prüfe, ob der Generator `context` als optional typisiert — falls ja, ergänze einen Test, der `captured.onError(new Error('x'), { id: 'a1' }, undefined)` aufruft (dieser Fall tritt real auf, wenn `onMutate` selbst geworfen hat).
 
-- [ ] **Step 8: Test laufen lassen, grün bestätigen**
+- [x] **Step 8: Test laufen lassen, grün bestätigen**
 
 ```bash
 cd frontend && npx vitest run src/features/chores/useChoreAssignments.test.tsx
@@ -4210,7 +4210,7 @@ cd frontend && npx vitest run src/features/chores/useChoreAssignments.test.tsx
 
 Erwartet: PASS, 8 Tests.
 
-- [ ] **Step 9: Typprüfung und Lint**
+- [x] **Step 9: Typprüfung und Lint**
 
 ```bash
 cd frontend && npm run type-check && npx eslint src/features/chores --max-warnings 0
@@ -4218,7 +4218,7 @@ cd frontend && npm run type-check && npx eslint src/features/chores --max-warnin
 
 Erwartet: keine Ausgabe.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 Beide Hook-Dateien, beide Tests und diesen Plan committen:
 
