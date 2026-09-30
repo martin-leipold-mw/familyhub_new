@@ -121,6 +121,40 @@ class ChorePersistenceTest
         }
 
         @Test
+        fun `Loeschen eines Mitglieds nimmt seine Zuweisungen mit`() {
+            val otherMemberId = members.save(FamilyMember(name = "Ben", role = "child", color = "blue")).id!!
+            val assignment =
+                assignments.saveAndFlush(
+                    ChoreAssignment(
+                        choreId = choreId,
+                        memberId = otherMemberId,
+                        points = 10,
+                        assignedOn = LocalDate.of(2026, 9, 22),
+                    ),
+                )
+
+            members.deleteById(otherMemberId)
+            members.flush()
+
+            assertThat(assignments.findById(assignment.id!!)).isEmpty()
+        }
+
+        @Test
+        fun `Loeschen eines Mitglieds setzt den Rotationszeiger der Vorlage auf null statt sie mitzureissen`() {
+            val otherMemberId = members.save(FamilyMember(name = "Clara", role = "child", color = "green")).id!!
+            val chore = chores.findById(choreId).orElseThrow()
+            chore.lastAssignedMemberId = otherMemberId
+            chores.saveAndFlush(chore)
+
+            members.deleteById(otherMemberId)
+            members.flush()
+
+            val reloaded = chores.findById(choreId).orElseThrow()
+            assertThat(reloaded.lastAssignedMemberId).isNull()
+            assertThat(chores.existsById(choreId)).isTrue()
+        }
+
+        @Test
         fun `zaehlt offene Zuweisungen je Mitglied`() {
             assignments.saveAndFlush(open())
 
