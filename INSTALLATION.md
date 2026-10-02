@@ -10,15 +10,91 @@
 | Pakete | **Container Manager** (Docker) |
 | Zugang | SSH empfohlen |
 
-## 1. Repository klonen
+## 1. Repository per SSH klonen
+
+Das Repository wird mit einem **Deploy Key** geklont: ein SSH-Schlüssel, der nur für dieses eine
+Repository gilt und nur lesen darf. Er liegt im Home-Verzeichnis des NAS-Benutzers, mit dem du dich
+per SSH anmeldest (im Folgenden `admin`).
+
+### 1.1 Vorbereitung in DSM (einmalig)
+
+1. **SSH aktivieren:** Systemsteuerung → Terminal & SNMP → **SSH-Dienst aktivieren**.
+2. **Benutzer-Home aktivieren:** Systemsteuerung → Benutzer und Gruppe → Erweitert →
+   **Home-Dienst für Benutzer aktivieren**. Ohne diesen Schalter hat der Benutzer kein
+   Home-Verzeichnis, und `~/.ssh` lässt sich nicht anlegen.
+3. **Git installieren:** Paket-Zentrum → Paket **Git Server** installieren. DSM bringt von Haus aus
+   kein `git` mit; das Paket stellt den Befehl auf der Kommandozeile bereit.
+
+### 1.2 SSH-Schlüssel auf der NAS erzeugen
 
 ```bash
 ssh admin@NAS-IP
-mkdir -p /volume1/docker
-cd /volume1/docker
-git clone https://github.com/GITHUB_USER/familyhub.git
-cd familyhub
+
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+ssh-keygen -t ed25519 -C "familyhub-nas" -f ~/.ssh/familyhub_deploy -N ""
 ```
+
+Das erzeugt zwei Dateien:
+
+| Datei | Inhalt | Wohin |
+|-------|--------|-------|
+| `~/.ssh/familyhub_deploy` | privater Schlüssel | bleibt auf der NAS, niemals weitergeben |
+| `~/.ssh/familyhub_deploy.pub` | öffentlicher Schlüssel | wird bei GitHub hinterlegt |
+
+`~` ist bei Synology `/var/services/homes/admin` (bzw. `/volume1/homes/admin`). Der Schlüssel hat
+bewusst keine Passphrase (`-N ""`), damit `git pull` ohne Rückfrage funktioniert — er darf ja nur
+dieses eine Repository lesen.
+
+### 1.3 Öffentlichen Schlüssel bei GitHub als Deploy Key eintragen
+
+```bash
+cat ~/.ssh/familyhub_deploy.pub
+```
+
+Die ausgegebene Zeile (beginnt mit `ssh-ed25519`) kopieren und auf GitHub eintragen:
+Repository `martin-leipold-mw/familyhub_new` → **Settings → Deploy keys → Add deploy key**.
+Titel z. B. „Synology NAS", **„Allow write access" nicht anhaken**.
+
+### 1.4 SSH-Konfiguration anlegen
+
+Damit `git` für GitHub automatisch den Deploy Key verwendet:
+
+```bash
+cat >> ~/.ssh/config <<'CONF'
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/familyhub_deploy
+    IdentitiesOnly yes
+CONF
+chmod 600 ~/.ssh/config ~/.ssh/familyhub_deploy
+```
+
+Verbindung testen (beim ersten Mal den Fingerprint mit `yes` bestätigen):
+
+```bash
+ssh -T git@github.com
+# Erwartet: "Hi martin-leipold-mw/familyhub_new! You've successfully authenticated, ..."
+```
+
+Kommt `Permission denied (publickey)`: Deploy Key in GitHub prüfen und die Rechte kontrollieren
+(`ls -la ~/.ssh` — Verzeichnis `drwx------`, Schlüssel und `config` `-rw-------`).
+
+### 1.5 Repository klonen
+
+```bash
+sudo mkdir -p /volume1/docker/familyhub
+sudo chown "$(whoami)" /volume1/docker/familyhub
+git clone git@github.com:martin-leipold-mw/familyhub_new.git /volume1/docker/familyhub
+cd /volume1/docker/familyhub
+```
+
+Das Verzeichnis gehört deinem Benutzer, damit `git pull` ohne `sudo` läuft — sonst würde Git als
+`root` den Schlüssel in `/root/.ssh` suchen und nicht finden.
+
+> **Hinweis:** Docker-Befehle (`docker-compose …`) brauchen auf der Synology `sudo`,
+> `git`-Befehle dagegen **nicht** — immer als normaler Benutzer ausführen.
 
 ## 2. Umgebungsvariablen konfigurieren
 
@@ -31,6 +107,7 @@ Folgende Werte müssen gesetzt werden:
 
 | Variable | Beschreibung | Beispiel |
 |----------|--------------|---------|
+| `GITHUB_USER` | GitHub-Konto, unter dem die Images in GHCR liegen (klein geschrieben) | `martin-leipold-mw` |
 | `POSTGRES_PASSWORD` | Datenbankpasswort | zufälliger String |
 | `SPRING_DATASOURCE_PASSWORD` | Muss identisch zu `POSTGRES_PASSWORD` sein | |
 | `FAMILYHUB_ENCRYPTION_KEY` | 32+ Zeichen, für OAuth-Token-Verschlüsselung | `openssl rand -base64 32` |
@@ -43,22 +120,22 @@ openssl rand -base64 32
 ## 3. GHCR-Pakete als öffentlich setzen (einmalig)
 
 Gehe zu `github.com/GITHUB_USER` → Packages → je Paket → Settings → Visibility → Public.  
-Danach braucht Watchtower keine Anmeldung.
+Danach brauchen Docker und Watchtower keine Anmeldung bei GHCR.
 
 ## 4. Stack starten
 
 ```bash
-docker-compose up -d
+sudo docker-compose up -d
 ```
 
 Beim ersten Start lädt Docker die Images herunter (~200 MB). Das dauert je nach Verbindung 1–5 Minuten.
 
 ```bash
 # Status prüfen:
-docker-compose ps
+sudo docker-compose ps
 
 # Logs:
-docker-compose logs -f
+sudo docker-compose logs -f
 ```
 
 ## 5. Ersteinrichtung
@@ -80,19 +157,29 @@ Updates erfolgen automatisch über Watchtower. Nach jedem Push auf `main` im Git
 2. Watchtower prüft alle 5 Minuten auf neue Images
 3. Bei neuen Images: Container werden automatisch neu gestartet (~30 Sekunden Downtime)
 
+Watchtower aktualisiert nur die **Images** von Backend und Frontend. Ändert sich
+`docker-compose.yml` selbst (neuer Dienst, neue Umgebungsvariable), muss das Repository
+nachgezogen werden:
+
+```bash
+cd /volume1/docker/familyhub
+git pull                                   # als normaler Benutzer, nutzt den Deploy Key
+sudo docker-compose up -d                  # übernimmt die geänderte Konfiguration
+```
+
 Manuelles Update erzwingen:
 ```bash
-docker-compose pull && docker-compose up -d
+sudo docker-compose pull && sudo docker-compose up -d
 ```
 
 ## 7. Backup
 
 ```bash
 # Datenbank sichern:
-docker-compose exec postgres pg_dump -U familyhub familyhub > backup-$(date +%Y%m%d).sql
+sudo docker-compose exec postgres pg_dump -U familyhub familyhub > backup-$(date +%Y%m%d).sql
 
 # Backup wiederherstellen:
-docker-compose exec -T postgres psql -U familyhub familyhub < backup-YYYYMMDD.sql
+sudo docker-compose exec -T postgres psql -U familyhub familyhub < backup-YYYYMMDD.sql
 ```
 
 **Wichtig:** Den Wert `FAMILYHUB_ENCRYPTION_KEY` aus `.env` separat sichern — ohne ihn sind gespeicherte OAuth-Tokens nicht entschlüsselbar.
@@ -101,13 +188,13 @@ docker-compose exec -T postgres psql -U familyhub familyhub < backup-YYYYMMDD.sq
 
 **Container startet nicht:**
 ```bash
-docker-compose logs backend
+sudo docker-compose logs backend
 ```
 Häufigste Ursache: `FAMILYHUB_ENCRYPTION_KEY` nicht gesetzt oder zu kurz.
 
 **Datenbank nicht erreichbar:**
 ```bash
-docker-compose ps postgres  # Healthcheck-Status prüfen
+sudo docker-compose ps postgres  # Healthcheck-Status prüfen
 ```
 
 **Ports:**
