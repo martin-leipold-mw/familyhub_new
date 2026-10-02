@@ -192,6 +192,15 @@ sudo docker-compose logs backend
 ```
 Häufigste Ursache: `FAMILYHUB_ENCRYPTION_KEY` nicht gesetzt oder zu kurz.
 
+**`invalid reference format: repository name must be lowercase`:**
+`GITHUB_USER` in `.env` ist nicht gesetzt, steht noch auf einem Platzhalter oder enthält
+Großbuchstaben. Der Wert wird in die Image-Namen (`ghcr.io/${GITHUB_USER}/…`) eingesetzt, und
+Docker erlaubt dort nur Kleinbuchstaben. Prüfen und korrigieren:
+```bash
+grep GITHUB_USER .env                      # muss GITHUB_USER=martin-leipold-mw lauten
+sudo docker-compose config | grep image:   # zeigt die tatsächlich verwendeten Image-Namen
+```
+
 **Datenbank nicht erreichbar:**
 ```bash
 sudo docker-compose ps postgres  # Healthcheck-Status prüfen
