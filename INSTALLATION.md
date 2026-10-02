@@ -192,6 +192,18 @@ sudo docker-compose logs backend
 ```
 Häufigste Ursache: `FAMILYHUB_ENCRYPTION_KEY` nicht gesetzt oder zu kurz.
 
+**`The data directory was initialized by PostgreSQL version 15, which is not compatible with this version 16`:**
+Die Datenbank hat ein fremdes Datenvolume erwischt, typischerweise das einer älteren Installation.
+FamilyHub verwendet das fest benannte Volume `familyhub-new-postgres-data`. Mit `git pull` den
+aktuellen Stand holen und neu starten:
+```bash
+git pull
+sudo docker-compose down
+sudo docker-compose up -d
+sudo docker volume ls | grep postgres      # familyhub-new-postgres-data muss auftauchen
+```
+Das alte Volume bleibt dabei unangetastet.
+
 **`invalid reference format: repository name must be lowercase`:**
 `GITHUB_USER` in `.env` ist nicht gesetzt, steht noch auf einem Platzhalter oder enthält
 Großbuchstaben. Der Wert wird in die Image-Namen (`ghcr.io/${GITHUB_USER}/…`) eingesetzt, und
