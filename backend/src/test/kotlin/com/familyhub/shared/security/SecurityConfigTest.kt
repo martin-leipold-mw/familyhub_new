@@ -19,4 +19,13 @@ class SecurityConfigTest {
         mockMvc.get("/api/health")
             .andExpect { status { isOk() } }
     }
+
+    @Test
+    fun `requests from the frontend origin behind the nginx proxy are not rejected`() {
+        // nginx forwards "Host: nas2.local" without the port, while the browser sends
+        // "Origin: http://nas2.local:3080" on its own same-origin requests.
+        mockMvc.get("http://nas2.local/api/health") {
+            header("Origin", "http://nas2.local:3080")
+        }.andExpect { status { isOk() } }
+    }
 }
