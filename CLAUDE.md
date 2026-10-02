@@ -12,7 +12,7 @@ Backend (`cd backend`, needs **Java 21** — see gotchas):
 - `./gradlew check` — full gate: OpenAPI codegen → compile → ktlint + detekt → tests → JaCoCo coverage verify. Tests use Testcontainers (Docker required).
 - `./gradlew test` / `./gradlew bootRun`
 
-Frontend (`cd frontend`, Node ≥ 20):
+Frontend (`cd frontend`, Node ≥ 22):
 - `npm run check` — full gate: `tsc --noEmit` + eslint (`--max-warnings 0`) + dependency-cruiser + coverage.
 - `npm test` (watch) / `npm run test:run` / `npm run test:e2e` (Playwright) / `npm run generate:api` (orval)
 
